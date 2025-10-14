@@ -5,9 +5,9 @@ const Footer: React.FC = () => {
         <footer style={{
             width: '100%',
             maxWidth: '1920px',
-            height: '268px',
-            backgroundColor: '#1B1A23',
-            color: '#A7A9BE',
+            height: '200px',
+            backgroundColor: 'var(--color-background)',
+            color: 'var(--color-paragraph)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -15,6 +15,10 @@ const Footer: React.FC = () => {
             margin: '0 auto',
             padding: '20px 50px',
             position: 'relative',
+            fontFamily: 'Kantumruy, sans-serif',
+            fontSize: '12px',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
         }}>
             {/* Top Line */}
             <div style={{
@@ -28,7 +32,7 @@ const Footer: React.FC = () => {
             <div style={{
                 width: '100px',
                 height: '2px',
-                background: '#FF8906',
+                background: 'var(--color-highlight)',
                 borderRadius: '1px',
                 position: 'absolute',
                 top: '0',
@@ -50,13 +54,11 @@ const Footer: React.FC = () => {
                     justifyContent: 'flex-start',
                 }}>
                     <div style={{
-                        fontFamily: 'Kantumruy',
-                        fontStyle: 'normal',
                         fontWeight: '400',
-                        fontSize: '18px',
+                        fontSize: '16px',
                         lineHeight: '33px',
                         textAlign: 'center',
-                        color: '#FF8906',
+                        color: 'var(--color-highlight)',
                         marginBottom: '20px',
                     }}>
                         Wroclaw University of Science and Technology
@@ -75,12 +77,11 @@ const Footer: React.FC = () => {
                 {/* Advertisement */}
                 <div style={{
                     width: '557px',
-                    height: '254px',
+                    height: 'auto',
                     background: 'url(image.png)',
-                    border: '1px solid #1B1A23',
                     borderRadius: '20px',
                     textAlign: 'center',
-                    color: '#A7A9BE',
+                    color: 'var(--color-paragraph)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -94,41 +95,101 @@ const Footer: React.FC = () => {
                     alignItems: 'center',
                     gap: '20px',
                 }}>
-                    {/* Media Links */}
+                    {/* Social Media Links */}
                     <div style={{
                         display: 'flex',
                         gap: '10px',
                     }}>
-                        <div style={{
+                        <a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" style={{
                             width: '40px',
                             height: '40px',
                             background: 'rgba(255, 255, 254, 0.04)',
                             borderRadius: '10px',
-                        }}></div>
-                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <img
+                                src="/assets/icons/tiktok.png"
+                                alt="TikTok"
+                                style={{
+                                    width: '50%',
+                                    // height: '50%',
+                                }}
+                            />
+                        </a>
+                        <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" style={{
                             width: '40px',
                             height: '40px',
                             background: 'rgba(255, 255, 254, 0.04)',
                             borderRadius: '10px',
-                        }}></div>
-                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <img
+                                src="/assets/icons/youtube.png"
+                                alt="YouTube"
+                                style={{
+                                    width: '50%',
+                                    // height: '50%',
+                                }}
+                            />
+                        </a>
+                        <a href="https://www.discord.com" target="_blank" rel="noopener noreferrer" style={{
                             width: '40px',
                             height: '40px',
                             background: 'rgba(255, 255, 254, 0.04)',
                             borderRadius: '10px',
-                        }}></div>
-                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <img
+                                src="/assets/icons/discord.png"
+                                alt="Discord"
+                                style={{
+                                    width: '50%',
+                                    // height: '50%',
+                                }}
+                            />
+                        </a>
+                        <a href="https://www.telegram.org" target="_blank" rel="noopener noreferrer" style={{
                             width: '40px',
                             height: '40px',
                             background: 'rgba(255, 255, 254, 0.04)',
                             borderRadius: '10px',
-                        }}></div>
-                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <img
+                                src="/assets/icons/telegram.png"
+                                alt="Telegram"
+                                style={{
+                                    width: '50%',
+                                    // height: '50%',
+                                }}
+                            />
+                        </a>
+                        <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" style={{
                             width: '40px',
                             height: '40px',
                             background: 'rgba(255, 255, 254, 0.04)',
                             borderRadius: '10px',
-                        }}></div>
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <img
+                                src="/assets/icons/instagram.png"
+                                alt="Instagram"
+                                style={{
+                                    width: '50%',
+                                    // height: '50%',
+                                }}
+                            />
+                        </a>
                     </div>
                     {/* Logo */}
                     <div style={{
@@ -151,15 +212,13 @@ const Footer: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border: '1px dashed #A7A9BE',
+                        border: '1px dashed var(--color-paragraph)',
                         borderRadius: '10px',
-                        fontFamily: 'Kantumruy',
-                        fontStyle: 'normal',
                         fontWeight: '400',
-                        fontSize: '18px',
+                        fontSize: '16px',
                         lineHeight: '33px',
                         textAlign: 'center',
-                        color: '#A7A9BE',
+                        color: 'var(--color-paragraph)',
                     }}>
                         l2p.online@gmail.com
                     </div>
