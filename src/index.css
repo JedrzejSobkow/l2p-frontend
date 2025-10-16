@@ -13,6 +13,12 @@
   --color-highlight: #ff8906;
 }
 
+@layer base{
+    html {
+        @apply bg-background;
+    }
+}
+
 body, html {
     margin: 0;
     padding: 0;
