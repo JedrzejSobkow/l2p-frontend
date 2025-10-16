@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
                 transform: 'translateX(-50%)',
             }}></div>
             {/* Content */}
-            <div style={{
+            <div className="footer-content" style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -63,7 +63,7 @@ const Footer: React.FC = () => {
                     }}>
                         Wroclaw University of Science and Technology
                     </div>
-                    <div style={{
+                    <div className="footer-names" style={{
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '10px',
@@ -74,29 +74,15 @@ const Footer: React.FC = () => {
                         <div>Damian Kwolek</div>
                     </div>
                 </div>
-                {/* Advertisement */}
-                <div style={{
-                    width: '557px',
-                    height: 'auto',
-                    background: 'url(image.png)',
-                    borderRadius: '20px',
-                    textAlign: 'center',
-                    color: 'var(--color-paragraph)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}>
-                    Advertisement: You can place ads in either sidebar too.
-                </div>
                 {/* Right Section */}
-                <div style={{
+                <div className="footer-right-section" style={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '20px',
                 }}>
                     {/* Social Media Links */}
-                    <div style={{
+                    <div className="footer-social-media" style={{
                         display: 'flex',
                         gap: '10px',
                     }}>
@@ -114,7 +100,6 @@ const Footer: React.FC = () => {
                                 alt="TikTok"
                                 style={{
                                     width: '50%',
-                                    // height: '50%',
                                 }}
                             />
                         </a>
@@ -132,7 +117,6 @@ const Footer: React.FC = () => {
                                 alt="YouTube"
                                 style={{
                                     width: '50%',
-                                    // height: '50%',
                                 }}
                             />
                         </a>
@@ -150,7 +134,6 @@ const Footer: React.FC = () => {
                                 alt="Discord"
                                 style={{
                                     width: '50%',
-                                    // height: '50%',
                                 }}
                             />
                         </a>
@@ -168,7 +151,6 @@ const Footer: React.FC = () => {
                                 alt="Telegram"
                                 style={{
                                     width: '50%',
-                                    // height: '50%',
                                 }}
                             />
                         </a>
@@ -186,41 +168,46 @@ const Footer: React.FC = () => {
                                 alt="Instagram"
                                 style={{
                                     width: '50%',
-                                    // height: '50%',
                                 }}
                             />
                         </a>
                     </div>
-                    {/* Logo */}
-                    <div style={{
-                        width: '126px',
-                        height: '64px',
-                    }}>
-                        <img
-                            src="/assets/images/logo.png"
-                            alt="L2P Logo"
-                            style={{
-                                width: '100%',
-                                height: 'auto',
-                            }}
-                        />
-                    </div>
-                    {/* Email */}
-                    <div style={{
-                        width: '338px',
-                        height: '34px',
+                    {/* Logo and Email */}
+                    <div className="footer-logo-email" style={{
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        border: '1px dashed var(--color-paragraph)',
-                        borderRadius: '10px',
-                        fontWeight: '400',
-                        fontSize: '16px',
-                        lineHeight: '33px',
-                        textAlign: 'center',
-                        color: 'var(--color-paragraph)',
+                        gap: '10px',
                     }}>
-                        l2p.online@gmail.com
+                        <div className="footer-logo" style={{
+                            width: '126px',
+                            height: '64px',
+                        }}>
+                            <img
+                                src="/assets/images/logo.png"
+                                alt="L2P Logo"
+                                style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                }}
+                            />
+                        </div>
+                        <div className="footer-email" style={{
+                            width: '338px',
+                            height: '34px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px dashed var(--color-paragraph)',
+                            borderRadius: '10px',
+                            fontWeight: '400',
+                            fontSize: '16px',
+                            lineHeight: '33px',
+                            textAlign: 'center',
+                            color: 'var(--color-paragraph)',
+                        }}>
+                            l2p.online@gmail.com
+                        </div>
                     </div>
                 </div>
             </div>
