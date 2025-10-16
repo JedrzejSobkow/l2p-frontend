@@ -10,7 +10,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header />
-            <main style={{ flex: 1, padding: '20px' }}>{children}</main>
+            <main
+                className="content-section"
+                style={{
+                    flex: 1,
+                    padding: '20px',
+                    backgroundColor: 'var(--color-background)',
+                    backgroundImage: 'url("/assets/images/watermark.png")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center',
+                    backgroundSize: 'contain',
+                }}
+            >
+                {children}
+            </main>
             <Footer />
         </div>
     );
