@@ -28,6 +28,54 @@ body, html {
     }
 }
 
+@media (max-width: 785px) {
+    .footer-names {
+        flex-direction: row !important; /* Display names in one line */
+        gap: 20px; /* Add spacing between names */
+        justify-content: center; /* Center-align names */
+        padding-bottom: 20px;
+    }
+
+    .footer-content {
+        display: block !important; /* Change to block layout */
+        width: 100%; /* Ensure full width */
+    }
+
+    footer {
+        height: auto !important; /* Allow footer to adjust its height */
+    }
+
+    .footer-right-section {
+        flex-direction: column !important; /* Stack social links and logo+email vertically */
+        justify-content: center; /* Center-align content */
+        align-items: center; /* Align items vertically */
+        gap: 20px; /* Add spacing between sections */
+    }
+
+    .footer-social-media {
+        display: flex;
+        flex-direction: row; /* Ensure social links are in one line */
+        justify-content: center;
+        gap: 10px; /* Add spacing between social links */
+    }
+
+    .footer-logo-email {
+        display: flex;
+        flex-direction: column; /* Stack logo and email vertically */
+        align-items: center;
+        gap: 10px; /* Add spacing between logo and email */
+    }
+
+    .footer-logo {
+        height: auto !important;
+    }
+
+    .footer-email {
+        display: flex;
+        justify-content: center;
+    }
+}
+
 @media (max-width: 670px) {
     .hide-on-smaller {
         display: none;
