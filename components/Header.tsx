@@ -15,8 +15,8 @@ const Header: React.FC = () => {
             fontFamily: 'Kantumruy, sans-serif',
             fontSize: '14px',
             fontWeight: '100',
-            boxSizing: 'border-box', // Ensure padding is included in width
-            overflow: 'hidden', // Prevent overflow
+            boxSizing: 'border-box', 
+            overflow: 'hidden', 
         }}>
             {/* Bottom Line */}
             <div style={{
@@ -43,14 +43,14 @@ const Header: React.FC = () => {
                 alignItems: 'center',
                 gap: '10px',
                 paddingRight: '10px',
-                flexShrink: 0, // Prevent shrinking
+                flexShrink: 0, 
             }}>
                 <img
                     src="/assets/images/logo.png"
                     alt="L2P Logo"
                     style={{
                         height: '74px',
-                        width: 'auto', // Maintain aspect ratio
+                        width: 'auto', 
                     }}
                 />
             </div>
@@ -60,8 +60,8 @@ const Header: React.FC = () => {
                 gap: '25px',
                 alignItems: 'center',
                 paddingRight: '10px',
-                flex: 1, // Allow this section to take up available space
-                justifyContent: 'left', // Center elements
+                flex: 1, 
+                justifyContent: 'left', 
             }}>
                 {/* Element 1 */}
                 <div style={{
@@ -137,7 +137,7 @@ const Header: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
-                flexShrink: 0, // Prevent shrinking
+                flexShrink: 0, 
                 paddingRight: '15px',
             }}>
                 <img
@@ -185,7 +185,7 @@ const Header: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexShrink: 0, // Prevent shrinking
+                flexShrink: 0, 
             }}>
                 <img
                     src="/assets/icons/menu.png"

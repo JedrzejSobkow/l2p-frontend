@@ -30,40 +30,40 @@ body, html {
 
 @media (max-width: 785px) {
     .footer-names {
-        flex-direction: row !important; /* Display names in one line */
-        gap: 20px; /* Add spacing between names */
-        justify-content: center; /* Center-align names */
+        flex-direction: row !important;
+        gap: 20px; 
+        justify-content: center; 
         padding-bottom: 20px;
     }
 
     .footer-content {
-        display: block !important; /* Change to block layout */
-        width: 100%; /* Ensure full width */
+        display: block !important;
+        width: 100%; 
     }
 
     footer {
-        height: auto !important; /* Allow footer to adjust its height */
+        height: auto !important; 
     }
 
     .footer-right-section {
-        flex-direction: column !important; /* Stack social links and logo+email vertically */
-        justify-content: center; /* Center-align content */
-        align-items: center; /* Align items vertically */
-        gap: 20px; /* Add spacing between sections */
+        flex-direction: column !important; 
+        justify-content: center;
+        align-items: center; 
+        gap: 20px; 
     }
 
     .footer-social-media {
         display: flex;
-        flex-direction: row; /* Ensure social links are in one line */
+        flex-direction: row; 
         justify-content: center;
-        gap: 10px; /* Add spacing between social links */
+        gap: 10px; 
     }
 
     .footer-logo-email {
         display: flex;
-        flex-direction: column; /* Stack logo and email vertically */
+        flex-direction: column; 
         align-items: center;
-        gap: 10px; /* Add spacing between logo and email */
+        gap: 10px; 
     }
 
     .footer-logo {
@@ -74,6 +74,10 @@ body, html {
         display: flex;
         justify-content: center;
     }
+
+    .footer-names div {
+      text-align: center;
+    }
 }
 
 @media (max-width: 670px) {
@@ -81,9 +85,6 @@ body, html {
         display: none;
     }
 
-    /* .hide-on-smaller {
-      padding-left: 20px;
-    } */
 
     .header-elements {
         gap: 0px !important;
