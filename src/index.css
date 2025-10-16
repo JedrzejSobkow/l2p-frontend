@@ -28,7 +28,7 @@ body, html {
     }
 }
 
-@media (max-width: 650px) {
+@media (max-width: 670px) {
     .hide-on-smaller {
         display: none;
     }
@@ -38,11 +38,11 @@ body, html {
     } */
 
     .header-elements {
-        gap: 0px !important; /* Ensures this style takes priority */
+        gap: 0px !important;
     }
 
     .user-info {
-        display: none; /* Hide user info on smaller screens to prevent overlap */
+        display: none; 
     }
 }
 

@@ -61,7 +61,7 @@ const Header: React.FC = () => {
                 alignItems: 'center',
                 paddingRight: '10px',
                 flex: 1, // Allow this section to take up available space
-                justifyContent: 'center', // Center elements
+                justifyContent: 'left', // Center elements
             }}>
                 {/* Element 1 */}
                 <div style={{
