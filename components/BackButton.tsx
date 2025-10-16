@@ -11,7 +11,7 @@ const BackButton: FC<BackButtonProps> = ({ label = 'Back', navigateTo = '/', cla
   return (
     <Link
       to={navigateTo}
-      className={`inline-flex items-center gap-2 text-xs font-semibold rounded-md p-2 border border-background-secondary text-button-text transition hover:text-white/90 hover:border hover:border-button bg-background-secondary ${className}`}
+      className={`inline-flex items-center gap-2 text-xs font-semibold rounded-md p-2 border border-background-secondary text-button-text transition hover:border hover:border-button bg-background-secondary ${className}`}
       {...props}
     >
       <FaArrowLeft />

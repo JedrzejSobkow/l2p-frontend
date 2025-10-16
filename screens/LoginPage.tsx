@@ -20,7 +20,7 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
   }
   return (
     <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[rgba(12,11,24,0.9)] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.4)]">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[rgba(12,11,24,0.9)] p-8 ">
           <BackButton className="mb-6" label="Back to home" />
         <div className="mb-8 space-y-2 text-center">
           <span className="inline-flex rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-orange-300">
@@ -68,7 +68,7 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
 
           <button
             type="submit"
-            className="mt-2 w-full rounded-full bg-gradient-to-r from-[#ffb347] to-[#ff6c00] px-6 py-3 text-sm font-semibold text-[#1a1625] shadow-[0_16px_30px_rgba(255,108,0,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(255,108,0,0.45)]"
+            className="mt-2 w-full rounded-full bg-button px-6 py-3 text-sm font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)]"
           >
             Sign in
           </button>
