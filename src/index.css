@@ -18,3 +18,36 @@ body, html {
     padding: 0;
     overflow-x: hidden;
 }
+
+@media (max-width: 1200px) {
+    .hide-on-small {
+        display: none;
+    }
+    .hide-on-small .icon {
+        display: none;
+    }
+}
+
+@media (max-width: 650px) {
+    .hide-on-smaller {
+        display: none;
+    }
+
+    /* .hide-on-smaller {
+      padding-left: 20px;
+    } */
+
+    .header-elements {
+        gap: 0px !important; /* Ensures this style takes priority */
+    }
+
+    .user-info {
+        display: none; /* Hide user info on smaller screens to prevent overlap */
+    }
+}
+
+@media (max-width: 450px) {
+  .hide-on-mobile {
+      display: none;
+  }
+}

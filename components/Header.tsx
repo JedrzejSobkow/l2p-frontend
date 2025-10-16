@@ -42,20 +42,26 @@ const Header: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
+                paddingRight: '10px',
+                flexShrink: 0, // Prevent shrinking
             }}>
                 <img
                     src="/assets/images/logo.png"
                     alt="L2P Logo"
                     style={{
                         height: '74px',
+                        width: 'auto', // Maintain aspect ratio
                     }}
                 />
             </div>
             {/* Header Elements */}
-            <div style={{
+            <div className="header-elements" style={{
                 display: 'flex',
                 gap: '25px',
                 alignItems: 'center',
+                paddingRight: '10px',
+                flex: 1, // Allow this section to take up available space
+                justifyContent: 'center', // Center elements
             }}>
                 {/* Element 1 */}
                 <div style={{
@@ -66,12 +72,13 @@ const Header: React.FC = () => {
                     <img
                         src="/assets/icons/wifi.png"
                         alt="WiFi Icon"
+                        className="hide-on-smaller"
                         style={{
                             width: '38px',
                             height: '38px',
                         }}
                     />
-                    <span>524 players online</span>
+                    <span className="hide-on-smaller">524 players online</span>
                 </div>
                 {/* Element 2 */}
                 <div style={{
@@ -82,12 +89,13 @@ const Header: React.FC = () => {
                     <img
                         src="/assets/icons/play.png"
                         alt="Play Icon"
+                        className="hide-on-small"
                         style={{
                             width: '38px',
                             height: '38px',
                         }}
                     />
-                    <span>No need for creating account</span>
+                    <span className="hide-on-small">No need for creating account</span>
                 </div>
                 {/* Element 3 */}
                 <div style={{
@@ -98,12 +106,13 @@ const Header: React.FC = () => {
                     <img
                         src="/assets/icons/globe.png"
                         alt="Globe Icon"
+                        className="hide-on-small"
                         style={{
                             width: '38px',
                             height: '38px',
                         }}
                     />
-                    <span>No need for downloading</span>
+                    <span className="hide-on-small">No need for downloading</span>
                 </div>
                 {/* Element 4 */}
                 <div style={{
@@ -114,12 +123,13 @@ const Header: React.FC = () => {
                     <img
                         src="/assets/icons/people.png"
                         alt="People Icon"
+                        className="hide-on-small"
                         style={{
                             width: '38px',
                             height: '38px',
                         }}
                     />
-                    <span>Just you and people you share passion with</span>
+                    <span className="hide-on-small">Just you and people you share passion with</span>
                 </div>
             </div>
             {/* User Info */}
@@ -127,6 +137,8 @@ const Header: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '10px',
+                flexShrink: 0, // Prevent shrinking
+                paddingRight: '15px',
             }}>
                 <img
                     src="/assets/images/pfp.png"
@@ -137,12 +149,12 @@ const Header: React.FC = () => {
                         borderRadius: '50%',
                     }}
                 />
-                <div style={{
+                <div className="user-info" style={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'flex-start',
                 }}>
-                    <span style={{
+                    <span className='hide-on-mobile' style={{
                         fontSize: '16px',
                         fontWeight: '100',
                         color: 'var(--color-headline)',
@@ -173,6 +185,7 @@ const Header: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flexShrink: 0, // Prevent shrinking
             }}>
                 <img
                     src="/assets/icons/menu.png"
