@@ -1,0 +1,115 @@
+import type { FC, FormEventHandler } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import BackButton from '../components/BackButton'
+
+type RegistrationPageProps = {
+  onSubmit?: FormEventHandler<HTMLFormElement>
+}
+
+const inputClass =
+  'w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-orange-400/70 focus:outline-none focus:ring-2 focus:ring-orange-400/40'
+
+const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
+  const navigate = useNavigate()
+  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
+    if (onSubmit) return onSubmit(e)
+    e.preventDefault()
+    // For now, fake success and go home
+    navigate('/', { replace: true })
+  }
+  return (
+    <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
+      <div className="w-full max-w-xl rounded-3xl border border-white/10 bg-[rgba(12,11,24,0.9)] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.4)]">
+        <BackButton className="mb-6" label="Back to home" />
+        <div className="mb-8 space-y-2 text-center">
+          <span className="inline-flex rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-orange-300">
+            Join the lobby
+          </span>
+          <h1 className="text-3xl font-semibold text-white">Create your L2P account</h1>
+          <p className="text-sm text-white/60">
+            Start tracking your favourite games, join lobbies and challenge top rated players.
+          </p>
+        </div>
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          <label className="space-y-2 text-sm text-white/70">
+            <span>Username</span>
+            <input
+              className={inputClass}
+              name="username"
+              type="text"
+              autoComplete="username"
+              required
+            />
+          </label>
+
+          <label className="space-y-2 text-sm text-white/70">
+            <span>Email address</span>
+            <input
+              className={inputClass}
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+            />
+          </label>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="space-y-2 text-sm text-white/70">
+              <span>Password</span>
+              <input
+                className={inputClass}
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+              />
+            </label>
+            <label className="space-y-2 text-sm text-white/70">
+              <span>Confirm password</span>
+              <input
+                className={inputClass}
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                required
+              />
+            </label>
+          </div>
+
+          <label className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/5 p-4 text-xs text-white/60">
+            <input
+              type="checkbox"
+              name="terms"
+              required
+              className="mt-0.5 h-4 w-4 rounded border-white/30 bg-transparent text-orange-400 focus:ring-orange-400/50"
+            />
+            <span>
+              I agree to the Terms of Service and confirm I have read the Privacy Policy. I understand
+              that online matches may be recorded for moderation.
+            </span>
+          </label>
+
+          <button
+            type="submit"
+            className="mt-2 w-full rounded-full bg-gradient-to-r from-[#ffb347] to-[#ff6c00] px-6 py-3 text-sm font-semibold text-[#1a1625] shadow-[0_16px_30px_rgba(255,108,0,0.35)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(255,108,0,0.45)]"
+          >
+            Create account
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-xs text-white/50">
+          Already have an account?{' '}
+          <Link
+            to="/login"
+            className="font-semibold text-orange-300 underline-offset-4 transition hover:text-orange-200 hover:underline"
+          >
+            Sign in instead
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default RegistrationPage
