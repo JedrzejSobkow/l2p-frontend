@@ -1,9 +1,9 @@
 import React from 'react';
-import HomeScreen from '../screens/HomeScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 const App: React.FC = () => {
     return (
-        <HomeScreen />
+        <ProfileScreen />
     );
 };
 

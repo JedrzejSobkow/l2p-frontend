@@ -11,6 +11,8 @@
   --color-secondary: #f25f4c;
   --color-tertiary: #e53170;
   --color-highlight: #ff8906;
+  --color-lp: #2abd69;
+  --color-active: #2abd69;
 }
 
 body, html {
