@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const ProfileScreen: React.FC = () => {
+    const [description, setDescription] = useState('');
+    const maxChars = 64;
+    const maxRows = 3;
+
+    const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        let value = e.target.value;
+        value = value.replace(/\n/g, ''); // Remove new line characters
+        if (value.length <= maxChars) {
+            setDescription(value);
+        }
+    };
+
     return (
         <main className="content-section flex flex-col items-center justify-center p-8 gap-8 text-headline font-sans">
             {/* Profile Picture */}
@@ -33,15 +45,37 @@ const ProfileScreen: React.FC = () => {
             </div>
 
             {/* About Me Section */}
-            <div className="w-72 p-2 border border-paragraph rounded-lg bg-background text-headline text-sm font-normal text-left">
-                <div className="font-bold text-lg text-highlight mb-2">
-                    about me
+            <div className="input flex flex-col w-fit static -mt-6">
+                <label
+                    htmlFor="about-me"
+                    className="text-highlight text-xl font-semibold relative top-3 ml-[20px] px-[3px] bg-input-bg w-fit"
+                >
+                    about me:
+                </label>
+                <textarea
+                    id="about-me"
+                    placeholder="Tell us something about you..."
+                    name="about-me"
+                    spellCheck="false"
+                    value={description}
+                    rows={3}
+                    onChange={handleDescriptionChange}
+                    className="input px-[20px] py-[17px] text-s rounded-[20px] w-[350px] focus:outline-none placeholder:text-headline/25 text-headline"
+                    style={{
+                        backgroundColor: 'rgba(47, 46, 54, 0.1)',
+                        border: '3px solid rgba(47, 46, 54, 0.5)',
+                        resize: 'none', 
+                        whiteSpace: 'pre-wrap', 
+                        overflowWrap: 'break-word',
+                    }}
+                ></textarea>
+                {/* Character Counter */}
+                <div className="flex justify-between w-[350px] mt-2">
+                    <div></div> {/* Empty div to push the counter to the right */}
+                    <div className="text-xs text-paragraph">
+                        {maxChars - description.length} characters left
+                    </div>
                 </div>
-                <p className="m-0">
-                    This is an example of a text<br />
-                    Longer text looks like this<br />
-                    sdasdssssssssdddddfsdfsdfadsfsdfsdfsdfsdfsdfsdfdd
-                </p>
             </div>
         </main>
     );
