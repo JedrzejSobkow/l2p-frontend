@@ -90,17 +90,14 @@ body, html {
 
 @media (max-width: 670px) {
     .hide-on-smaller {
-        display: none;
+        display: none; /* Only hides the WiFi section */
     }
-
 
     .header-elements {
         gap: 0px !important;
     }
 
-    .user-info {
-        display: none; 
-    }
+
 }
 
 @media (max-width: 450px) {

@@ -1,93 +1,47 @@
 import React from 'react';
-import Layout from '../components/Layout';
 
 const ProfileScreen: React.FC = () => {
     return (
-        <main className="content-section" style={{
-            flex: 1,
-            padding: '20px',
-            backgroundColor: 'var(--color-background)',
-            backgroundImage: 'url("/assets/images/watermark.png")',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            backgroundSize: 'contain',
-        }}> 
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '30px',
-                gap: '30px',
-                color: 'var(--color-headline)',
-                fontFamily: 'Kantumruy, sans-serif',
-            }}>
-                {/* Profile Picture */}
-                <div style={{
-                    width: '250px',
-                    height: '250px',
-                    borderRadius: '50%',
-                    backgroundColor: '#D9D9D9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '20px',
-                    position: 'relative',
-                }}>
-                    <img
-                        src="/assets/images/profile-picture.png"
-                        alt="Profile Picture"
-                        style={{
-                            width: '240px',
-                            height: '240px',
-                            borderRadius: '50%',
-                        }}
-                    />
-                </div>
+        <main className="content-section flex flex-col items-center justify-center p-8 gap-8 text-headline font-sans">
+            {/* Profile Picture */}
+            <div className="w-64 h-64 rounded-full bg-gray-400 flex items-center justify-center mb-5 relative">
+                <img
+                    src="/assets/images/profile-picture.png"
+                    alt="Profile Picture"
+                    className="w-60 h-60 rounded-full"
+                />
+            </div>
 
-                {/* Rating */}
-                <div style={{
-                    fontSize: '24px',
-                    fontWeight: '700',
-                    color: 'var(--color-highlight)',
-                    marginBottom: '10px',
-                }}>
-                    RATING <span style={{ color: 'var(--color-headline)', paddingLeft: '10px' }}>495.00</span> <span style={{ color: 'var(--color-lp)' }}>LP</span>
-                </div>
+            {/* Rating */}
+            <div className="text-2xl font-bold text-highlight mb-2">
+                RATING <span className="text-headline pl-2">495.00</span> <span className="text-lp">LP</span>
+            </div>
 
-                {/* Username */}
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '30px',
-                    fontSize: '18px',
-                    fontWeight: '400',
-                    marginBottom: '20px',
-                }}>
-                    <img
-                        src="/assets/icons/user.png"
-                        alt="User Icon"
-                        style={{
-                            width: '26px',
-                            height: '26px',
-                        }}
-                    />
-                    <span>le_frogger422786</span>
-                    <img
-                        src="/assets/icons/edit.png"
-                        alt="Edit Icon"
-                        style={{
-                            width: '24px',
-                            height: '24px',
-                            cursor: 'pointer',
-                        }}
-                    />
-                </div>
+            {/* Username */}
+            <div className="flex items-center gap-8 text-lg font-normal mb-5">
+                <img
+                    src="/assets/icons/user.png"
+                    alt="User Icon"
+                    className="w-6 h-6"
+                />
+                <span>le_frogger422786</span>
+                <img
+                    src="/assets/icons/edit.png"
+                    alt="Edit Icon"
+                    className="w-6 h-6 cursor-pointer"
+                />
+            </div>
 
-                {/* About Me Section */}
-                <div>
-                    
+            {/* About Me Section */}
+            <div className="w-72 p-2 border border-paragraph rounded-lg bg-background text-headline text-sm font-normal text-left">
+                <div className="font-bold text-lg text-highlight mb-2">
+                    about me
                 </div>
+                <p className="m-0">
+                    This is an example of a text<br />
+                    Longer text looks like this<br />
+                    sdasdssssssssdddddfsdfsdfadsfsdfsdfsdfsdfsdfsdfdd
+                </p>
             </div>
         </main>
     );
