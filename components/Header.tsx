@@ -3,12 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const Header: React.FC = () => {
-    const { isAuthenticated, user, login, logout } = useAuth();
-
-    const handleLoginClick = () => {
-        login('user23283293');
-    };
-
+    const { isAuthenticated, user, logout } = useAuth();
     const handleLogoutClick = () => {
         logout();
     };
@@ -193,13 +188,12 @@ const Header: React.FC = () => {
                     </>
                 ) : (
                     <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={handleLoginClick}
+                        <Link
+                            to='/login'
                             className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-colors duration-200 hover:bg-highlight hover:text-button-text-dark"
                         >
                             Log in
-                        </button>
+                        </Link>
                         <Link
                             to="/register"
                             className="text-xs font-semibold text-headline transition-colors hover:text-highlight"
