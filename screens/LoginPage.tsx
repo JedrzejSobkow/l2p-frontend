@@ -1,6 +1,7 @@
 import type { FC, FormEventHandler } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
+import { useAuth } from '../components/AuthContext'
 
 type LoginPageProps = {
   onSubmit?: FormEventHandler<HTMLFormElement>
@@ -11,11 +12,13 @@ const inputClass =
 
 const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
     if (onSubmit) return onSubmit(e)
     e.preventDefault()
-    // For now, fake success and go home
+    // For now, fake success by mocking the login flow
+    login('user23283293')
     navigate('/', { replace: true })
   }
   return (

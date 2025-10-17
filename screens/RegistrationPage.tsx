@@ -1,6 +1,7 @@
 import type { FC, FormEventHandler } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
+import { useAuth } from '../components/AuthContext'
 
 type RegistrationPageProps = {
   onSubmit?: FormEventHandler<HTMLFormElement>
@@ -11,10 +12,13 @@ const inputClass =
 
 const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
   const navigate = useNavigate()
+  const { login } = useAuth()
+
   const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
     if (onSubmit) return onSubmit(e)
     e.preventDefault()
     // For now, fake success and go home
+    login(e.currentTarget.username.value)
     navigate('/', { replace: true })
   }
   return (

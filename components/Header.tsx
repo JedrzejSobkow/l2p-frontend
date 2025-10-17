@@ -1,6 +1,18 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const Header: React.FC = () => {
+    const { isAuthenticated, user, login, logout } = useAuth();
+
+    const handleLoginClick = () => {
+        login('user23283293');
+    };
+
+    const handleLogoutClick = () => {
+        logout();
+    };
+
     return (
         <header style={{
             width: '100%',
@@ -140,43 +152,62 @@ const Header: React.FC = () => {
                 flexShrink: 0, 
                 paddingRight: '15px',
             }}>
-                <img
-                    src="/assets/images/pfp.png"
-                    alt="User Icon"
-                    style={{
-                        width: '42px',
-                        height: '42px',
-                        borderRadius: '50%',
-                    }}
-                />
-                <div className="user-info" style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-start',
-                }}>
-                    <span className='hide-on-mobile' style={{
-                        fontSize: '16px',
-                        fontWeight: '100',
-                        color: 'var(--color-headline)',
-                    }}>
-                        Hello, 
-                        <span style={{
-                        fontSize: '16px',
-                        fontWeight: '400',
-                        paddingLeft: '3px',
-                        color: 'var(--color-headline)',}}> 
-                        user23283293
-                        </span>
-                    </span>
-                    <a href="/logout" style={{
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        color: 'var(--color-highlight)',
-                        textDecoration: 'none',
-                    }}>
-                        logout
-                    </a>
-                </div>
+                {isAuthenticated ? (
+                    <>
+                        <img
+                            src="/assets/images/pfp.png"
+                            alt="User Icon"
+                            style={{
+                                width: '42px',
+                                height: '42px',
+                                borderRadius: '50%',
+                            }}
+                        />
+                        <div className="user-info" style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-start',
+                        }}>
+                            <span className='hide-on-mobile' style={{
+                                fontSize: '16px',
+                                fontWeight: '100',
+                                color: 'var(--color-headline)',
+                            }}>
+                                Hello, 
+                                <span style={{
+                                fontSize: '16px',
+                                fontWeight: '400',
+                                paddingLeft: '3px',
+                                color: 'var(--color-headline)',}}> 
+                                {user?.username}
+                                </span>
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleLogoutClick}
+                                className="cursor-pointer border-0 bg-transparent p-0 text-[10px] font-bold uppercase text-[color:var(--color-highlight)] transition-colors hover:text-[color:var(--color-secondary)]"
+                            >
+                                logout
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handleLoginClick}
+                            className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-colors duration-200 hover:bg-highlight hover:text-button-text-dark"
+                        >
+                            Log in
+                        </button>
+                        <Link
+                            to="/register"
+                            className="text-xs font-semibold text-headline transition-colors hover:text-highlight"
+                        >
+                            Sign up
+                        </Link>
+                    </div>
+                )}
             </div>
             {/* Menu Button */}
             <div style={{
