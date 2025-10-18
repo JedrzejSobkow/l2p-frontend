@@ -7,15 +7,15 @@ const ProfileScreen: React.FC = () => {
     const [newPassword, setNewPassword] = useState('');
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [username, setUsername] = useState('le_frogger422786');
-    const [isPasswordValid, setIsPasswordValid] = useState(true); // Track password validity
-    const [showDeleteModal, setShowDeleteModal] = useState(false); // Track delete modal visibility
-    const [deleteConfirmation, setDeleteConfirmation] = useState(''); // Track delete confirmation input
+    const [isPasswordValid, setIsPasswordValid] = useState(true); 
+    const [showDeleteModal, setShowDeleteModal] = useState(false); 
+    const [deleteConfirmation, setDeleteConfirmation] = useState(''); 
     const maxChars = 64;
     const maxUsernameLength = 20;
 
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value;
-        value = value.replace(/\n/g, ''); // Remove new line characters
+        value = value.replace(/\n/g, ''); 
         if (value.length <= maxChars) {
             setDescription(value);
         }
@@ -31,7 +31,7 @@ const ProfileScreen: React.FC = () => {
             setCurrentPassword(value);
         } else {
             setNewPassword(value);
-            validatePassword(value); // Validate the new password
+            validatePassword(value); 
         }
     };
 
@@ -51,12 +51,10 @@ const ProfileScreen: React.FC = () => {
 
     const saveUsername = () => {
         setIsEditingUsername(false);
-        // Add any additional save logic here (e.g., API call)
     };
 
     const handleDeleteAccount = () => {
         if (deleteConfirmation === 'delete') {
-            // Perform delete account logic here (e.g., API call)
             alert('Account deleted successfully!');
             setShowDeleteModal(false);
             setDeleteConfirmation('');
@@ -73,7 +71,6 @@ const ProfileScreen: React.FC = () => {
         <main className="content-section flex flex-col items-center justify-center px-0 md:px-16 py-16 gap-8 text-headline font-sans h-full">
             {/* Two Columns Layout */}
             <div className="flex flex-col lg:flex-row justify-between items-center w-full max-w-6xl gap-8 h-full mx-auto">
-                {/* Left Column: Big Profile Picture, Username, About Me */}
                 <div className="flex flex-col items-center w-4/5 lg:w-1/2 gap-6">
                     {/* Big Profile Picture */}
                     <div className="w-64 h-64 rounded-full bg-gray-400 flex items-center justify-center relative">
@@ -284,9 +281,9 @@ const ProfileScreen: React.FC = () => {
                     <div
                         className="bg-background p-6 rounded-lg shadow-lg text-center"
                         style={{
-                            outline: '2px solid var(--color-highlight)', // Add highlight color outline
+                            outline: '2px solid var(--color-highlight)',
                         }}
-                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <h2 className="text-highlight text-xl font-bold mb-4">Confirm Account Deletion</h2>
                         <p className="text-paragraph mb-4">
@@ -302,7 +299,7 @@ const ProfileScreen: React.FC = () => {
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleDeleteAccount}
-                                disabled={deleteConfirmation !== 'delete'} // Disable if the phrase is incorrect
+                                disabled={deleteConfirmation !== 'delete'} 
                                 className={`px-4 py-2 rounded ${
                                     deleteConfirmation === 'delete'
                                         ? 'bg-red-500 text-white cursor-pointer'
