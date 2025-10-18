@@ -7,6 +7,9 @@ const ProfileScreen: React.FC = () => {
     const [newPassword, setNewPassword] = useState('');
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [username, setUsername] = useState('le_frogger422786');
+    const [isPasswordValid, setIsPasswordValid] = useState(true); // Track password validity
+    const [showDeleteModal, setShowDeleteModal] = useState(false); // Track delete modal visibility
+    const [deleteConfirmation, setDeleteConfirmation] = useState(''); // Track delete confirmation input
     const maxChars = 64;
     const maxUsernameLength = 20;
 
@@ -23,11 +26,19 @@ const ProfileScreen: React.FC = () => {
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'current' | 'new') => {
+        const value = e.target.value;
         if (type === 'current') {
-            setCurrentPassword(e.target.value);
+            setCurrentPassword(value);
         } else {
-            setNewPassword(e.target.value);
+            setNewPassword(value);
+            validatePassword(value); // Validate the new password
         }
+    };
+
+    const validatePassword = (password: string) => {
+        // Example password policy: at least 8 characters, one uppercase, one lowercase, one number
+        const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        setIsPasswordValid(passwordPolicy.test(password));
     };
 
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,9 +54,20 @@ const ProfileScreen: React.FC = () => {
         // Add any additional save logic here (e.g., API call)
     };
 
+    const handleDeleteAccount = () => {
+        if (deleteConfirmation === 'delete') {
+            // Perform delete account logic here (e.g., API call)
+            alert('Account deleted successfully!');
+            setShowDeleteModal(false);
+            setDeleteConfirmation('');
+        } else {
+            alert('Please type "delete" to confirm.');
+        }
+    };
+
     const pictures = [
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
+'/assets/images/profile-picture.png',
+'/assets/images/profile-picture.png',
         '/assets/images/profile-picture.png',
         '/assets/images/profile-picture.png',
         '/assets/images/profile-picture.png',
@@ -61,6 +83,8 @@ const ProfileScreen: React.FC = () => {
         '/assets/images/profile-picture.png',
         '/assets/images/profile-picture.png',
     ];
+
+    const isResetEnabled = currentPassword && isPasswordValid && newPassword; 
 
     return (
         <main className="content-section flex flex-col items-center justify-center px-0 md:px-16 py-16 gap-8 text-headline font-sans h-full">
@@ -222,10 +246,12 @@ const ProfileScreen: React.FC = () => {
                             placeholder="Enter new password"
                             value={newPassword}
                             onChange={(e) => handlePasswordChange(e, 'new')}
-                            className="input px-[15px] py-[12px] text-s rounded-[40px] w-full focus:outline-none placeholder:text-headline/25 text-headline"
+                            className={`input px-[15px] py-[12px] text-s rounded-[40px] w-full focus:outline-none placeholder:text-headline/25 ${
+                                isPasswordValid ? 'border-[#FF8906]' : 'border-red-500'
+                            }`}
                             style={{
                                 backgroundColor: '#0F0E17',
-                                border: '2px solid #FF8906',
+                                borderWidth: '2px',
                                 color: '#FFFFFE',
                             }}
                         />
@@ -238,7 +264,12 @@ const ProfileScreen: React.FC = () => {
                 </div>
 
                 {/* Reset Button */}
-                <button className="bg-highlight/35 text-stroke font-bold py-2 px-6 rounded-[10px] w-[150px]">
+                <button
+                    className={`font-bold py-2 px-6 rounded-[10px] w-[150px] ${
+                        isResetEnabled ? 'bg-highlight text-stroke' : 'bg-highlight/35 text-stroke'
+                    }`}
+                    disabled={!isResetEnabled}
+                >
                     RESET
                 </button>
 
@@ -248,10 +279,67 @@ const ProfileScreen: React.FC = () => {
                 </div>
 
                 {/* Delete Account Button */}
-                <button className="border-2 border-attention/70 text-attention/70 font-bold py-2 px-6 rounded-[20px] w-[200px]">
+                <button
+                    className="border-2 border-attention/70 text-attention/70 font-bold py-2 px-6 rounded-[20px] w-[200px]"
+                    onClick={() => setShowDeleteModal(true)}
+                >
                     Delete account
                 </button>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div
+                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+                    style={{ backdropFilter: 'blur(8px)' }}
+                    onClick={() => {
+                        setShowDeleteModal(false);
+                        setDeleteConfirmation('');
+                    }}
+                >
+                    <div
+                        className="bg-background p-6 rounded-lg shadow-lg text-center"
+                        style={{
+                            outline: '2px solid var(--color-highlight)', // Add highlight color outline
+                        }}
+                        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+                    >
+                        <h2 className="text-highlight text-xl font-bold mb-4">Confirm Account Deletion</h2>
+                        <p className="text-paragraph mb-4">
+                            Type <strong>"delete"</strong> below to confirm account deletion.
+                        </p>
+                        <input
+                            type="text"
+                            value={deleteConfirmation}
+                            onChange={(e) => setDeleteConfirmation(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-400 rounded mb-4"
+                            placeholder="Type 'delete' here"
+                        />
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={handleDeleteAccount}
+                                disabled={deleteConfirmation !== 'delete'} // Disable if the phrase is incorrect
+                                className={`px-4 py-2 rounded ${
+                                    deleteConfirmation === 'delete'
+                                        ? 'bg-red-500 text-white cursor-pointer'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                            >
+                                Confirm
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowDeleteModal(false);
+                                    setDeleteConfirmation('');
+                                }}
+                                className="bg-gray-300 text-black px-4 py-2 rounded"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 };
