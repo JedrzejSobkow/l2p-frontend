@@ -65,24 +65,7 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const pictures = [
-'/assets/images/profile-picture.png',
-'/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-        '/assets/images/profile-picture.png',
-    ];
+    const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/profile-pictures/pfp${index + 1}.png`);
 
     const isResetEnabled = currentPassword && isPasswordValid && newPassword; 
 
@@ -185,8 +168,9 @@ const ProfileScreen: React.FC = () => {
                                 key={index}
                                 className={`w-16 h-16 rounded-full border-2 ${
                                     selectedPictureId === index
-                                    ? 'border-4 border-highlight'
-                                    : 'border-2 border-gray-400'                                } flex items-center justify-center cursor-pointer`}
+                                        ? 'border-4 border-highlight'
+                                        : 'border-2 border-gray-400'
+                                } flex items-center justify-center cursor-pointer`}
                                 onClick={() => handlePictureSelect(index)}
                             >
                                 <img
