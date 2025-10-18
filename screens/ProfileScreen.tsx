@@ -5,7 +5,10 @@ const ProfileScreen: React.FC = () => {
     const [selectedPictureId, setSelectedPictureId] = useState<number | null>(null);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
+    const [isEditingUsername, setIsEditingUsername] = useState(false);
+    const [username, setUsername] = useState('le_frogger422786');
     const maxChars = 64;
+    const maxUsernameLength = 20;
 
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value;
@@ -25,6 +28,19 @@ const ProfileScreen: React.FC = () => {
         } else {
             setNewPassword(e.target.value);
         }
+    };
+
+    const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Allow only alphanumeric characters and underscores, and limit to 14 characters
+        if (/^[a-zA-Z0-9_]*$/.test(value) && value.length <= maxUsernameLength) {
+            setUsername(value);
+        }
+    };
+
+    const saveUsername = () => {
+        setIsEditingUsername(false);
+        // Add any additional save logic here (e.g., API call)
     };
 
     const pictures = [
@@ -68,12 +84,37 @@ const ProfileScreen: React.FC = () => {
                             alt="User Icon"
                             className="w-6 h-6"
                         />
-                        <span>le_frogger422786</span>
-                        <img
-                            src="/assets/icons/edit.png"
-                            alt="Edit Icon"
-                            className="w-6 h-6 cursor-pointer"
-                        />
+                        {isEditingUsername ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={handleUsernameChange}
+                                    className="px-2 py-1 border border-gray-400 rounded"
+                                />
+                                <button
+                                    onClick={saveUsername}
+                                    className="px-3 py-1 bg-highlight text-stroke rounded"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        ) : (
+                            <span
+                                onClick={() => setIsEditingUsername(true)}
+                                className="cursor-pointer hover:underline"
+                            >
+                                {username}
+                            </span>
+                        )}
+                        {!isEditingUsername && (
+                            <img
+                                src="/assets/icons/edit.png"
+                                alt="Edit Icon"
+                                className="w-6 h-6 cursor-pointer"
+                                onClick={() => setIsEditingUsername(true)}
+                            />
+                        )}
                     </div>
 
                     {/* About Me Section */}
