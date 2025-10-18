@@ -13,6 +13,7 @@
   --color-highlight: #ff8906;
   --color-lp: #2abd69;
   --color-active: #2abd69;
+  --color-attention: #bc2b07;
 }
 
 @layer base{

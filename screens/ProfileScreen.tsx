@@ -136,7 +136,7 @@ const ProfileScreen: React.FC = () => {
             </div>
 
             {/* Change Password and Delete Account Section */}
-            <div className="flex flex-col items-start w-full max-w-4xl mt-12 gap-6 lg:w-full md:w-3/5 mx-auto">
+            <div className="flex flex-col items-start w-4/5 max-w-4xl mt-12 gap-6 lg:w-full md:w-3/5 mx-auto">
                 <h2 className="text-highlight text-2xl font-bold">Change password</h2>
                 <div className="flex flex-col gap-4 w-full max-w-[500px]">
                     {/* Current Password */}
@@ -197,17 +197,17 @@ const ProfileScreen: React.FC = () => {
                 </div>
 
                 {/* Reset Button */}
-                <button className="bg-highlight text-headline font-bold py-2 px-6 rounded-[20px] w-[150px]">
+                <button className="bg-highlight/35 text-stroke font-bold py-2 px-6 rounded-[10px] w-[150px]">
                     RESET
                 </button>
 
                 {/* Email Address */}
-                <div className="text-highlight text-lg font-bold">
-                    e-mail address <span className="text-headline font-normal">frogshoplsmydops@onet.pl</span>
+                <div className="text-highlight text-lg font-bold pt-[25px]">
+                    e-mail address <span className="text-headline/35 font-normal pl-[20px]">frogshoplsmydops@onet.pl</span>
                 </div>
 
                 {/* Delete Account Button */}
-                <button className="border-2 border-highlight text-highlight font-bold py-2 px-6 rounded-[20px] w-[200px]">
+                <button className="border-2 border-attention/70 text-attention/70 font-bold py-2 px-6 rounded-[20px] w-[200px]">
                     Delete account
                 </button>
             </div>
