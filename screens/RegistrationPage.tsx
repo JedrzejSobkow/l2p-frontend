@@ -1,17 +1,13 @@
-import type { FC, FormEventHandler } from 'react'
+import type { FC, FormEventHandler, ReactNode } from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
 
-type RegistrationPageProps = {
-  onSubmit?: FormEventHandler<HTMLFormElement>
-}
-
 const inputClass =
   'w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-orange-400/70 focus:outline-none focus:ring-2 focus:ring-orange-400/40'
 
-const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
+const RegistrationPage = () => {
   const navigate = useNavigate()
   const { register, login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
@@ -19,23 +15,21 @@ const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
-    if (onSubmit) return onSubmit(e)
     e.preventDefault()
     setSubmitting(true)
     setError(null)
     setFieldErrors({})
     try {
       const form = new FormData(e.currentTarget)
-      const username = String(form.get('username') || '')
+      const username  = String(form.get('username') || '')
       const email = String(form.get('email') || '')
       const password = String(form.get('password') || '')
       const confirmPassword = String(form.get('confirmPassword') || '')
       const termsAccepted = form.get('terms') !== null
       if (!termsAccepted) throw new Error('You must accept the terms')
       if (password !== confirmPassword) throw new Error('Passwords do not match')
-      await register({ username, email, password })
-      // Auto sign-in after registration using the same credentials
-      await login({ identifier: username, password, remember: true })
+      await register({ nickname: username , email, password })
+      await login({ username : email , password, remember: true }) // w api jest że po username jest logowanie jednak loguje tylko po email + trzeba ujednolicić nickname i username
       navigate('/', { replace: true })
     } catch (err: any) {
       if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)

@@ -174,7 +174,7 @@ const Header: React.FC = () => {
                                 fontWeight: '400',
                                 paddingLeft: '3px',
                                 color: 'var(--color-headline)',}}> 
-                                {user?.username}
+                                {user?.nickname}
                                 </span>
                             </span>
                             <button

@@ -1,5 +1,4 @@
-// Lightweight HTTP client for cookie-based auth
-// Assumes backend sets auth cookies on login and uses them for session
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? ''
 
 export type ApiErrorShape = {
   status: number
@@ -20,13 +19,16 @@ export class ApiError extends Error implements ApiErrorShape {
   }
 }
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL ?? ''
+
+let unauthorizedHandler: (() => void) | null = null
+
+export function onUnauthorized(cb: (() => void) | null) { unauthorizedHandler = cb }
 
 type RequestOptions = {
   method?: string
   body?: any
   headers?: Record<string, string>
-  auth?: boolean // kept for compatibility; no-op for cookie auth
+  auth?: boolean
   signal?: AbortSignal
 }
 
@@ -108,6 +110,10 @@ async function parseError(res: Response): Promise<ApiError> {
 export async function request<T = any>(path: string, options: RequestOptions = {}): Promise<T> {
   const res = await doFetch(path, options)
 
+  if(res.status === 401){
+    unauthorizedHandler?.();
+    throw await parseError(res)
+  }
   if (!res.ok) {
     throw await parseError(res)
   }

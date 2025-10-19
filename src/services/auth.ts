@@ -9,23 +9,22 @@ export type User = {
 }
 
 export type LoginPayload = {
-  identifier: string
+  username: string
   password: string
   remember?: boolean
 }
 
 export type RegisterPayload = {
-  username: string
+  nickname: string
   email: string
   password: string
 }
 
-// Cookie-based auth; no access token handling needed here
 
 export async function login(payload: LoginPayload): Promise<User> {
   // OAuth2PasswordRequestForm (x-www-form-urlencoded)
   const form = new URLSearchParams()
-  form.set('username', payload.identifier)
+  form.set('username', payload.username)
   form.set('password', payload.password)
   form.set('grant_type', 'password')
   if (payload.remember) form.set('scope', 'remember')
@@ -33,14 +32,13 @@ export async function login(payload: LoginPayload): Promise<User> {
   const data = await request<any>('/auth/login', { method: 'POST', body: form, auth: false })
   if (data?.user) return data.user as User
   // Cookie-based session; try to fetch current user if available
-  return await getMe().catch(() => ({ username: payload.identifier } as User))
+  return await getMe().catch(() => ({ username: payload.username } as User))
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {
-  // Backend expects { email, nickname, password }
   const body = {
     email: payload.email,
-    nickname: payload.username,
+    nickname: payload.nickname,
     password: payload.password,
   }
   const data = await request<any>('/auth/register', { method: 'POST', body, auth: false })

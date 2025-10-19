@@ -4,14 +4,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
 
-type LoginPageProps = {
-  onSubmit?: FormEventHandler<HTMLFormElement>
-}
 
 const inputClass =
   'w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-orange-400/70 focus:outline-none focus:ring-2 focus:ring-orange-400/40'
 
-const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
+const LoginPage = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
@@ -19,17 +16,16 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
-    if (onSubmit) return onSubmit(e)
     e.preventDefault()
     setSubmitting(true)
     setError(null)
     setFieldErrors({})
     try {
       const form = new FormData(e.currentTarget)
-      const identifier = String(form.get('identifier') || '')
+      const username  = String(form.get('username') || '')
       const password = String(form.get('password') || '')
       const remember = form.get('remember') !== null
-      await login({ identifier, password, remember })
+      await login({ username, password, remember })
       navigate('/', { replace: true })
     } catch (err: any) {
       if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
@@ -54,10 +50,10 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <label className="space-y-2 text-sm text-white/70">
-            <span>Email or username</span>
+            <span>Username</span>
             <input
               className={inputClass}
-              name="identifier"
+              name="username"
               type="text"
               autoComplete="username"
               required
@@ -70,6 +66,9 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
           <div className="space-y-2 text-sm text-white/70">
             <div className="flex items-center justify-between">
               <span>Password</span>
+              <Link to="/forgot-password" className="text-xs text-orange-300 hover:text-orange-200 underline-offset-4 hover:underline">
+                Forgot password?
+              </Link>
             </div>
             <input
               className={inputClass}
