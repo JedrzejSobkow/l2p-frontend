@@ -1,4 +1,5 @@
 import type { FC, FormEventHandler } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
@@ -13,13 +14,29 @@ const inputClass =
 const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     if (onSubmit) return onSubmit(e)
     e.preventDefault()
-    // For now, fake success by mocking the login flow
-    login('user23283293')
-    navigate('/', { replace: true })
+    setSubmitting(true)
+    setError(null)
+    setFieldErrors({})
+    try {
+      const form = new FormData(e.currentTarget)
+      const identifier = String(form.get('identifier') || '')
+      const password = String(form.get('password') || '')
+      const remember = form.get('remember') !== null
+      await login({ identifier, password, remember })
+      navigate('/', { replace: true })
+    } catch (err: any) {
+      if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
+      setError(err?.message || 'Sign in failed')
+    } finally {
+      setSubmitting(false)
+    }
   }
   return (
     <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
@@ -45,6 +62,9 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
               autoComplete="username"
               required
             />
+            {fieldErrors.username && (
+              <p className="text-red-300 text-xs" role="alert">{fieldErrors.username}</p>
+            )}
           </label>
 
           <div className="space-y-2 text-sm text-white/70">
@@ -58,6 +78,9 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
               autoComplete="current-password"
               required
             />
+            {fieldErrors.password && (
+              <p className="text-red-300 text-xs" role="alert">{fieldErrors.password}</p>
+            )}
           </div>
 
           <label className="flex items-center gap-3 text-xs text-white/60">
@@ -72,9 +95,13 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
           <button
             type="submit"
             className="mt-2 w-full rounded-full bg-button px-6 py-3 text-sm font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)]"
+            disabled={submitting}
           >
-            Sign in
+            {submitting ? 'Signing in...' : 'Sign in'}
           </button>
+          {error && (
+            <p className="text-red-300 text-xs mt-3" role="alert">{error}</p>
+          )}
         </form>
 
         <p className="mt-6 text-center text-xs text-white/50">
@@ -92,3 +119,7 @@ const LoginPage: FC<LoginPageProps> = ({ onSubmit }) => {
 }
 
 export default LoginPage
+
+
+
+

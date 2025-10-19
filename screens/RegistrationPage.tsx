@@ -1,4 +1,5 @@
 import type { FC, FormEventHandler } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
@@ -12,14 +13,36 @@ const inputClass =
 
 const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { register, login } = useAuth()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     if (onSubmit) return onSubmit(e)
     e.preventDefault()
-    // For now, fake success and go home
-    login(e.currentTarget.username.value)
-    navigate('/', { replace: true })
+    setSubmitting(true)
+    setError(null)
+    setFieldErrors({})
+    try {
+      const form = new FormData(e.currentTarget)
+      const username = String(form.get('username') || '')
+      const email = String(form.get('email') || '')
+      const password = String(form.get('password') || '')
+      const confirmPassword = String(form.get('confirmPassword') || '')
+      const termsAccepted = form.get('terms') !== null
+      if (!termsAccepted) throw new Error('You must accept the terms')
+      if (password !== confirmPassword) throw new Error('Passwords do not match')
+      await register({ username, email, password })
+      // Auto sign-in after registration using the same credentials
+      await login({ identifier: username, password, remember: true })
+      navigate('/', { replace: true })
+    } catch (err: any) {
+      if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
+      setError(err?.message || 'Registration failed')
+    } finally {
+      setSubmitting(false)
+    }
   }
   return (
     <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
@@ -45,6 +68,9 @@ const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
               autoComplete="username"
               required
             />
+            {fieldErrors.nickname && (
+              <p className="text-red-300 text-xs" role="alert">{fieldErrors.nickname}</p>
+            )}
           </label>
 
           <label className="space-y-2 text-sm text-white/70">
@@ -56,6 +82,9 @@ const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
               autoComplete="email"
               required
             />
+            {fieldErrors.email && (
+              <p className="text-red-300 text-xs" role="alert">{fieldErrors.email}</p>
+            )}
           </label>
 
           <div className="grid gap-5 sm:grid-cols-2">
@@ -68,6 +97,9 @@ const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
                 autoComplete="new-password"
                 required
               />
+              {fieldErrors.password && (
+                <p className="text-red-300 text-xs" role="alert">{fieldErrors.password}</p>
+              )}
             </label>
             <label className="space-y-2 text-sm text-white/70">
               <span>Confirm password</span>
@@ -97,9 +129,13 @@ const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
           <button
             type="submit"
             className="mt-2 w-full rounded-full bg-button px-6 py-3 text-sm font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)]"
+            disabled={submitting}
           >
-            Create account
+            {submitting ? 'Creating account...' : 'Create account'}
           </button>
+          {error && (
+            <p className="text-red-300 text-xs mt-3" role="alert">{error}</p>
+          )}
         </form>
 
         <p className="mt-6 text-center text-xs text-white/50">
@@ -117,3 +153,4 @@ const RegistrationPage: FC<RegistrationPageProps> = ({ onSubmit }) => {
 }
 
 export default RegistrationPage
+
