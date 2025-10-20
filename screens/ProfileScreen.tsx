@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Popup from '../components/Popup'; // Import the Popup component
+import Popup from '../components/Popup'; 
 
 const ProfileScreen: React.FC = () => {
     const [description, setDescription] = useState('');
@@ -13,8 +13,10 @@ const ProfileScreen: React.FC = () => {
     const [deleteConfirmation, setDeleteConfirmation] = useState(''); 
     const [email, setEmail] = useState(''); 
     const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
-    const [usernameError, setUsernameError] = useState(false); // Track if username update failed
-    const [popup, setPopup] = useState<{ type: 'error'; message: string } | null>(null); // State for error popup
+    const [usernameError, setUsernameError] = useState(false); 
+    const [popup, setPopup] = useState<{ type: 'error'; message: string } | null>(null); 
+    const [descriptionOutline, setDescriptionOutline] = useState<string>('rgba(47, 46, 54, 0.5)'); 
+    const [descriptionTimeout, setDescriptionTimeout] = useState<NodeJS.Timeout | null>(null); 
     const maxChars = 64;
     const maxUsernameLength = 20;
 
@@ -87,11 +89,49 @@ const ProfileScreen: React.FC = () => {
         login();
     }, []);
 
+    const saveDescription = async (updatedDescription: string) => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'accept': 'application/json',
+                },
+                credentials: 'include', 
+                body: JSON.stringify({
+                    description: updatedDescription, 
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Description saved successfully');
+            } else {
+                console.error('Failed to save description:', response.statusText);
+                setPopup({ type: 'error', message: 'Failed to save description. Please try again.' });
+            }
+        } catch (error) {
+            console.error('Error saving description:', error);
+            setPopup({ type: 'error', message: 'Failed to save description. Please try again.' });
+        }
+    };
+
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value;
         value = value.replace(/\n/g, ''); 
         if (value.length <= maxChars) {
             setDescription(value);
+
+            if (descriptionTimeout) {
+                clearTimeout(descriptionTimeout);
+            }
+
+            setDescriptionOutline('rgba(59, 130, 246, 0.4)'); 
+
+            const timeout = setTimeout(() => {
+                setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
+                saveDescription(value); 
+            }, 2000);
+            setDescriptionTimeout(timeout); 
         }
     };
 
@@ -162,7 +202,7 @@ const ProfileScreen: React.FC = () => {
 
     const handleUsernameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-            saveUsername(); // Trigger save when Enter is pressed
+            saveUsername(); 
         }
     };
 
@@ -174,18 +214,18 @@ const ProfileScreen: React.FC = () => {
                     'Content-Type': 'application/json',
                     'accept': 'application/json',
                 },
-                credentials: 'include', // Ensure cookies are included
+                credentials: 'include', 
                 body: JSON.stringify({
-                    nickname: username, // Send the updated username
+                    nickname: username, 
                 }),
             });
 
             if (response.ok) {
                 console.log('Username updated successfully');
-                setIsEditingUsername(false); // Exit editing mode
-                setUsernameError(false); // Clear error state
+                setIsEditingUsername(false); 
+                setUsernameError(false); 
             } else {
-                setUsernameError(true); // Set error state
+                setUsernameError(true); 
                 if (response.status === 400) {
                     // Bad Request: Username is already occupied
                     setPopup({ type: 'error', message: 'This username is already occupied. Please choose another one.' });
@@ -196,13 +236,13 @@ const ProfileScreen: React.FC = () => {
                     // Generic error message
                     setPopup({ type: 'error', message: 'Failed to update username. Please try again.' });
                 }
-                setTimeout(() => setUsernameError(false), 1000); // Clear error after 1 second
+                setTimeout(() => setUsernameError(false), 1000); 
             }
         } catch (error) {
             console.error('Error updating username:', error);
-            setUsernameError(true); // Set error state
-            setPopup({ type: 'error', message: 'Failed to update username. Please try again.' }); // Show generic error popup
-            setTimeout(() => setUsernameError(false), 1000); // Clear error after 1 second
+            setUsernameError(true); 
+            setPopup({ type: 'error', message: 'Failed to update username. Please try again.' }); 
+            setTimeout(() => setUsernameError(false), 1000); 
         }
     };
 
@@ -245,10 +285,10 @@ const ProfileScreen: React.FC = () => {
                                     type="text"
                                     value={username}
                                     onChange={handleUsernameChange}
-                                    onKeyDown={handleUsernameKeyDown} // Handle Enter key
+                                    onKeyDown={handleUsernameKeyDown} 
                                     className={`px-2 py-1 border rounded ${
                                         usernameError ? 'border-red-500' : 'border-gray-400'
-                                    }`} // Apply red border if there's an error
+                                    }`}
                                 />
                                 <button
                                     onClick={saveUsername}
@@ -294,7 +334,7 @@ const ProfileScreen: React.FC = () => {
                             className="input px-[20px] py-[17px] text-s rounded-[20px] w-full focus:outline-none placeholder:text-headline/25 text-headline"
                             style={{
                                 backgroundColor: 'rgba(47, 46, 54, 0.1)',
-                                border: '3px solid rgba(47, 46, 54, 0.5)',
+                                border: `3px solid ${descriptionOutline}`, 
                                 resize: 'none', 
                                 whiteSpace: 'pre-wrap', 
                                 overflowWrap: 'break-word',
@@ -302,7 +342,7 @@ const ProfileScreen: React.FC = () => {
                         ></textarea>
                         {/* Character Counter */}
                         <div className="flex justify-between w-full mt-2">
-                            <div></div> {/* Empty div to push the counter to the right */}
+                            <div></div> 
                             <div className="text-xs text-paragraph">
                                 {maxChars - description.length} characters left
                             </div>
