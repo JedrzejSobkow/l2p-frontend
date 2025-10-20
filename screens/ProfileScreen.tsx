@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ProfileScreen: React.FC = () => {
     const [description, setDescription] = useState('');
@@ -6,12 +6,80 @@ const ProfileScreen: React.FC = () => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [username, setUsername] = useState('le_frogger422786');
+    const [username, setUsername] = useState(''); // Updated to start as empty
     const [isPasswordValid, setIsPasswordValid] = useState(true); 
     const [showDeleteModal, setShowDeleteModal] = useState(false); 
     const [deleteConfirmation, setDeleteConfirmation] = useState(''); 
+    const [email, setEmail] = useState(''); // Updated to start as empty
+    const [profilePictureId, setProfilePictureId] = useState<number | null>(null); // Store the backend-provided picture ID
     const maxChars = 64;
     const maxUsernameLength = 20;
+
+    const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/profile-pictures/pfp${index + 1}.png`);
+
+    useEffect(() => {
+        const login = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/v1/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        grant_type: 'password',
+                        username: '272651@student.pwr.edu.pl',
+                        password: 'zaq1@WSX',
+                        scope: '',
+                        client_id: 'string',
+                        client_secret: '********',
+                    }),
+                    credentials: 'include', // Ensure cookies are included
+                });
+
+                if (response.ok) {
+                    console.log('Login successful');
+                    fetchUserData(); // Fetch user data after successful login
+                } else {
+                    console.error('Login failed:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+            }
+        };
+
+        const fetchUserData = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
+                    method: 'GET',
+                    headers: {
+                        'accept': 'application/json',
+                    },
+                    credentials: 'include', // Ensure cookies are included
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('User data fetched:', data);
+                    setUsername(data.nickname); // Update username
+                    setEmail(data.email); // Update email
+                    setDescription(data.description || ''); // Update description if available
+                    setProfilePictureId(data.pfp_path || null); // Store the backend-provided picture ID
+
+                    // Set the selected picture ID to match the backend-provided picture
+                    if (data.pfp_path) {
+                        setSelectedPictureId(data.pfp_path - 1); // Adjust for 0-based index
+                    }
+                } else {
+                    console.error('Failed to fetch user data:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        };
+
+        login();
+    }, []);
 
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value;
@@ -23,6 +91,16 @@ const ProfileScreen: React.FC = () => {
 
     const handlePictureSelect = (id: number) => {
         setSelectedPictureId(id);
+    };
+
+    const getDisplayedPicture = () => {
+        if (selectedPictureId !== null) {
+            return pictures[selectedPictureId];
+        }
+        if (profilePictureId !== null) {
+            return pictures[profilePictureId - 1]; // Adjust for 0-based index
+        }
+        return '/assets/images/profile-picture.png'; // Default picture
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'current' | 'new') => {
@@ -63,8 +141,6 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/profile-pictures/pfp${index + 1}.png`);
-
     const isResetEnabled = currentPassword && isPasswordValid && newPassword; 
 
     return (
@@ -75,7 +151,7 @@ const ProfileScreen: React.FC = () => {
                     {/* Big Profile Picture */}
                     <div className="w-64 h-64 rounded-full bg-gray-400 flex items-center justify-center relative">
                         <img
-                            src={selectedPictureId !== null ? pictures[selectedPictureId] : '/assets/images/profile-picture.png'}
+                            src={getDisplayedPicture()}
                             alt="Profile Picture"
                             className="w-60 h-60 rounded-full"
                         />
@@ -256,7 +332,7 @@ const ProfileScreen: React.FC = () => {
 
                 {/* Email Address */}
                 <div className="text-highlight text-lg font-bold pt-[25px]">
-                    e-mail address <span className="text-headline/35 font-normal pl-[20px]">frogshoplsmydops@onet.pl</span>
+                    e-mail address <span className="text-headline/35 font-normal pl-[20px]">{email}</span>
                 </div>
 
                 {/* Delete Account Button */}
