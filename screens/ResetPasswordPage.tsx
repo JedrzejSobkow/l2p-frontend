@@ -2,9 +2,7 @@ import { useState, type FormEventHandler } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { resetPassword } from '../src/services/auth'
-
-const inputClass =
-  'w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-orange-400/70 focus:outline-none focus:ring-2 focus:ring-orange-400/40'
+  
 
 const ResetPasswordPage: React.FC = () => {
   const [params] = useSearchParams()
@@ -40,14 +38,14 @@ const ResetPasswordPage: React.FC = () => {
 
   return (
     <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
-      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[rgba(12,11,24,0.9)] p-8 ">
+      <div className="auth-card">
         <BackButton className="mb-6" label="Back to home" />
         <div className="mb-6 space-y-2 text-center">
-          <span className="inline-flex rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-orange-300">
+          <span className="auth-badge">
             Choose new password
           </span>
-          <h1 className="text-3xl font-semibold text-white">Reset password</h1>
-          <p className="text-sm text-white/60">Enter the token from your email and a new password.</p>
+          <h1 className="auth-title">Reset password</h1>
+          <p className="auth-desc">Enter the token from your email and a new password.</p>
         </div>
 
         {success ? (
@@ -55,12 +53,12 @@ const ResetPasswordPage: React.FC = () => {
             Password updated. Redirecting to sign in…
           </div>
         ) : (
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="auth-form" onSubmit={handleSubmit}>
             {!initialToken && (
-              <label className="space-y-2 text-sm text-white/70">
+              <label className="auth-label">
                 <span>Reset token</span>
                 <input
-                  className={inputClass}
+                  className='auth-input'
                   name="token"
                   type="text"
                   required
@@ -68,10 +66,10 @@ const ResetPasswordPage: React.FC = () => {
               </label>
             )}
 
-            <label className="space-y-2 text-sm text-white/70">
+            <label className="auth-label">
               <span>New password</span>
               <input
-                className={inputClass}
+                className='auth-input'
                 name="password"
                 type="password"
                 autoComplete="new-password"
@@ -82,10 +80,10 @@ const ResetPasswordPage: React.FC = () => {
               )}
             </label>
 
-            <label className="space-y-2 text-sm text-white/70">
+            <label className="auth-label">
               <span>Confirm new password</span>
               <input
-                className={inputClass}
+                className='auth-input'
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
@@ -95,7 +93,7 @@ const ResetPasswordPage: React.FC = () => {
 
             <button
               type="submit"
-              className="mt-2 w-full rounded-full bg-button px-6 py-3 text-sm font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)]"
+              className="mt-2 auth-btn"
               disabled={submitting}
             >
               {submitting ? 'Updating…' : 'Update password'}
@@ -103,8 +101,8 @@ const ResetPasswordPage: React.FC = () => {
             {error && (
               <p className="text-red-300 text-xs" role="alert">{error}</p>
             )}
-            <p className="text-center text-xs text-white/50">
-              Didn’t get a token? Check your spam folder or <Link className="text-orange-300 hover:text-orange-200 underline-offset-4 hover:underline" to="/forgot-password">request a new one</Link>.
+            <p className="auth-note">
+              Didn’t get a token? Check your spam folder or <Link className="auth-link" to="/forgot-password">request a new one</Link>.
             </p>
           </form>
         )}
