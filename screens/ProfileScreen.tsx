@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import Popup from '../components/Popup'; 
 
 const ProfileScreen: React.FC = () => {
+    const navigate = useNavigate(); 
     const [description, setDescription] = useState('');
     const [selectedPictureId, setSelectedPictureId] = useState<number | null>(null);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
-    const [confirmNewPassword, setConfirmNewPassword] = useState(''); // State for confirm new password
+    const [confirmNewPassword, setConfirmNewPassword] = useState(''); 
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [username, setUsername] = useState(''); 
     const [isPasswordValid, setIsPasswordValid] = useState(true); 
@@ -15,12 +17,12 @@ const ProfileScreen: React.FC = () => {
     const [email, setEmail] = useState(''); 
     const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
     const [usernameError, setUsernameError] = useState(false); 
-    const [popup, setPopup] = useState<{ type: 'error' | 'informative'; message: string } | null>(null); 
+    const [popup, setPopup] = useState<{ type: 'error' | 'informative' | 'confirmation'; message: string } | null>(null); 
     const [descriptionOutline, setDescriptionOutline] = useState<string>('rgba(47, 46, 54, 0.5)'); 
     const [descriptionTimeout, setDescriptionTimeout] = useState<NodeJS.Timeout | null>(null); 
-    const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false); // Visibility for current password
-    const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false); // Visibility for new password
-    const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false); // Visibility for confirm new password
+    const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false); 
+    const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false); 
+    const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false); 
     const maxChars = 64;
     const maxUsernameLength = 20;
 
@@ -45,7 +47,7 @@ const ProfileScreen: React.FC = () => {
     };
 
     const handlePasswordIconStyle = {
-        filter: 'invert(52%) sepia(96%) saturate(746%) hue-rotate(1deg) brightness(102%) contrast(101%)', // Highlight color
+        filter: 'invert(52%) sepia(96%) saturate(746%) hue-rotate(1deg) brightness(102%) contrast(101%)', 
     };
 
     useEffect(() => {
@@ -59,8 +61,8 @@ const ProfileScreen: React.FC = () => {
                     },
                     body: new URLSearchParams({
                         grant_type: 'password',
-                        username: '272651@student.pwr.edu.pl',
-                        password: 'zaq1@WSX',
+                        username: 'user@example.com',
+                        password: 'strongpassword123',
                         scope: '',
                         client_id: 'string',
                         client_secret: '********',
@@ -272,11 +274,31 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         if (deleteConfirmation === 'delete') {
-            alert('Account deleted successfully!');
-            setShowDeleteModal(false);
-            setDeleteConfirmation('');
+            try {
+                const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
+                    method: 'DELETE',
+                    headers: {
+                        'accept': 'application/json',
+                    },
+                    credentials: 'include', 
+                });
+
+                if (response.ok) {
+                    console.log('Account deleted successfully');
+                    setPopup({ type: 'confirmation', message: 'Account deleted successfully!' });
+                    setShowDeleteModal(false);
+                    setDeleteConfirmation('');
+                    setTimeout(() => navigate('/'), 2000); 
+                } else {
+                    console.error('Failed to delete account:', response.statusText);
+                    setPopup({ type: 'error', message: 'Failed to delete account. Please try again.' });
+                }
+            } catch (error) {
+                console.error('Error deleting account:', error);
+                setPopup({ type: 'error', message: 'Failed to delete account. Please try again.' });
+            }
         } else {
             alert('Please type "delete" to confirm.');
         }
@@ -291,15 +313,15 @@ const ProfileScreen: React.FC = () => {
                         'Content-Type': 'application/json',
                         'accept': 'application/json',
                     },
-                    credentials: 'include', // Ensure cookies are included
+                    credentials: 'include', 
                     body: JSON.stringify({
-                        password: newPassword, // Send the new password
+                        password: newPassword, 
                     }),
                 });
 
                 if (response.ok) {
                     console.log('Password updated successfully');
-                    setPopup({ type: 'informative', message: 'Password updated successfully!' });
+                    setPopup({ type: 'confirmation', message: 'Password updated successfully!' }); 
                     setNewPassword('');
                     setConfirmNewPassword('');
                 } else {
@@ -446,7 +468,7 @@ const ProfileScreen: React.FC = () => {
                         </label>
                         <input
                             id="new-password"
-                            type={isNewPasswordVisible ? 'text' : 'password'} // Toggle input type
+                            type={isNewPasswordVisible ? 'text' : 'password'} 
                             placeholder="Enter new password"
                             value={newPassword}
                             onChange={(e) => handlePasswordChange(e, 'new')}
@@ -460,13 +482,13 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} // Toggle icon
+                            src={isNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} 
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
-                            style={handlePasswordIconStyle} // Apply highlight color
-                            onMouseDown={() => handlePasswordVisibility('new', true)} // Show password on mouse down
-                            onMouseUp={() => handlePasswordVisibility('new', false)} // Hide password on mouse up
-                            onMouseLeave={() => handlePasswordVisibility('new', false)} // Hide password if mouse leaves
+                            style={handlePasswordIconStyle} 
+                            onMouseDown={() => handlePasswordVisibility('new', true)} 
+                            onMouseUp={() => handlePasswordVisibility('new', false)} 
+                            onMouseLeave={() => handlePasswordVisibility('new', false)} 
                         />
                     </div>
 
@@ -480,7 +502,7 @@ const ProfileScreen: React.FC = () => {
                         </label>
                         <input
                             id="confirm-new-password"
-                            type={isConfirmNewPasswordVisible ? 'text' : 'password'} // Toggle input type
+                            type={isConfirmNewPasswordVisible ? 'text' : 'password'} 
                             placeholder="Confirm new password"
                             value={confirmNewPassword}
                             onChange={(e) => handlePasswordChange(e, 'confirm')}
@@ -494,13 +516,13 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isConfirmNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} // Toggle icon
+                            src={isConfirmNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} 
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
-                            style={handlePasswordIconStyle} // Apply highlight color
-                            onMouseDown={() => handlePasswordVisibility('confirm', true)} // Show password on mouse down
-                            onMouseUp={() => handlePasswordVisibility('confirm', false)} // Hide password on mouse up
-                            onMouseLeave={() => handlePasswordVisibility('confirm', false)} // Hide password if mouse leaves
+                            style={handlePasswordIconStyle} 
+                            onMouseDown={() => handlePasswordVisibility('confirm', true)} 
+                            onMouseUp={() => handlePasswordVisibility('confirm', false)} 
+                            onMouseLeave={() => handlePasswordVisibility('confirm', false)} 
                         />
                     </div>
 
@@ -529,7 +551,7 @@ const ProfileScreen: React.FC = () => {
 
                 {/* Delete Account Button */}
                 <button
-                    className="border-2 border-attention/70 text-attention/70 font-bold py-2 px-6 rounded-[20px] w-[200px]"
+                    className="border-2 border-attention/70 text-attention/70 font-bold py-2 px-6 rounded-[20px] w-[200px] transition-all duration-300 hover:bg-attention/70 hover:text-white hover:scale-105"
                     onClick={() => setShowDeleteModal(true)}
                 >
                     Delete account
