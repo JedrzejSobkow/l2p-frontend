@@ -6,16 +6,16 @@ const ProfileScreen: React.FC = () => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [username, setUsername] = useState(''); // Updated to start as empty
+    const [username, setUsername] = useState(''); 
     const [isPasswordValid, setIsPasswordValid] = useState(true); 
     const [showDeleteModal, setShowDeleteModal] = useState(false); 
     const [deleteConfirmation, setDeleteConfirmation] = useState(''); 
-    const [email, setEmail] = useState(''); // Updated to start as empty
-    const [profilePictureId, setProfilePictureId] = useState<number | null>(null); // Store the backend-provided picture ID
+    const [email, setEmail] = useState(''); 
+    const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
     const maxChars = 64;
     const maxUsernameLength = 20;
 
-    const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/profile-pictures/pfp${index + 1}.png`);
+    const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/avatar/${index + 1}.png`);
 
     useEffect(() => {
         const login = async () => {
@@ -34,12 +34,12 @@ const ProfileScreen: React.FC = () => {
                         client_id: 'string',
                         client_secret: '********',
                     }),
-                    credentials: 'include', // Ensure cookies are included
+                    credentials: 'include', 
                 });
 
                 if (response.ok) {
                     console.log('Login successful');
-                    fetchUserData(); // Fetch user data after successful login
+                    fetchUserData(); 
                 } else {
                     console.error('Login failed:', response.statusText);
                 }
@@ -55,20 +55,23 @@ const ProfileScreen: React.FC = () => {
                     headers: {
                         'accept': 'application/json',
                     },
-                    credentials: 'include', // Ensure cookies are included
+                    credentials: 'include', 
                 });
 
                 if (response.ok) {
                     const data = await response.json();
                     console.log('User data fetched:', data);
-                    setUsername(data.nickname); // Update username
-                    setEmail(data.email); // Update email
-                    setDescription(data.description || ''); // Update description if available
-                    setProfilePictureId(data.pfp_path || null); // Store the backend-provided picture ID
+                    setUsername(data.nickname); 
+                    setEmail(data.email); 
+                    setDescription(data.description || ''); 
+                    setProfilePicturePath(data.pfp_path || null); 
 
-                    // Set the selected picture ID to match the backend-provided picture
+
                     if (data.pfp_path) {
-                        setSelectedPictureId(data.pfp_path - 1); // Adjust for 0-based index
+                        const match = data.pfp_path.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
+                        if (match) {
+                            setSelectedPictureId(parseInt(match[1], 10) - 1);
+                        }
                     }
                 } else {
                     console.error('Failed to fetch user data:', response.statusText);
@@ -89,18 +92,47 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const handlePictureSelect = (id: number) => {
+    const handlePictureSelect = async (id: number) => {
         setSelectedPictureId(id);
+
+        const newProfilePicturePath = `/images/avatar/${id + 1}.png`; 
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'accept': 'application/json',
+                },
+                credentials: 'include', 
+                body: JSON.stringify({
+                    pfp_path: newProfilePicturePath, 
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Profile picture updated successfully');
+                setProfilePicturePath(newProfilePicturePath); 
+            } else {
+                console.error('Failed to update profile picture:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error updating profile picture:', error);
+        }
     };
 
     const getDisplayedPicture = () => {
         if (selectedPictureId !== null) {
             return pictures[selectedPictureId];
         }
-        if (profilePictureId !== null) {
-            return pictures[profilePictureId - 1]; // Adjust for 0-based index
+        if (profilePicturePath) {
+            const match = profilePicturePath.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
+            if (match) {
+                const id = parseInt(match[1], 10) - 1; 
+                return pictures[id];
+            }
         }
-        return '/assets/images/profile-picture.png'; // Default picture
+        return '/assets/images/profile-picture.png'; 
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'current' | 'new') => {
@@ -114,14 +146,12 @@ const ProfileScreen: React.FC = () => {
     };
 
     const validatePassword = (password: string) => {
-        // Example password policy: at least 8 characters, one uppercase, one lowercase, one number
         const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
         setIsPasswordValid(passwordPolicy.test(password));
     };
 
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
-        // Allow only alphanumeric characters and underscores, and limit to 14 characters
         if (/^[a-zA-Z0-9_]*$/.test(value) && value.length <= maxUsernameLength) {
             setUsername(value);
         }
