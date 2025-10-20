@@ -6,6 +6,7 @@ const ProfileScreen: React.FC = () => {
     const [selectedPictureId, setSelectedPictureId] = useState<number | null>(null);
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState(''); // State for confirm new password
     const [isEditingUsername, setIsEditingUsername] = useState(false);
     const [username, setUsername] = useState(''); 
     const [isPasswordValid, setIsPasswordValid] = useState(true); 
@@ -14,13 +15,38 @@ const ProfileScreen: React.FC = () => {
     const [email, setEmail] = useState(''); 
     const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
     const [usernameError, setUsernameError] = useState(false); 
-    const [popup, setPopup] = useState<{ type: 'error'; message: string } | null>(null); 
+    const [popup, setPopup] = useState<{ type: 'error' | 'informative'; message: string } | null>(null); 
     const [descriptionOutline, setDescriptionOutline] = useState<string>('rgba(47, 46, 54, 0.5)'); 
     const [descriptionTimeout, setDescriptionTimeout] = useState<NodeJS.Timeout | null>(null); 
+    const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false); // Visibility for current password
+    const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false); // Visibility for new password
+    const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false); // Visibility for confirm new password
     const maxChars = 64;
     const maxUsernameLength = 20;
 
     const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/avatar/${index + 1}.png`);
+
+    const togglePasswordVisibility = (type: 'current' | 'new') => {
+        if (type === 'current') {
+            setIsCurrentPasswordVisible((prev) => !prev);
+        } else {
+            setIsNewPasswordVisible((prev) => !prev);
+        }
+    };
+
+    const handlePasswordVisibility = (type: 'current' | 'new' | 'confirm', isVisible: boolean) => {
+        if (type === 'current') {
+            setIsCurrentPasswordVisible(isVisible);
+        } else if (type === 'new') {
+            setIsNewPasswordVisible(isVisible);
+        } else {
+            setIsConfirmNewPasswordVisible(isVisible);
+        }
+    };
+
+    const handlePasswordIconStyle = {
+        filter: 'invert(52%) sepia(96%) saturate(746%) hue-rotate(1deg) brightness(102%) contrast(101%)', // Highlight color
+    };
 
     useEffect(() => {
         const login = async () => {
@@ -178,13 +204,13 @@ const ProfileScreen: React.FC = () => {
         return '/assets/images/profile-picture.png'; 
     };
 
-    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'current' | 'new') => {
+    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'confirm') => {
         const value = e.target.value;
-        if (type === 'current') {
-            setCurrentPassword(value);
-        } else {
+        if (type === 'new') {
             setNewPassword(value);
-            validatePassword(value); 
+            validatePassword(value);
+        } else {
+            setConfirmNewPassword(value);
         }
     };
 
@@ -256,7 +282,38 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const isResetEnabled = currentPassword && isPasswordValid && newPassword; 
+    const handleResetPassword = async () => {
+        if (isResetEnabled) {
+            try {
+                const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'accept': 'application/json',
+                    },
+                    credentials: 'include', // Ensure cookies are included
+                    body: JSON.stringify({
+                        password: newPassword, // Send the new password
+                    }),
+                });
+
+                if (response.ok) {
+                    console.log('Password updated successfully');
+                    setPopup({ type: 'informative', message: 'Password updated successfully!' });
+                    setNewPassword('');
+                    setConfirmNewPassword('');
+                } else {
+                    console.error('Failed to update password:', response.statusText);
+                    setPopup({ type: 'error', message: 'Failed to update password. Please try again.' });
+                }
+            } catch (error) {
+                console.error('Error updating password:', error);
+                setPopup({ type: 'error', message: 'Failed to update password. Please try again.' });
+            }
+        }
+    };
+
+    const isResetEnabled = newPassword && confirmNewPassword && isPasswordValid && newPassword === confirmNewPassword;
 
     return (
         <main className="content-section flex flex-col items-center justify-center px-0 md:px-16 py-16 gap-8 text-headline font-sans h-full">
@@ -379,34 +436,6 @@ const ProfileScreen: React.FC = () => {
             <div className="flex flex-col items-start w-4/5 max-w-4xl mt-12 gap-6 lg:w-full md:w-3/5 mx-auto">
                 <h2 className="text-highlight text-2xl font-bold">Change password</h2>
                 <div className="flex flex-col gap-4 w-full max-w-[500px]">
-                    {/* Current Password */}
-                    <div className="input flex flex-col w-full relative">
-                        <label
-                            htmlFor="current-password"
-                            className="text-headline text-sm font-semibold relative top-3 ml-[20px] px-[3px] bg-background w-fit"
-                        >
-                            current password
-                        </label>
-                        <input
-                            id="current-password"
-                            type="password"
-                            placeholder="Enter actual password"
-                            value={currentPassword}
-                            onChange={(e) => handlePasswordChange(e, 'current')}
-                            className="input px-[15px] py-[12px] text-s rounded-[40px] w-full focus:outline-none placeholder:text-headline/25 text-headline"
-                            style={{
-                                backgroundColor: '#0F0E17',
-                                border: '2px solid #FF8906',
-                                color: '#FFFFFE',
-                            }}
-                        />
-                        <img
-                            src="/assets/icons/password.png"
-                            alt="Password Icon"
-                            className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6"
-                        />
-                    </div>
-
                     {/* New Password */}
                     <div className="input flex flex-col w-full relative">
                         <label
@@ -417,7 +446,7 @@ const ProfileScreen: React.FC = () => {
                         </label>
                         <input
                             id="new-password"
-                            type="password"
+                            type={isNewPasswordVisible ? 'text' : 'password'} // Toggle input type
                             placeholder="Enter new password"
                             value={newPassword}
                             onChange={(e) => handlePasswordChange(e, 'new')}
@@ -431,19 +460,64 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src="/assets/icons/password.png"
-                            alt="Password Icon"
-                            className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6"
+                            src={isNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} // Toggle icon
+                            alt="Toggle Password Visibility"
+                            className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
+                            style={handlePasswordIconStyle} // Apply highlight color
+                            onMouseDown={() => handlePasswordVisibility('new', true)} // Show password on mouse down
+                            onMouseUp={() => handlePasswordVisibility('new', false)} // Hide password on mouse up
+                            onMouseLeave={() => handlePasswordVisibility('new', false)} // Hide password if mouse leaves
                         />
                     </div>
-                </div>
 
+                    {/* Confirm New Password */}
+                    <div className="input flex flex-col w-full relative">
+                        <label
+                            htmlFor="confirm-new-password"
+                            className="text-headline text-sm font-semibold relative top-3 ml-[20px] px-[3px] bg-background w-fit"
+                        >
+                            confirm new password
+                        </label>
+                        <input
+                            id="confirm-new-password"
+                            type={isConfirmNewPasswordVisible ? 'text' : 'password'} // Toggle input type
+                            placeholder="Confirm new password"
+                            value={confirmNewPassword}
+                            onChange={(e) => handlePasswordChange(e, 'confirm')}
+                            className={`input px-[15px] py-[12px] text-s rounded-[40px] w-full focus:outline-none placeholder:text-headline/25 ${
+                                confirmNewPassword && confirmNewPassword !== newPassword ? 'border-red-500' : 'border-[#FF8906]'
+                            }`}
+                            style={{
+                                backgroundColor: '#0F0E17',
+                                borderWidth: '2px',
+                                color: '#FFFFFE',
+                            }}
+                        />
+                        <img
+                            src={isConfirmNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} // Toggle icon
+                            alt="Toggle Password Visibility"
+                            className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
+                            style={handlePasswordIconStyle} // Apply highlight color
+                            onMouseDown={() => handlePasswordVisibility('confirm', true)} // Show password on mouse down
+                            onMouseUp={() => handlePasswordVisibility('confirm', false)} // Hide password on mouse up
+                            onMouseLeave={() => handlePasswordVisibility('confirm', false)} // Hide password if mouse leaves
+                        />
+                    </div>
+
+                    {/* Password Hint */}
+                    <div className="text-xs mt-1 text-paragraph">
+                        Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, and a number.
+                    </div>
+                </div>
                 {/* Reset Button */}
                 <button
-                    className={`font-bold py-2 px-6 rounded-[10px] w-[150px] ${
-                        isResetEnabled ? 'bg-highlight text-stroke' : 'bg-highlight/35 text-stroke'
+                    className={`font-bold py-2 px-6 rounded-[10px] w-[150px] transition-all duration-300 ${
+                        isResetEnabled
+                            ? 'bg-highlight text-stroke hover:bg-highlight/90 hover:scale-105 cursor-pointer'
+                            : 'bg-highlight/35 text-stroke cursor-not-allowed'
                     }`}
                     disabled={!isResetEnabled}
+                    onClick={handleResetPassword}
                 >
                     RESET
                 </button>
