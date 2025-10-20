@@ -163,6 +163,11 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
+    const handleDescriptionBlur = async () => {
+        setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
+        await saveDescription(description); 
+    };
+
     const handlePictureSelect = async (id: number) => {
         setSelectedPictureId(id);
 
@@ -337,6 +342,9 @@ const ProfileScreen: React.FC = () => {
 
     const isResetEnabled = newPassword && confirmNewPassword && isPasswordValid && newPassword === confirmNewPassword;
 
+    const isFirstPasswordInvalid = !isPasswordValid; 
+    const isSecondPasswordInvalid = isFirstPasswordInvalid || (confirmNewPassword && confirmNewPassword !== newPassword); 
+
     return (
         <main className="content-section flex flex-col items-center justify-center px-0 md:px-16 py-16 gap-8 text-headline font-sans h-full">
             {/* Two Columns Layout */}
@@ -410,6 +418,7 @@ const ProfileScreen: React.FC = () => {
                             value={description}
                             rows={3}
                             onChange={handleDescriptionChange}
+                            onBlur={handleDescriptionBlur} 
                             className="input px-[20px] py-[17px] text-s rounded-[20px] w-full focus:outline-none placeholder:text-headline/25 text-headline"
                             style={{
                                 backgroundColor: 'rgba(47, 46, 54, 0.1)',
@@ -473,7 +482,7 @@ const ProfileScreen: React.FC = () => {
                             value={newPassword}
                             onChange={(e) => handlePasswordChange(e, 'new')}
                             className={`input px-[15px] py-[12px] text-s rounded-[40px] w-full focus:outline-none placeholder:text-headline/25 ${
-                                isPasswordValid ? 'border-[#FF8906]' : 'border-red-500'
+                                isFirstPasswordInvalid ? 'border-red-500' : 'border-[#FF8906]'
                             }`}
                             style={{
                                 backgroundColor: '#0F0E17',
@@ -507,7 +516,7 @@ const ProfileScreen: React.FC = () => {
                             value={confirmNewPassword}
                             onChange={(e) => handlePasswordChange(e, 'confirm')}
                             className={`input px-[15px] py-[12px] text-s rounded-[40px] w-full focus:outline-none placeholder:text-headline/25 ${
-                                confirmNewPassword && confirmNewPassword !== newPassword ? 'border-red-500' : 'border-[#FF8906]'
+                                isSecondPasswordInvalid ? 'border-red-500' : 'border-[#FF8906]'
                             }`}
                             style={{
                                 backgroundColor: '#0F0E17',
