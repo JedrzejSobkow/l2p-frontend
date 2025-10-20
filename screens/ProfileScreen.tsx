@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Popup from '../components/Popup'; // Import the Popup component
 
 const ProfileScreen: React.FC = () => {
     const [description, setDescription] = useState('');
@@ -12,6 +13,8 @@ const ProfileScreen: React.FC = () => {
     const [deleteConfirmation, setDeleteConfirmation] = useState(''); 
     const [email, setEmail] = useState(''); 
     const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
+    const [usernameError, setUsernameError] = useState(false); // Track if username update failed
+    const [popup, setPopup] = useState<{ type: 'error'; message: string } | null>(null); // State for error popup
     const maxChars = 64;
     const maxUsernameLength = 20;
 
@@ -157,8 +160,50 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const saveUsername = () => {
-        setIsEditingUsername(false);
+    const handleUsernameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            saveUsername(); // Trigger save when Enter is pressed
+        }
+    };
+
+    const saveUsername = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'accept': 'application/json',
+                },
+                credentials: 'include', // Ensure cookies are included
+                body: JSON.stringify({
+                    nickname: username, // Send the updated username
+                }),
+            });
+
+            if (response.ok) {
+                console.log('Username updated successfully');
+                setIsEditingUsername(false); // Exit editing mode
+                setUsernameError(false); // Clear error state
+            } else {
+                setUsernameError(true); // Set error state
+                if (response.status === 400) {
+                    // Bad Request: Username is already occupied
+                    setPopup({ type: 'error', message: 'This username is already occupied. Please choose another one.' });
+                } else if (response.status === 422) {
+                    // Unprocessable Content: Username is too short
+                    setPopup({ type: 'error', message: 'Username is too short. Minimum 3 characters required.' });
+                } else {
+                    // Generic error message
+                    setPopup({ type: 'error', message: 'Failed to update username. Please try again.' });
+                }
+                setTimeout(() => setUsernameError(false), 1000); // Clear error after 1 second
+            }
+        } catch (error) {
+            console.error('Error updating username:', error);
+            setUsernameError(true); // Set error state
+            setPopup({ type: 'error', message: 'Failed to update username. Please try again.' }); // Show generic error popup
+            setTimeout(() => setUsernameError(false), 1000); // Clear error after 1 second
+        }
     };
 
     const handleDeleteAccount = () => {
@@ -200,7 +245,10 @@ const ProfileScreen: React.FC = () => {
                                     type="text"
                                     value={username}
                                     onChange={handleUsernameChange}
-                                    className="px-2 py-1 border border-gray-400 rounded"
+                                    onKeyDown={handleUsernameKeyDown} // Handle Enter key
+                                    className={`px-2 py-1 border rounded ${
+                                        usernameError ? 'border-red-500' : 'border-gray-400'
+                                    }`} // Apply red border if there's an error
                                 />
                                 <button
                                     onClick={saveUsername}
@@ -426,6 +474,15 @@ const ProfileScreen: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Error Popup */}
+            {popup && (
+                <Popup
+                    type={popup.type}
+                    message={popup.message}
+                    onClose={() => setPopup(null)}
+                />
             )}
         </main>
     );
