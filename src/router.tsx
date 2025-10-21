@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "../components/Layout";
 import HomeScreen from "../screens/HomeScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 import LoginPage from "../screens/LoginPage";
 import RequireGuest from '../components/RequireGuest'
 import RegistrationPage from "../screens/RegistrationPage";
@@ -32,7 +33,12 @@ export const router = createBrowserRouter([
             {
                 path: 'register',
                 element: <RequireGuest><RegistrationPage /></RequireGuest>
-            }
+            },
+            { 
+                path: "profile", 
+                Component: ProfileScreen 
+            },
+
         ] 
     }
 ])
