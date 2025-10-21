@@ -20,7 +20,7 @@ const Header: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center gap-2 pr-2 flex-shrink-0">
                 <img
-                    src="/assets/images/logo.png"
+                    src="/src/assets/images/logo.png"
                     alt="L2P Logo"
                     className="h-18 w-auto"
                 />
@@ -30,7 +30,7 @@ const Header: React.FC = () => {
                 {/* WiFi Section */}
                 <div className="flex items-center gap-2 hide-on-smaller">
                     <img
-                        src="/assets/icons/wifi.png"
+                        src="/src/assets/icons/wifi.png"
                         alt="WiFi Icon"
                         className="w-9 h-9"
                     />
@@ -39,7 +39,7 @@ const Header: React.FC = () => {
                 {/* Element 2 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/assets/icons/play.png"
+                        src="/src/assets/icons/play.png"
                         alt="Play Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -48,7 +48,7 @@ const Header: React.FC = () => {
                 {/* Element 3 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/assets/icons/globe.png"
+                        src="/src/assets/icons/globe.png"
                         alt="Globe Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -57,7 +57,7 @@ const Header: React.FC = () => {
                 {/* Element 4 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/assets/icons/people.png"
+                        src="/src/assets/icons/people.png"
                         alt="People Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -70,7 +70,7 @@ const Header: React.FC = () => {
                     <>
                         <Link to="/profile">
                             <img
-                                src="/assets/images/pfp.png"
+                                src="/src/assets/images/pfp.png"
                                 alt="User Icon"
                                 className="w-10 h-10 rounded-full cursor-pointer"
                             />
@@ -78,7 +78,7 @@ const Header: React.FC = () => {
                         <div className="user-info flex flex-col items-start">
                             <Link to="/profile" className="hide-on-mobile text-base font-light text-headline cursor-pointer">
                                 Hello, 
-                                <span className="text-base font-medium pl-1 text-headline">{user?.username}</span>
+                                <span className="text-base font-medium pl-1 text-headline">{user?.nickname}</span>
                             </Link>
                             <button
                                 type="button"
@@ -113,7 +113,7 @@ const Header: React.FC = () => {
             {/* Menu Button */}
             <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
-                    src="/assets/icons/menu.png"
+                    src="/src/assets/icons/menu.png"
                     alt="Menu Icon"
                     className="w-9 h-9"
                 />

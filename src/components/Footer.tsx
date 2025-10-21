@@ -30,35 +30,35 @@ const Footer: React.FC = () => {
                     <div className="footer-social-media flex gap-2">
                         <a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255, 255, 254, 0.1)' }}>
                             <img
-                                src="/assets/icons/tiktok.png"
+                                src="/src/assets/icons/tiktok.png"
                                 alt="TikTok"
                                 className="w-1/2"
                             />
                         </a>
                         <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255, 255, 254, 0.1)' }}>
                             <img
-                                src="/assets/icons/youtube.png"
+                                src="/src/assets/icons/youtube.png"
                                 alt="YouTube"
                                 className="w-1/2"
                             />
                         </a>
                         <a href="https://www.discord.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255, 255, 254, 0.1)' }}>
                             <img
-                                src="/assets/icons/discord.png"
+                                src="/src/assets/icons/discord.png"
                                 alt="Discord"
                                 className="w-1/2"
                             />
                         </a>
                         <a href="https://www.telegram.org" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255, 255, 254, 0.1)' }}>
                             <img
-                                src="/assets/icons/telegram.png"
+                                src="/src/assets/icons/telegram.png"
                                 alt="Telegram"
                                 className="w-1/2"
                             />
                         </a>
                         <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(255, 255, 254, 0.1)' }}>
                             <img
-                                src="/assets/icons/instagram.png"
+                                src="/src/assets/icons/instagram.png"
                                 alt="Instagram"
                                 className="w-1/2"
                             />
@@ -68,7 +68,7 @@ const Footer: React.FC = () => {
                     <div className="footer-logo-email flex flex-col items-center gap-2">
                         <div className="footer-logo w-32 h-16">
                             <img
-                                src="/assets/images/logo.png"
+                                src="/src/assets/images/logo.png"
                                 alt="L2P Logo"
                                 className="w-full h-auto"
                             />

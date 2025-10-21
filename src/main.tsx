@@ -4,7 +4,7 @@ import { StrictMode } from "react";
 
 import { router } from './router'
 import './index.css'
-import { AuthProvider } from "../components/AuthContext";
+import { AuthProvider } from "./components/AuthContext";
 
 const root = document.getElementById("root");
 if (!root) {
