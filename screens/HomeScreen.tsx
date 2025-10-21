@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router';
 
 const HomeScreen: React.FC = () => {
     return (
@@ -11,7 +12,7 @@ const HomeScreen: React.FC = () => {
                     backgroundRepeat: 'no-repeat',
                     backgroundPosition: 'center',
                     backgroundSize: 'contain',
-                }}> 
+                }}>
         </main>
     );
 };
