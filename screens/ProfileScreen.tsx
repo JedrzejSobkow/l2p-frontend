@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import Popup from '../components/Popup'; 
+import { handleResetPassword, saveDescription, saveUsername, handlePictureSelect, fetchUserData, handleDeleteAccount } from '../utils/profileUtils'; 
 
 const ProfileScreen: React.FC = () => {
     const navigate = useNavigate(); 
@@ -62,7 +63,7 @@ const ProfileScreen: React.FC = () => {
                     body: new URLSearchParams({
                         grant_type: 'password',
                         username: 'user@example.com',
-                        password: 'strongpassword123',
+                        password: 'zaq1@WSX',
                         scope: '',
                         client_id: 'string',
                         client_secret: '********',
@@ -72,7 +73,7 @@ const ProfileScreen: React.FC = () => {
 
                 if (response.ok) {
                     console.log('Login successful');
-                    fetchUserData(); 
+                    fetchUserData(setUsername, setEmail, setDescription, setProfilePicturePath, setSelectedPictureId, setPopup); 
                 } else {
                     console.error('Login failed:', response.statusText);
                 }
@@ -81,67 +82,8 @@ const ProfileScreen: React.FC = () => {
             }
         };
 
-        const fetchUserData = async () => {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
-                    method: 'GET',
-                    headers: {
-                        'accept': 'application/json',
-                    },
-                    credentials: 'include', 
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('User data fetched:', data);
-                    setUsername(data.nickname); 
-                    setEmail(data.email); 
-                    setDescription(data.description || ''); 
-                    setProfilePicturePath(data.pfp_path || null); 
-
-
-                    if (data.pfp_path) {
-                        const match = data.pfp_path.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
-                        if (match) {
-                            setSelectedPictureId(parseInt(match[1], 10) - 1);
-                        }
-                    }
-                } else {
-                    console.error('Failed to fetch user data:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-            }
-        };
-
         login();
     }, []);
-
-    const saveDescription = async (updatedDescription: string) => {
-        try {
-            const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'accept': 'application/json',
-                },
-                credentials: 'include', 
-                body: JSON.stringify({
-                    description: updatedDescription, 
-                }),
-            });
-
-            if (response.ok) {
-                console.log('Description saved successfully');
-            } else {
-                console.error('Failed to save description:', response.statusText);
-                setPopup({ type: 'error', message: 'Failed to save description. Please try again.' });
-            }
-        } catch (error) {
-            console.error('Error saving description:', error);
-            setPopup({ type: 'error', message: 'Failed to save description. Please try again.' });
-        }
-    };
 
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value;
@@ -157,7 +99,7 @@ const ProfileScreen: React.FC = () => {
 
             const timeout = setTimeout(() => {
                 setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
-                saveDescription(value); 
+                saveDescription(value, setPopup); 
             }, 2000);
             setDescriptionTimeout(timeout); 
         }
@@ -165,36 +107,11 @@ const ProfileScreen: React.FC = () => {
 
     const handleDescriptionBlur = async () => {
         setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
-        await saveDescription(description); 
+        await saveDescription(description, setPopup); 
     };
 
-    const handlePictureSelect = async (id: number) => {
-        setSelectedPictureId(id);
-
-        const newProfilePicturePath = `/images/avatar/${id + 1}.png`; 
-
-        try {
-            const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'accept': 'application/json',
-                },
-                credentials: 'include', 
-                body: JSON.stringify({
-                    pfp_path: newProfilePicturePath, 
-                }),
-            });
-
-            if (response.ok) {
-                console.log('Profile picture updated successfully');
-                setProfilePicturePath(newProfilePicturePath); 
-            } else {
-                console.error('Failed to update profile picture:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Error updating profile picture:', error);
-        }
+    const handlePictureSelection = async (id: number) => {
+        await handlePictureSelect(id, setSelectedPictureId, setProfilePicturePath, setPopup); 
     };
 
     const getDisplayedPicture = () => {
@@ -235,109 +152,27 @@ const ProfileScreen: React.FC = () => {
 
     const handleUsernameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
-            saveUsername(); 
+            handleUsernameSave(); 
         }
     };
 
-    const saveUsername = async () => {
-        try {
-            const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'accept': 'application/json',
-                },
-                credentials: 'include', 
-                body: JSON.stringify({
-                    nickname: username, 
-                }),
-            });
-
-            if (response.ok) {
-                console.log('Username updated successfully');
-                setIsEditingUsername(false); 
-                setUsernameError(false); 
-            } else {
-                setUsernameError(true); 
-                if (response.status === 400) {
-                    // Bad Request: Username is already occupied
-                    setPopup({ type: 'error', message: 'This username is already occupied. Please choose another one.' });
-                } else if (response.status === 422) {
-                    // Unprocessable Content: Username is too short
-                    setPopup({ type: 'error', message: 'Username is too short. Minimum 3 characters required.' });
-                } else {
-                    // Generic error message
-                    setPopup({ type: 'error', message: 'Failed to update username. Please try again.' });
-                }
-                setTimeout(() => setUsernameError(false), 1000); 
-            }
-        } catch (error) {
-            console.error('Error updating username:', error);
-            setUsernameError(true); 
-            setPopup({ type: 'error', message: 'Failed to update username. Please try again.' }); 
-            setTimeout(() => setUsernameError(false), 1000); 
-        }
+    const handleUsernameSave = async () => {
+        await saveUsername(username, setPopup, setIsEditingUsername, setUsernameError); 
     };
 
-    const handleDeleteAccount = async () => {
-        if (deleteConfirmation === 'delete') {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
-                    method: 'DELETE',
-                    headers: {
-                        'accept': 'application/json',
-                    },
-                    credentials: 'include', 
-                });
-
-                if (response.ok) {
-                    console.log('Account deleted successfully');
-                    setPopup({ type: 'confirmation', message: 'Account deleted successfully!' });
-                    setShowDeleteModal(false);
-                    setDeleteConfirmation('');
-                    setTimeout(() => navigate('/'), 2000); 
-                } else {
-                    console.error('Failed to delete account:', response.statusText);
-                    setPopup({ type: 'error', message: 'Failed to delete account. Please try again.' });
-                }
-            } catch (error) {
-                console.error('Error deleting account:', error);
-                setPopup({ type: 'error', message: 'Failed to delete account. Please try again.' });
-            }
-        } else {
-            alert('Please type "delete" to confirm.');
-        }
+    const handleAccountDeletion = async () => {
+        await handleDeleteAccount(deleteConfirmation, setPopup, setShowDeleteModal, setDeleteConfirmation, navigate);
     };
 
-    const handleResetPassword = async () => {
-        if (isResetEnabled) {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/v1/users/me', {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'accept': 'application/json',
-                    },
-                    credentials: 'include', 
-                    body: JSON.stringify({
-                        password: newPassword, 
-                    }),
-                });
-
-                if (response.ok) {
-                    console.log('Password updated successfully');
-                    setPopup({ type: 'confirmation', message: 'Password updated successfully!' }); 
-                    setNewPassword('');
-                    setConfirmNewPassword('');
-                } else {
-                    console.error('Failed to update password:', response.statusText);
-                    setPopup({ type: 'error', message: 'Failed to update password. Please try again.' });
-                }
-            } catch (error) {
-                console.error('Error updating password:', error);
-                setPopup({ type: 'error', message: 'Failed to update password. Please try again.' });
-            }
-        }
+    const handlePasswordReset = async () => {
+        await handleResetPassword(
+            newPassword,
+            confirmNewPassword,
+            isPasswordValid,
+            setPopup,
+            setNewPassword,
+            setConfirmNewPassword
+        );
     };
 
     const isResetEnabled = newPassword && confirmNewPassword && isPasswordValid && newPassword === confirmNewPassword;
@@ -378,7 +213,7 @@ const ProfileScreen: React.FC = () => {
                                     }`}
                                 />
                                 <button
-                                    onClick={saveUsername}
+                                    onClick={handleUsernameSave}
                                     className="px-3 py-1 bg-highlight text-stroke rounded"
                                 >
                                     Save
@@ -450,7 +285,7 @@ const ProfileScreen: React.FC = () => {
                                         ? 'border-4 border-highlight'
                                         : 'border-2 border-gray-400'
                                 } flex items-center justify-center cursor-pointer`}
-                                onClick={() => handlePictureSelect(index)}
+                                onClick={() => handlePictureSelection(index)}
                             >
                                 <img
                                     src={picture}
@@ -548,7 +383,7 @@ const ProfileScreen: React.FC = () => {
                             : 'bg-highlight/35 text-stroke cursor-not-allowed'
                     }`}
                     disabled={!isResetEnabled}
-                    onClick={handleResetPassword}
+                    onClick={handlePasswordReset}
                 >
                     RESET
                 </button>
@@ -597,7 +432,7 @@ const ProfileScreen: React.FC = () => {
                         />
                         <div className="flex justify-center gap-4">
                             <button
-                                onClick={handleDeleteAccount}
+                                onClick={handleAccountDeletion}
                                 disabled={deleteConfirmation !== 'delete'} 
                                 className={`px-4 py-2 rounded ${
                                     deleteConfirmation === 'delete'
