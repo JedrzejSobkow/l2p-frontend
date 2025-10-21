@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { User, LoginPayload, RegisterPayload } from '../src/services/auth'
-import * as auth from '../src/services/auth'
-import { onUnauthorized } from '../src/lib/http'
+import type { User, LoginPayload, RegisterPayload } from '../services/auth'
+import * as auth from '../services/auth'
+import { onUnauthorized } from '../lib/http'
 
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated'
 
