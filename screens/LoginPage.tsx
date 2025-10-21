@@ -18,10 +18,10 @@ const LoginPage = () => {
     setFieldErrors({})
     try {
       const form = new FormData(e.currentTarget)
-      const username  = String(form.get('username') || '')
+      const email  = String(form.get('email') || '')
       const password = String(form.get('password') || '')
       const remember = form.get('remember') !== null
-      await login({ username, password, remember })
+      await login({ email, password, remember })
       navigate('/', { replace: true })
     } catch (err: any) {
       if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
@@ -46,12 +46,12 @@ const LoginPage = () => {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">
-            <span>Username</span>
+            <span>Email</span>
             <input
               className="auth-input"
-              name="username"
+              name="email"
               type="text"
-              autoComplete="username"
+              autoComplete="email"
               required
             />
             {fieldErrors.username && (

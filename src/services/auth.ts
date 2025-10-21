@@ -2,14 +2,14 @@ import { request } from '../lib/http'
 
 export type User = {
   id?: string | number
-  username: string
+  nickname: string
   email?: string
   avatarUrl?: string
   roles?: string[]
 }
 
 export type LoginPayload = {
-  username: string
+  email: string
   password: string
   remember?: boolean
 }
@@ -32,14 +32,14 @@ export type ResetPasswordPayload = {
 
 export async function login(payload: LoginPayload): Promise<User> {
   const form = new URLSearchParams()
-  form.set('username', payload.username)
+  form.set('username', payload.email)
   form.set('password', payload.password)
   form.set('grant_type', 'password')
   if (payload.remember) form.set('scope', 'remember')
 
   await request<any>('/auth/login', { method: 'POST', body: form, auth: false })
 
-  return await getMe().catch(() => ({ username: payload.username } as User))
+  return await getMe().catch(() => ({ nickname: payload.email} as User))
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {

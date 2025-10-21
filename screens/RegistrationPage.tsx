@@ -18,15 +18,15 @@ const RegistrationPage = () => {
     setFieldErrors({})
     try {
       const form = new FormData(e.currentTarget)
-      const username  = String(form.get('username') || '')
+      const nickname  = String(form.get('nickname') || '')
       const email = String(form.get('email') || '')
       const password = String(form.get('password') || '')
       const confirmPassword = String(form.get('confirmPassword') || '')
       const termsAccepted = form.get('terms') !== null
       if (!termsAccepted) throw new Error('You must accept the terms')
       if (password !== confirmPassword) throw new Error('Passwords do not match')
-      await register({ nickname: username , email, password })
-      await login({ username : email , password, remember: true }) // w api jest że po username jest logowanie jednak loguje tylko po email + trzeba ujednolicić nickname i username
+      await register({ nickname: nickname , email, password })
+      await login({ email , password, remember: true })
       navigate('/', { replace: true })
     } catch (err: any) {
       if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
@@ -51,12 +51,12 @@ const RegistrationPage = () => {
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">
-            <span>Username</span>
+            <span>Nickname</span>
             <input
               className="auth-input"
-              name="username"
+              name="nickname"
               type="text"
-              autoComplete="username"
+              autoComplete="nickname"
               required
             />
             {fieldErrors.nickname && (
