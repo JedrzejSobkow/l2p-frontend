@@ -1,12 +1,12 @@
 import { createBrowserRouter } from "react-router-dom";
-import Layout from "../components/Layout";
-import HomeScreen from "../screens/HomeScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import LoginPage from "../screens/LoginPage";
-import RequireGuest from '../components/RequireGuest'
-import RegistrationPage from "../screens/RegistrationPage";
-import ForgotPasswordPage from "../screens/ForgotPasswordPage";
-import ResetPasswordPage from "../screens/ResetPasswordPage";
+import Layout from "./components/Layout";
+import HomeScreen from "./screens/HomeScreen";
+import ProfileScreen from "./screens/ProfileScreen";
+import LoginPage from "./screens/LoginPage";
+import RequireGuest from './components/RequireGuest'
+import RegistrationPage from "./screens/RegistrationPage";
+import ForgotPasswordPage from "./screens/ForgotPasswordPage";
+import ResetPasswordPage from "./screens/ResetPasswordPage";
 
 
 export const router = createBrowserRouter([

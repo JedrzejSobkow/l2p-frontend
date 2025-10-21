@@ -1,7 +1,7 @@
 import { useState, type FormEventHandler } from 'react'
 import { Link } from 'react-router-dom'
 import BackButton from '../components/BackButton'
-import { forgotPassword } from '../src/services/auth'
+import { forgotPassword } from '../services/auth'
 
 const ForgotPasswordPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false)

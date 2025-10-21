@@ -1,7 +1,7 @@
 import { useState, type FormEventHandler } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import BackButton from '../components/BackButton'
-import { resetPassword } from '../src/services/auth'
+import { resetPassword } from '../services/auth'
   
 
 const ResetPasswordPage: React.FC = () => {
