@@ -1,12 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
 const Header: React.FC = () => {
     const { isAuthenticated, user, logout } = useAuth();
-    const handleLogoutClick = () => {
-        logout();
-    };
+    const location = useLocation();
+
+    const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 
     return (
         <header className="w-full h-16 bg-background text-headline flex items-center justify-between px-5 relative font-sans text-sm font-light overflow-hidden">
@@ -20,7 +20,7 @@ const Header: React.FC = () => {
             {/* Logo */}
             <div className="flex items-center gap-2 pr-2 flex-shrink-0">
                 <img
-                    src="/assets/images/logo.png"
+                    src="/src/assets/images/logo.png"
                     alt="L2P Logo"
                     className="h-18 w-auto"
                 />
@@ -30,7 +30,7 @@ const Header: React.FC = () => {
                 {/* WiFi Section */}
                 <div className="flex items-center gap-2 hide-on-smaller">
                     <img
-                        src="/assets/icons/wifi.png"
+                        src="/src/assets/icons/wifi.png"
                         alt="WiFi Icon"
                         className="w-9 h-9"
                     />
@@ -39,7 +39,7 @@ const Header: React.FC = () => {
                 {/* Element 2 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/assets/icons/play.png"
+                        src="/src/assets/icons/play.png"
                         alt="Play Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -48,7 +48,7 @@ const Header: React.FC = () => {
                 {/* Element 3 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/assets/icons/globe.png"
+                        src="/src/assets/icons/globe.png"
                         alt="Globe Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -57,7 +57,7 @@ const Header: React.FC = () => {
                 {/* Element 4 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/assets/icons/people.png"
+                        src="/src/assets/icons/people.png"
                         alt="People Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -65,73 +65,55 @@ const Header: React.FC = () => {
                 </div>
             </div>
             {/* User Info */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                flexShrink: 0, 
-                paddingRight: '15px',
-            }}>
+            <div className="flex items-center gap-2 flex-shrink-0 pr-4">
                 {isAuthenticated ? (
                     <>
-                        <img
-                            src="/assets/images/pfp.png"
-                            alt="User Icon"
-                            style={{
-                                width: '42px',
-                                height: '42px',
-                                borderRadius: '50%',
-                            }}
-                        />
-                        <div className="user-info" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-start',
-                        }}>
-                            <span className='hide-on-mobile' style={{
-                                fontSize: '16px',
-                                fontWeight: '100',
-                                color: 'var(--color-headline)',
-                            }}>
+                        <Link to="/profile">
+                            <img
+                                src="/src/assets/images/pfp.png"
+                                alt="User Icon"
+                                className="w-10 h-10 rounded-full cursor-pointer"
+                            />
+                        </Link>
+                        <div className="user-info flex flex-col items-start">
+                            <Link to="/profile" className="hide-on-mobile text-base font-light text-headline cursor-pointer">
                                 Hello, 
-                                <span style={{
-                                fontSize: '16px',
-                                fontWeight: '400',
-                                paddingLeft: '3px',
-                                color: 'var(--color-headline)',}}> 
-                                {user?.nickname}
-                                </span>
-                            </span>
+                                <span className="text-base font-medium pl-1 text-headline">{user?.nickname}</span>
+                            </Link>
                             <button
                                 type="button"
-                                onClick={handleLogoutClick}
-                                className="cursor-pointer border-0 bg-transparent p-0 text-[10px] font-bold uppercase text-[color:var(--color-highlight)] transition-colors hover:text-[color:var(--color-secondary)]"
+                                onClick={logout}
+                                className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer"
                             >
                                 logout
                             </button>
                         </div>
                     </>
                 ) : (
-                    <div className="flex items-center gap-3">
+                    <>
+                        {!isAuthScreen && (
+                            <>
+                                <div className="user-info flex flex-col items-start">
+                                    <span className="hide-on-mobile text-base font-light text-headline">
+                                        Hello, 
+                                        <span className="text-base font-medium pl-1 text-headline">Guest</span>
+                                    </span>
+                                </div>
+                            </>
+                        )}
                         <Link
-                            to='/login'
+                            to="/login"
                             className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-colors duration-200 hover:bg-highlight hover:text-button-text-dark"
                         >
                             Log in
                         </Link>
-                        <Link
-                            to="/register"
-                            className="text-xs font-semibold text-headline transition-colors hover:text-highlight"
-                        >
-                            Sign up
-                        </Link>
-                    </div>
+                    </>
                 )}
             </div>
             {/* Menu Button */}
             <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
-                    src="/assets/icons/menu.png"
+                    src="/src/assets/icons/menu.png"
                     alt="Menu Icon"
                     className="w-9 h-9"
                 />

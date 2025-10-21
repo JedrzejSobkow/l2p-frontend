@@ -27,7 +27,7 @@ const ProfileScreen: React.FC = () => {
     const maxChars = 64;
     const maxUsernameLength = 20;
 
-    const pictures = Array.from({ length: 16 }, (_, index) => `/assets/images/avatar/${index + 1}.png`);
+    const pictures = Array.from({ length: 16 }, (_, index) => `/src/assets/images/avatar/${index + 1}.png`);
 
     const togglePasswordVisibility = (type: 'current' | 'new') => {
         if (type === 'current') {
@@ -125,7 +125,7 @@ const ProfileScreen: React.FC = () => {
                 return pictures[id];
             }
         }
-        return '/assets/images/profile-picture.png'; 
+        return '/src/assets/images/profile-picture.png'; 
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'confirm') => {
@@ -197,7 +197,7 @@ const ProfileScreen: React.FC = () => {
                     {/* Username */}
                     <div className="flex items-center gap-4 text-lg font-normal">
                         <img
-                            src="/assets/icons/user.png"
+                            src="/src/assets/icons/user.png"
                             alt="User Icon"
                             className="w-6 h-6"
                         />
@@ -229,7 +229,7 @@ const ProfileScreen: React.FC = () => {
                         )}
                         {!isEditingUsername && (
                             <img
-                                src="/assets/icons/edit.png"
+                                src="/src/assets/icons/edit.png"
                                 alt="Edit Icon"
                                 className="w-6 h-6 cursor-pointer"
                                 onClick={() => setIsEditingUsername(true)}
@@ -326,7 +326,7 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} 
+                            src={isNewPasswordVisible ? '/src/assets/icons/eye-off.png' : '/src/assets/icons/eye.png'} 
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
                             style={handlePasswordIconStyle} 
@@ -360,7 +360,7 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isConfirmNewPasswordVisible ? '/assets/icons/eye-off.png' : '/assets/icons/eye.png'} 
+                            src={isConfirmNewPasswordVisible ? '/src/assets/icons/eye-off.png' : '/src/assets/icons/eye.png'} 
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
                             style={handlePasswordIconStyle} 
