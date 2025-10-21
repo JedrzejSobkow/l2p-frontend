@@ -68,16 +68,18 @@ const Header: React.FC = () => {
             <div className="flex items-center gap-2 flex-shrink-0 pr-4">
                 {isAuthenticated ? (
                     <>
-                        <img
-                            src="/assets/images/pfp.png"
-                            alt="User Icon"
-                            className="w-10 h-10 rounded-full"
-                        />
+                        <Link to="/profile">
+                            <img
+                                src="/assets/images/pfp.png"
+                                alt="User Icon"
+                                className="w-10 h-10 rounded-full cursor-pointer"
+                            />
+                        </Link>
                         <div className="user-info flex flex-col items-start">
-                            <span className="hide-on-mobile text-base font-light text-headline">
+                            <Link to="/profile" className="hide-on-mobile text-base font-light text-headline cursor-pointer">
                                 Hello, 
                                 <span className="text-base font-medium pl-1 text-headline">{user?.username}</span>
-                            </span>
+                            </Link>
                             <button
                                 type="button"
                                 onClick={logout}
