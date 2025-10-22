@@ -3,9 +3,11 @@ import { request } from '../lib/http'
 export type User = {
   id?: string | number
   nickname: string
-  email?: string
-  avatarUrl?: string
-  roles?: string[]
+  email?: string,
+  is_active: boolean,
+  is_verified: boolean,
+  pfp_path?: string
+  description?: String
 }
 
 export type LoginPayload = {
@@ -28,6 +30,8 @@ export type ResetPasswordPayload = {
   token: string
   password: string
 }
+
+// /auth/ endpoints
 
 
 export async function login(payload: LoginPayload): Promise<User> {
@@ -52,10 +56,6 @@ export async function register(payload: RegisterPayload): Promise<User> {
   return (data?.user as User) ?? (await getMe().catch(() => null as unknown as User))
 }
 
-export async function getMe(): Promise<User> {
-  return await request<User>('/users/me', { method: 'GET' })
-}
-
 export async function logout(): Promise<void> {
   await request('/auth/logout', { method: 'POST', auth: true })
 }
@@ -77,3 +77,18 @@ export async function resetPassword(payload: ResetPasswordPayload): Promise<stri
   })
   return res
 }
+
+// /users/ endpoints
+
+export async function getMe(): Promise<User> {
+  return await request<User>('/users/me', { method: 'GET' })
+}
+
+export async function patchMe(payload: Partial<User>): Promise<User> {
+  return await request<User>('/users/me', { method: 'PATCH', body: payload })
+}
+
+export async function deleteMe(): Promise<void> {
+  await request('/users/me', { method: 'DELETE' })
+}
+

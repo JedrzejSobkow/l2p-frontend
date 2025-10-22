@@ -12,6 +12,8 @@ type AuthContextValue = {
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => Promise<void>
+  updateProfile: (payload: Partial<User>) => Promise<User>
+  deleteAccount: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -92,6 +94,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await auth.register(payload)
   }
 
+  const updateProfile = async (updates: Partial<User>) => {
+    const updated = await auth.patchMe(updates)
+    setUser(updated)
+    return updated
+  }
+
+  const deleteAccount = async () => {
+    await auth.deleteMe()
+    setUser(null)
+    setStatus('unauthenticated')
+  }
+
   const logout = async () => {
     await auth.logout()
     setUser(null)
@@ -106,6 +120,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       login,
       register,
       logout,
+      updateProfile,
+      deleteAccount
     }),
     [user, status],
   )
