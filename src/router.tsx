@@ -7,7 +7,7 @@ import RequireGuest from './components/RequireGuest'
 import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
-import SelectLobbyScreen from "./screens/SelectLobbyScreen";
+import SelectLobbyByGameScreen from "./screens/SelectLobbyByGameScreen";
 import SearchGamesScreen from "./screens/SearchGamesScreen";
 import SearchLobbiesScreen from "./screens/SearchLobbiesScreen";
 
@@ -41,8 +41,8 @@ export const router = createBrowserRouter([
                 Component: ProfileScreen 
             },
             {
-                path: 'select_lobby/:lobbyName',
-                Component: SelectLobbyScreen
+                path: 'select_lobby_by_game/:gameName',
+                Component: SelectLobbyByGameScreen
             },
             {
                 path: 'search_games/:searchPhrase?',

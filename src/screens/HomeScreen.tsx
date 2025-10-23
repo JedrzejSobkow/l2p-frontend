@@ -79,7 +79,7 @@ const HomeScreen: React.FC = () => {
           placeholder="Search for games or players..."
           suggestions={['Tic Tac Toe', 'Clobber', 'Chess', 'Checkers', 'Sudoku', 'Minesweeper']}
           onEnterRoute="/search_games"
-          onSuggestionClickRoute="/select_lobby"
+          onSuggestionClickRoute="/select_lobby_by_game"
         />
       </div>
 
