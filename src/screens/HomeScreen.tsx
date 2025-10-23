@@ -86,7 +86,7 @@ const HomeScreen: React.FC = () => {
             { text: 'Minesweeper', image: '/src/assets/images/minesweeper.png' },
           ]}
           onEnterRoute="/find_games"
-          onSuggestionClickRoute="/find_lobbies/game"
+          onSuggestionClickRoute="/game"
         />
       </div>
 
