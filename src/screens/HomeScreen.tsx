@@ -76,8 +76,15 @@ const HomeScreen: React.FC = () => {
       <div className="flex justify-center">
         <SearchBar
           size="normal"
-          placeholder="Search for games or players..."
-          suggestions={['Tic Tac Toe', 'Clobber', 'Chess', 'Checkers', 'Sudoku', 'Minesweeper']}
+          placeholder="Search for games..."
+          suggestions={[
+            { text: 'Tic Tac Toe', image: '/src/assets/images/tic-tac-toe.png' },
+            { text: 'Clobber', image: '/src/assets/images/clobber.png' },
+            { text: 'Chess', image: '/src/assets/images/chess.png' },
+            { text: 'Checkers', image: '/src/assets/images/checkers.png' },
+            { text: 'Sudoku', image: '/src/assets/images/sudoku.png' },
+            { text: 'Minesweeper', image: '/src/assets/images/minesweeper.png' },
+          ]}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/find_lobbies/game"
         />
@@ -113,7 +120,12 @@ const HomeScreen: React.FC = () => {
             <SearchBar
               size="small"
               placeholder="Search lobbies..."
-              suggestions={['Beginner Lobby', 'Advanced Lobby', 'Expert Lobby', 'Casual Lobby']}
+              suggestions={[
+                { text: 'Beginner Lobby' },
+                { text: 'Advanced Lobby' },
+                { text: 'Expert Lobby' },
+                { text: 'Casual Lobby' },
+              ]}
               onEnterRoute="/find_lobbies/phrase"
               onSuggestionClickRoute="/find_lobbies/phrase"
             />

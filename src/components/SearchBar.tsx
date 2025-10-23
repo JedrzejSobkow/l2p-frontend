@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+interface Suggestion {
+  text: string;
+  image?: string;
+}
+
 interface SearchBarProps {
   size?: 'normal' | 'small';
   placeholder?: string;
-  suggestions?: string[];
+  suggestions?: Suggestion[];
   onEnterRoute?: string; 
   onSuggestionClickRoute?: string;
 }
@@ -23,8 +28,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const isSmall = size === 'small';
 
-  const filteredSuggestions = suggestions.filter((phrase) =>
-    phrase.toLowerCase().includes(searchPhrase.toLowerCase())
+  const filteredSuggestions = suggestions.filter((suggestion) =>
+    suggestion.text.toLowerCase().includes(searchPhrase.toLowerCase())
   );
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -91,13 +96,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
           }`}
         >
           {filteredSuggestions.length > 0 ? (
-            filteredSuggestions.map((phrase, index) => (
+            filteredSuggestions.map((suggestion, index) => (
               <li
                 key={index}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSuggestionClick(phrase)}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handleSuggestionClick(suggestion.text)}
               >
-                {phrase}
+                {suggestion.image && (
+                  <img
+                    src={suggestion.image}
+                    alt={suggestion.text}
+                    className="w-8 h-8 object-cover"
+                  />
+                )}
+                <span className="text-gray-700">{suggestion.text}</span>
               </li>
             ))
           ) : (
