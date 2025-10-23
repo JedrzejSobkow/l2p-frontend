@@ -9,6 +9,7 @@ import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
 import SelectLobbyScreen from "./screens/SelectLobbyScreen";
 import SearchGamesScreen from "./screens/SearchGamesScreen";
+import SearchLobbiesScreen from "./screens/SearchLobbiesScreen";
 
 export const router = createBrowserRouter([
     {
@@ -40,12 +41,16 @@ export const router = createBrowserRouter([
                 Component: ProfileScreen 
             },
             {
-                path: 'select_lobby/:gameName',
+                path: 'select_lobby/:lobbyName',
                 Component: SelectLobbyScreen
             },
             {
                 path: 'search_games/:searchPhrase?',
                 Component: SearchGamesScreen
+            },
+            {
+                path: 'search_lobbies/:searchPhrase?',
+                Component: SearchLobbiesScreen
             }
         ] 
     }

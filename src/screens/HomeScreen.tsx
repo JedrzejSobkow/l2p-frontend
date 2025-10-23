@@ -74,7 +74,13 @@ const HomeScreen: React.FC = () => {
     <main className="flex flex-col gap-8 px-10 lg:px-20 py-5 bg-background h-full">
       {/* Search Bar */}
       <div className="flex justify-center">
-        <SearchBar size="normal" placeholder="Search for games or players..." />
+        <SearchBar
+          size="normal"
+          placeholder="Search for games or players..."
+          suggestions={['Tic Tac Toe', 'Clobber', 'Chess', 'Checkers', 'Sudoku', 'Minesweeper']}
+          onEnterRoute="/search_games"
+          onSuggestionClickRoute="/select_lobby"
+        />
       </div>
 
       <div className="flex flex-col md:flex-row justify-between gap-8">
@@ -101,7 +107,18 @@ const HomeScreen: React.FC = () => {
 
       {/* Game Lobbies Section */}
       <div className="flex flex-col gap-6">
-        <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
+          <div className="w-64">
+            <SearchBar
+              size="small"
+              placeholder="Search lobbies..."
+              suggestions={['Beginner Lobby', 'Advanced Lobby', 'Expert Lobby', 'Casual Lobby']}
+              onEnterRoute="/search_lobbies"
+              onSuggestionClickRoute="/search_lobbies"
+            />
+          </div>
+        </div>
         {gameLobbies.map((lobby, index) => (
           <GameLobbyCard
             key={index}

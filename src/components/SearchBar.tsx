@@ -1,33 +1,118 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface SearchBarProps {
   size?: 'normal' | 'small';
   placeholder?: string;
+  suggestions?: string[];
+  onEnterRoute?: string; 
+  onSuggestionClickRoute?: string;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ size = 'normal', placeholder = 'Search...' }) => {
+const SearchBar: React.FC<SearchBarProps> = ({
+  size = 'normal',
+  placeholder = 'Search...',
+  suggestions = [],
+  onEnterRoute = '/search_games',
+  onSuggestionClickRoute = '/select_lobby',
+}) => {
+  const [searchPhrase, setSearchPhrase] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const navigate = useNavigate();
+  const searchBarRef = useRef<HTMLDivElement>(null);
+
   const isSmall = size === 'small';
 
+  const filteredSuggestions = suggestions.filter((phrase) =>
+    phrase.toLowerCase().includes(searchPhrase.toLowerCase())
+  );
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      if (searchPhrase.trim()) {
+        navigate(`${onEnterRoute}/${searchPhrase}`);
+      } else {
+        navigate(onEnterRoute);
+      }
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (phrase: string) => {
+    navigate(`${onSuggestionClickRoute}/${phrase}`);
+    setShowSuggestions(false);
+  };
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+      setShowSuggestions(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div
-      className={`flex items-center bg-white rounded-full shadow-md ${
-        isSmall ? 'px-3 py-1 max-w-sm' : 'px-4 py-2 max-w-xl w-full'
-      }`}
-    >
-      <input
-        type="text"
-        placeholder={placeholder}
-        className={`flex-1 text-gray-500 placeholder-gray-400 focus:outline-none ${
-          isSmall ? 'text-sm' : 'text-base'
+    <div className="relative w-full max-w-xl" ref={searchBarRef}>
+      <div
+        className={`flex items-center bg-white rounded-full shadow-md ${
+          isSmall ? 'px-3 py-1' : 'px-4 py-2'
         }`}
-      />
-      <button className="ml-2">
-        <img
-          src="/src/assets/icons/search.png"
-          alt="Search Icon"
-          className={isSmall ? 'w-4 h-4' : 'w-5 h-5'}
+      >
+        <input
+          type="text"
+          value={searchPhrase}
+          onChange={(e) => {
+            setSearchPhrase(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className={`flex-1 text-gray-500 placeholder-gray-400 focus:outline-none ${
+            isSmall ? 'text-sm' : 'text-base'
+          }`}
         />
-      </button>
+        <button className="ml-2">
+          <img
+            src="/src/assets/icons/search.png"
+            alt="Search Icon"
+            className={isSmall ? 'w-4 h-4' : 'w-5 h-5'}
+          />
+        </button>
+      </div>
+      {showSuggestions && (
+        <ul
+          className={`absolute bg-white border border-gray-300 rounded-md shadow-lg mt-1 z-10 ${
+            isSmall ? 'w-[calc(100%-1.5rem)]' : 'w-full'
+          }`}
+        >
+          {filteredSuggestions.length > 0 ? (
+            filteredSuggestions.map((phrase, index) => (
+              <li
+                key={index}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handleSuggestionClick(phrase)}
+              >
+                {phrase}
+              </li>
+            ))
+          ) : (
+            <li
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-500"
+              onClick={() => {
+                navigate(onEnterRoute);
+                setShowSuggestions(false);
+              }}
+            >
+              No results - Show all
+            </li>
+          )}
+        </ul>
+      )}
     </div>
   );
 };
