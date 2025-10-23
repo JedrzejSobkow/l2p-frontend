@@ -46,14 +46,6 @@ export const router = createBrowserRouter([
                 element: <RequireGuest> <FindGamesScreen /> </RequireGuest>
             },
             {
-                path: 'find_lobbies/',
-                element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
-            },
-            {
-                path: 'find_lobbies/phrase/:searchPhrase?',
-                element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
-            },
-            {
                 path: 'game/:gameName?',
                 element: <RequireGuest> <GameScreen /> </RequireGuest>
             },

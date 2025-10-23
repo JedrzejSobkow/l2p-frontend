@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { FaAngleRight, FaAngleLeft } from 'react-icons/fa';
 import LeaderboardCard from '../components/LeaderboardCard';
 import GameRecommendationWithImages from '../components/GameRecommendationWithImages';
 import SearchBar from '../components/SearchBar';
@@ -24,51 +25,120 @@ const HomeScreen: React.FC = () => {
     { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
   ];
 
-  const gameLobbies = [
+  const paginatedLobbies = [
     {
-      gameName: 'Tic Tac Toe',
-      lobbyName: 'Beginner Lobby',
-      gameImage: '/src/assets/images/tic-tac-toe.png',
-      players: [
-        { username: 'PlayerOne', avatar: '/src/assets/images/avatar/1.png' },
-        { username: 'PlayerTwo', avatar: '/src/assets/images/avatar/2.png' },
-        { username: 'PlayerThree', avatar: '/src/assets/images/avatar/2.png' },
-        { username: 'cool_usersdfsfsdfsdf', avatar: '/src/assets/images/avatar/2.png' },
+      page: 1,
+      lobbies: [
+        {
+          gameName: 'Tic Tac Toe',
+          lobbyName: 'Beginner Lobby',
+          gameImage: '/src/assets/images/tic-tac-toe.png',
+          players: [
+            { username: 'PlayerOne', avatar: '/src/assets/images/avatar/1.png' },
+            { username: 'PlayerTwo', avatar: '/src/assets/images/avatar/2.png' },
+          ],
+          maxPlayers: 5,
+          duration: '5-10 mins',
+        },
+        {
+          gameName: 'Clobber',
+          lobbyName: 'Advanced Lobby',
+          gameImage: '/src/assets/images/clobber.png',
+          players: [
+            { username: 'PlayerThree', avatar: '/src/assets/images/avatar/3.png' },
+          ],
+          maxPlayers: 2,
+          duration: '10-15 mins',
+        },
+        {
+          gameName: 'Chess',
+          lobbyName: 'Strategy Lobby',
+          gameImage: '/src/assets/images/chess.png',
+          players: [
+            { username: 'PlayerFour', avatar: '/src/assets/images/avatar/4.png' },
+          ],
+          maxPlayers: 4,
+          duration: '15-20 mins',
+        },
       ],
-      maxPlayers: 5,
-      duration: '5-10 mins',
     },
     {
-      gameName: 'Clobber',
-      lobbyName: 'Advanced Lobby',
-      gameImage: '/src/assets/images/clobber.png',
-      players: [
-        { username: 'PlayerThree', avatar: '/src/assets/images/avatar/3.png' },
+      page: 2,
+      lobbies: [
+        {
+          gameName: 'Checkers',
+          lobbyName: 'Casual Checkers',
+          gameImage: '/src/assets/images/checkers.png',
+          players: [
+            { username: 'PlayerFive', avatar: '/src/assets/images/avatar/5.png' },
+          ],
+          maxPlayers: 3,
+          duration: '10-15 mins',
+        },
+        {
+          gameName: 'Sudoku',
+          lobbyName: 'Puzzle Masters',
+          gameImage: '/src/assets/images/sudoku.png',
+          players: [
+            { username: 'PlayerSix', avatar: '/src/assets/images/avatar/6.png' },
+          ],
+          maxPlayers: 6,
+          duration: '20-30 mins',
+        },
+        {
+          gameName: 'Minesweeper',
+          lobbyName: 'Mine Hunters',
+          gameImage: '/src/assets/images/minesweeper.png',
+          players: [
+            { username: 'PlayerSeven', avatar: '/src/assets/images/avatar/7.png' },
+          ],
+          maxPlayers: 4,
+          duration: '10-15 mins',
+        },
       ],
-      maxPlayers: 2,
-      duration: '10-15 mins',
     },
     {
-      gameName: 'Clobber',
-      lobbyName: 'Expert Lobby',
-      gameImage: '/src/assets/images/clobber.png',
-      players: [
-        { username: 'PlayerFour', avatar: '/src/assets/images/avatar/4.png' },
+      page: 3,
+      lobbies: [
+        {
+          gameName: 'Tic Tac Toe',
+          lobbyName: 'Pro Lobby',
+          gameImage: '/src/assets/images/tic-tac-toe.png',
+          players: [
+            { username: 'PlayerEight', avatar: '/src/assets/images/avatar/8.png' },
+          ],
+          maxPlayers: 2,
+          duration: '5-10 mins',
+        },
+        {
+          gameName: 'Clobber',
+          lobbyName: 'Clobber Champs',
+          gameImage: '/src/assets/images/clobber.png',
+          players: [
+            { username: 'PlayerNine', avatar: '/src/assets/images/avatar/9.png' },
+          ],
+          maxPlayers: 6,
+          duration: '15-20 mins',
+        },
       ],
-      maxPlayers: 6,
-      duration: '15-20 mins',
-    },
-    {
-      gameName: 'Tic Tac Toe',
-      lobbyName: 'Casual Lobby',
-      gameImage: '/src/assets/images/tic-tac-toe.png',
-      players: [
-        { username: 'PlayerFive', avatar: '/src/assets/images/avatar/5.png' },
-      ],
-      maxPlayers: 3,
-      duration: '10-15 mins',
     },
   ];
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const handleNextPage = () => {
+    if (currentPage < paginatedLobbies.length) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const currentLobbies = paginatedLobbies.find((page) => page.page === currentPage)?.lobbies || [];
 
   return (
     <main className="flex flex-col gap-8 px-10 lg:px-20 py-5 bg-background h-full">
@@ -116,22 +186,8 @@ const HomeScreen: React.FC = () => {
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
-          <div className="w-64">
-            <SearchBar
-              size="small"
-              placeholder="Search lobbies..."
-              suggestions={[
-                { text: 'Beginner Lobby' },
-                { text: 'Advanced Lobby' },
-                { text: 'Expert Lobby' },
-                { text: 'Casual Lobby' },
-              ]}
-              onEnterRoute="/find_lobbies/phrase"
-              onSuggestionClickRoute="/find_lobbies/phrase"
-            />
-          </div>
         </div>
-        {gameLobbies.map((lobby, index) => (
+        {currentLobbies.map((lobby, index) => (
           <GameLobbyCard
             key={index}
             gameName={lobby.gameName}
@@ -142,6 +198,25 @@ const HomeScreen: React.FC = () => {
             duration={lobby.duration}
           />
         ))}
+        <div className="flex justify-center items-center gap-6 mt-4">
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            className="text-highlight disabled:opacity-50"
+          >
+            <FaAngleLeft size={30} />
+          </button>
+          <span className="text-lg font-bold text-headline">
+            Page {currentPage} of {paginatedLobbies.length}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === paginatedLobbies.length}
+            className="text-highlight disabled:opacity-50"
+          >
+            <FaAngleRight size={30} />
+          </button>
+        </div>
       </div>
     </main>
   );
