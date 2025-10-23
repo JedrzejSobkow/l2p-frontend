@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface GameLobbyCardProps {
   gameName: string;
@@ -10,6 +11,12 @@ interface GameLobbyCardProps {
 }
 
 const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, gameImage, players, maxPlayers, duration }) => {
+  const navigate = useNavigate();
+
+  const handleNavigateToLobby = () => {
+    navigate(`/lobby/${lobbyName}`);
+  };
+
   return (
     <div className="flex flex-col md:flex-row items-center gap-8 p-4 rounded-lg bg-background-secondary shadow-md">
       {/* Game Image and Game Name */}
@@ -21,7 +28,10 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
       {/* Game Info */}
       <div className="flex flex-col w-[200px]">
         <h2 className="text-xl font-bold text-headline">{lobbyName}</h2>
-        <button className="mt-2 px-3 py-1 bg-highlight text-white text-sm font-bold rounded-md hover:bg-highlight/90 transition-all">
+        <button
+          className="mt-2 px-3 py-1 bg-highlight text-white text-sm font-bold rounded-md hover:bg-highlight/90 hover:scale-105 transition-transform"
+          onClick={handleNavigateToLobby}
+        >
           Join
         </button>
         <div className="text-paragraph text-sm mt-2">
@@ -60,12 +70,12 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
               key={index}
               className={`flex items-center gap-2 p-2 border rounded-lg transition-transform ${
                 players[index]
-                  ? 'border-gray-300'
-                  : 'border-headline hover:border-highlight hover:scale-105 cursor-pointer'
+                  ? 'border-paragraph'
+                  : 'border-paragraph hover:border-highlight hover:scale-105 cursor-pointer'
               }`}
               onClick={() => {
                 if (!players[index]) {
-                  console.log('Empty slot clicked!'); 
+                  handleNavigateToLobby();
                 }
               }}
             >

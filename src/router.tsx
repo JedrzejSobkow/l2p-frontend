@@ -57,7 +57,7 @@ export const router = createBrowserRouter([
                 element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
             },
             {
-                path: 'lobby/:lobby',
+                path: 'lobby/:lobbyName',
                 element: <RequireGuest> <LobbyScreen /> </RequireGuest>
             }
         ] 
