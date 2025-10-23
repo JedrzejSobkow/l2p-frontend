@@ -2,7 +2,9 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
-const Header: React.FC = () => {
+const Header = ({ onToggleFriends }:{
+    onToggleFriends?:() => void
+    }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
 
@@ -113,6 +115,7 @@ const Header: React.FC = () => {
             {/* Menu Button */}
             <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
+                    onClick={onToggleFriends}
                     src="/src/assets/icons/menu.png"
                     alt="Menu Icon"
                     className="w-9 h-9"
