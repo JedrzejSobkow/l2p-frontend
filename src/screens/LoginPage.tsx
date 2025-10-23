@@ -3,19 +3,21 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
+import type { PopupProps } from '../components/Popup'
+import Popup from '../components/Popup'
 
 const LoginPage = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [popup, setPopup] = useState<PopupProps | null>(null); 
+  
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
     setSubmitting(true)
     setError(null)
-    setFieldErrors({})
     try {
       const form = new FormData(e.currentTarget)
       const email  = String(form.get('email') || '')
@@ -24,8 +26,16 @@ const LoginPage = () => {
       await login({ email, password, remember })
       navigate('/', { replace: true })
     } catch (err: any) {
-      if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
-      setError(err?.message || 'Sign in failed')
+      let message = ''
+      if (err.message === 'LOGIN_USER_NOT_VERIFIED')
+        message = 'User is not verified'
+      else if (err.message === 'LOGIN_BAD_CREDENTIALS'){
+        message = 'Invalid email or password'
+      }
+      else {
+        message = 'Siggning in failed'
+      }
+      setPopup({type: 'error',message ,onClose: () => {setPopup(null)}})
     } finally {
       setSubmitting(false)
     }
@@ -50,13 +60,10 @@ const LoginPage = () => {
             <input
               className="auth-input"
               name="email"
-              type="text"
+              type="email"
               autoComplete="email"
               required
             />
-            {fieldErrors.username && (
-              <p className="text-red-300 text-xs" role="alert">{fieldErrors.username}</p>
-            )}
           </label>
 
           <div className="space-y-2 text-sm text-white/70">
@@ -73,9 +80,6 @@ const LoginPage = () => {
               autoComplete="current-password"
               required
             />
-            {fieldErrors.password && (
-              <p className="text-red-300 text-xs" role="alert">{fieldErrors.password}</p>
-            )}
           </div>
 
           <label className="flex items-center gap-3 text-xs text-white/60">
@@ -106,6 +110,14 @@ const LoginPage = () => {
           </Link>
         </p>
       </div>
+      {/* Error Popup */}
+            {popup && (
+                <Popup
+                    type={popup.type}
+                    message={popup.message}
+                    onClose={() => setPopup(null)}
+                />
+            )}
     </div>
   )
 }
