@@ -1,4 +1,4 @@
-import type { FC, FormEventHandler } from 'react'
+import type { FormEventHandler } from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'

@@ -7,7 +7,7 @@ export type User = {
   is_active: boolean,
   is_verified: boolean,
   pfp_path?: string
-  description?: String
+  description?: string
 }
 
 export type LoginPayload = {
