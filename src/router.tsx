@@ -7,9 +7,9 @@ import RequireGuest from './components/RequireGuest'
 import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
-import SelectLobbyByGameScreen from "./screens/SelectLobbyByGameScreen";
-import SearchGamesScreen from "./screens/SearchGamesScreen";
-import SearchLobbiesScreen from "./screens/SearchLobbiesScreen";
+import FindGamesScreen from "./screens/FindGamesScreen";
+import FindLobbiesScreen from "./screens/FindLobbiesScreen";
+import LobbyScreen from "./screens/LobbyScreen";
 
 export const router = createBrowserRouter([
     {
@@ -41,16 +41,24 @@ export const router = createBrowserRouter([
                 Component: ProfileScreen 
             },
             {
-                path: 'select_lobby_by_game/:gameName',
-                Component: SelectLobbyByGameScreen
+                path: 'find_games/:searchPhrase?',
+                element: <RequireGuest> <FindGamesScreen /> </RequireGuest>
             },
             {
-                path: 'search_games/:searchPhrase?',
-                Component: SearchGamesScreen
+                path: 'find_lobbies/',
+                element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
             },
             {
-                path: 'search_lobbies/:searchPhrase?',
-                Component: SearchLobbiesScreen
+                path: 'find_lobbies/phrase/:searchPhrase?',
+                element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
+            },
+            {
+                path: 'find_lobbies/game/:gameName?',
+                element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
+            },
+            {
+                path: 'lobby/:lobby',
+                element: <RequireGuest> <LobbyScreen /> </RequireGuest>
             }
         ] 
     }

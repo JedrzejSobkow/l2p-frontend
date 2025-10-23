@@ -58,9 +58,16 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
           {Array.from({ length: maxPlayers }).map((_, index) => (
             <div
               key={index}
-              className={`flex items-center gap-2 p-2 border rounded-lg ${
-                players[index] ? 'border-gray-300' : 'border-headline'
+              className={`flex items-center gap-2 p-2 border rounded-lg transition-transform ${
+                players[index]
+                  ? 'border-gray-300'
+                  : 'border-headline hover:border-highlight hover:scale-105 cursor-pointer'
               }`}
+              onClick={() => {
+                if (!players[index]) {
+                  console.log('Empty slot clicked!'); 
+                }
+              }}
             >
               {players[index] ? (
                 <>
@@ -83,12 +90,12 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
                 </>
               ) : (
                 <>
-                <div className='h-10 content-center'>
-                  <img
-                    src="/src/assets/icons/add-player.png"
-                    alt="Add Player"
-                    className="w-7 cursor-pointer"
-                  />
+                  <div className="h-10 content-center">
+                    <img
+                      src="/src/assets/icons/add-player.png"
+                      alt="Add Player"
+                      className="w-7"
+                    />
                   </div>
                   <span
                     className="text-sm text-highlight break-words"

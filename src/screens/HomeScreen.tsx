@@ -78,8 +78,8 @@ const HomeScreen: React.FC = () => {
           size="normal"
           placeholder="Search for games or players..."
           suggestions={['Tic Tac Toe', 'Clobber', 'Chess', 'Checkers', 'Sudoku', 'Minesweeper']}
-          onEnterRoute="/search_games"
-          onSuggestionClickRoute="/select_lobby_by_game"
+          onEnterRoute="/find_games"
+          onSuggestionClickRoute="/find_lobbies/game"
         />
       </div>
 
@@ -114,8 +114,8 @@ const HomeScreen: React.FC = () => {
               size="small"
               placeholder="Search lobbies..."
               suggestions={['Beginner Lobby', 'Advanced Lobby', 'Expert Lobby', 'Casual Lobby']}
-              onEnterRoute="/search_lobbies"
-              onSuggestionClickRoute="/search_lobbies"
+              onEnterRoute="/find_lobbies/phrase"
+              onSuggestionClickRoute="/find_lobbies/phrase"
             />
           </div>
         </div>
