@@ -17,6 +17,9 @@
   --color-lp: #2abd69;
   --color-active: #2abd69;
   --color-attention: #bc2b07;
+  --color-first-place: #ffd700;
+  --color-second-place: #c0c0c0;
+  --color-third-place: #cd7f32;
 }
 
 @layer base{
