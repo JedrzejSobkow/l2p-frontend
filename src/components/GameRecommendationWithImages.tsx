@@ -7,7 +7,7 @@ interface GameRecommendationWithImages {
 
 const GameRecommendationWithImages: React.FC<GameRecommendationWithImages> = ({ title, images }) => {
   return (
-    <div className="flex flex-col gap-4 w-full md:w-[90%] md:px-[5%]">
+    <div className="flex flex-col gap-4 w-full md:w-[95%] mr:px-[5%]">
       <h2 className="text-2xl font-bold text-headline">{title}</h2>
       <div className="flex flex-wrap justify-left gap-6">
         {images.map((image, index) => (

@@ -2,6 +2,7 @@ import React from 'react';
 import LeaderboardCard from '../components/LeaderboardCard';
 import GameRecommendationWithImages from '../components/GameRecommendationWithImages';
 import SearchBar from '../components/SearchBar';
+import GameLobbyCard from '../components/GameLobbyCard';
 
 const HomeScreen: React.FC = () => {
   const leaderboardData = [
@@ -22,11 +23,56 @@ const HomeScreen: React.FC = () => {
 
   const featuredGamesImages = [
     { src: '/src/assets/images/clobber.png', alt: 'Clobber' },
+  ];
 
+  const gameLobbies = [
+    {
+      gameName: 'Tic Tac Toe',
+      lobbyName: 'Beginner Lobby',
+      gameImage: '/src/assets/images/tic-tac-toe.png',
+      players: [
+        { username: 'PlayerOne', avatar: '/src/assets/images/avatar/1.png' },
+        { username: 'PlayerTwo', avatar: '/src/assets/images/avatar/2.png' },
+        { username: 'PlayerThree', avatar: '/src/assets/images/avatar/2.png' },
+        { username: 'cool_usersdfsfsdfsdf', avatar: '/src/assets/images/avatar/2.png' },
+      ],
+      maxPlayers: 5,
+      duration: '5-10 mins',
+    },
+    {
+      gameName: 'Clobber',
+      lobbyName: 'Advanced Lobby',
+      gameImage: '/src/assets/images/clobber.png',
+      players: [
+        { username: 'PlayerThree', avatar: '/src/assets/images/avatar/3.png' },
+      ],
+      maxPlayers: 2,
+      duration: '10-15 mins',
+    },
+    {
+      gameName: 'Clobber',
+      lobbyName: 'Expert Lobby',
+      gameImage: '/src/assets/images/clobber.png',
+      players: [
+        { username: 'PlayerFour', avatar: '/src/assets/images/avatar/4.png' },
+      ],
+      maxPlayers: 6,
+      duration: '15-20 mins',
+    },
+    {
+      gameName: 'Tic Tac Toe',
+      lobbyName: 'Casual Lobby',
+      gameImage: '/src/assets/images/tic-tac-toe.png',
+      players: [
+        { username: 'PlayerFive', avatar: '/src/assets/images/avatar/5.png' },
+      ],
+      maxPlayers: 3,
+      duration: '10-15 mins',
+    },
   ];
 
   return (
-    <main className="flex flex-col gap-8 p-5 bg-background h-full">
+    <main className="flex flex-col gap-8 px-10 lg:px-20 py-5 bg-background h-full">
       {/* Search Bar */}
       <div className="flex justify-center">
         <SearchBar size="normal" placeholder="Search for games or players..." />
@@ -52,6 +98,22 @@ const HomeScreen: React.FC = () => {
             />
           ))}
         </div>
+      </div>
+
+      {/* Game Lobbies Section */}
+      <div className="flex flex-col gap-6">
+        <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
+        {gameLobbies.map((lobby, index) => (
+          <GameLobbyCard
+            key={index}
+            gameName={lobby.gameName}
+            lobbyName={lobby.lobbyName}
+            gameImage={lobby.gameImage}
+            players={lobby.players}
+            maxPlayers={lobby.maxPlayers}
+            duration={lobby.duration}
+          />
+        ))}
       </div>
     </main>
   );
