@@ -12,7 +12,7 @@ const GameRecommendationWithImages: React.FC<GameRecommendationWithImages> = ({ 
       <h2 className="text-2xl font-bold text-headline">{title}</h2>
       <div className="flex flex-wrap justify-left gap-6">
         {images.map((image, index) => (
-          <Link to={`/find_lobbies/game/${image.gameName}`} key={index}>
+          <Link to={`/game/${image.gameName}`} key={index}>
             <img
               src={image.src}
               alt={image.alt}

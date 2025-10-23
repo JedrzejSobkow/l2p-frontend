@@ -10,6 +10,7 @@ import ResetPasswordPage from "./screens/ResetPasswordPage";
 import FindGamesScreen from "./screens/FindGamesScreen";
 import FindLobbiesScreen from "./screens/FindLobbiesScreen";
 import LobbyScreen from "./screens/LobbyScreen";
+import GameScreen from "./screens/GameScreen";
 
 export const router = createBrowserRouter([
     {
@@ -53,8 +54,8 @@ export const router = createBrowserRouter([
                 element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
             },
             {
-                path: 'find_lobbies/game/:gameName?',
-                element: <RequireGuest> <FindLobbiesScreen /> </RequireGuest>
+                path: 'game/:gameName?',
+                element: <RequireGuest> <GameScreen /> </RequireGuest>
             },
             {
                 path: 'lobby/:lobbyName',
