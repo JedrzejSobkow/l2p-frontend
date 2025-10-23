@@ -16,13 +16,12 @@ const HomeScreen: React.FC = () => {
   const topPlayers = leaderboardData.slice(0, 5);
 
   const topPicksImages = [
-    { src: '/src/assets/images/tic-tac-toe.png', alt: 'Tic Tac Toe' },
-    { src: '/src/assets/images/clobber.png', alt: 'Clobber' },
-    { src: '/src/assets/images/more-games.png', alt: 'More Games' },
+    { src: '/src/assets/images/tic-tac-toe.png', alt: 'Tic Tac Toe', gameName: 'tic-tac-toe' },
+    { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
   ];
 
   const featuredGamesImages = [
-    { src: '/src/assets/images/clobber.png', alt: 'Clobber' },
+    { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
   ];
 
   const gameLobbies = [
