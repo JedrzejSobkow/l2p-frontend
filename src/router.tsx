@@ -8,7 +8,10 @@ import RequireAuth from './components/RequireAuth'
 import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
-
+import FindGamesScreen from "./screens/FindGamesScreen";
+import FindLobbiesScreen from "./screens/FindLobbiesScreen";
+import LobbyScreen from "./screens/LobbyScreen";
+import GameScreen from "./screens/GameScreen";
 
 export const router = createBrowserRouter([
     {
@@ -39,7 +42,18 @@ export const router = createBrowserRouter([
                 path: "profile", 
                 element: <RequireAuth><ProfileScreen></ProfileScreen></RequireAuth> 
             },
-
+            {
+                path: 'find_games/:searchPhrase?',
+                element: <RequireGuest> <FindGamesScreen /> </RequireGuest>
+            },
+            {
+                path: 'game/:gameName?',
+                element: <RequireGuest> <GameScreen /> </RequireGuest>
+            },
+            {
+                path: 'lobby/:lobbyName',
+                element: <RequireGuest> <LobbyScreen /> </RequireGuest>
+            }
         ] 
     }
 ])

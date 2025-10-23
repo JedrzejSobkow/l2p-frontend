@@ -3,18 +3,22 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
+import type { PopupProps } from '../components/Popup'
+import Popup from '../components/Popup'
+import { ApiError } from '../lib/http'
 
 const RegistrationPage = () => {
   const navigate = useNavigate()
   const { register, login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [popup,setPopup] = useState<PopupProps|null>(null)
+
+  const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
     setSubmitting(true)
-    setError(null)
     setFieldErrors({})
     try {
       const form = new FormData(e.currentTarget)
@@ -22,15 +26,40 @@ const RegistrationPage = () => {
       const email = String(form.get('email') || '')
       const password = String(form.get('password') || '')
       const confirmPassword = String(form.get('confirmPassword') || '')
-      const termsAccepted = form.get('terms') !== null
-      if (!termsAccepted) throw new Error('You must accept the terms')
-      if (password !== confirmPassword) throw new Error('Passwords do not match')
-      await register({ nickname: nickname , email, password })
+
+      const errors: Record<string,string> = {}
+      if (!passwordPolicy.test(password)) {
+        errors.password = 'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, and a number.';
+      }
+      if (password !== confirmPassword) {
+        errors.confirmPassword = 'Passwords are not the same';
+      }
+      if (!nickname) {
+        errors.nickname = 'Nickname is required';
+      }
+      if (!email) {
+        errors.email = 'Email is required';
+      }
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
+        return
+      }
+      await register({ nickname , email, password })
       await login({ email , password, remember: true })
       navigate('/', { replace: true })
+     
     } catch (err: any) {
-      if (err?.fields && typeof err.fields === 'object') setFieldErrors(err.fields)
-      setError(err?.message || 'Registration failed')
+      let message = ''
+      if (err instanceof ApiError && err.message === 'REGISTER_USER_ALREADY_EXISTS'){
+        message = 'User with this email already exists'
+        fieldErrors.email = 'User with this email already exists'
+        setFieldErrors(fieldErrors)
+      }
+      else {
+        message = 'Registration failed'
+      }
+      setPopup({type: 'error', message: message, onClose: () => setPopup(null)})
+
     } finally {
       setSubmitting(false)
     }
@@ -101,6 +130,9 @@ const RegistrationPage = () => {
                 autoComplete="new-password"
                 required
               />
+              {fieldErrors.confirmPassword && (
+                <p className="text-red-300 text-xs" role="alert">{fieldErrors.confirmPassword}</p>
+              )}
             </label>
           </div>
 
@@ -124,9 +156,6 @@ const RegistrationPage = () => {
           >
             {submitting ? 'Creating account...' : 'Create account'}
           </button>
-          {error && (
-            <p className="text-red-300 text-xs mt-3" role="alert">{error}</p>
-          )}
         </form>
 
         <p className="mt-6 auth-note">
@@ -136,6 +165,14 @@ const RegistrationPage = () => {
           </Link>
         </p>
       </div>
+      {/* Error Popup */}
+            {popup && (
+                <Popup
+                    type={popup.type}
+                    message={popup.message}
+                    onClose={() => setPopup(null)}
+                />
+            )}
     </div>
   )
 }
