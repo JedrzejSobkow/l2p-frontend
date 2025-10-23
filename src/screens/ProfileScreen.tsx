@@ -98,6 +98,7 @@ const ProfileScreen: React.FC = () => {
     const handleDescriptionBlur = async () => {
         setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
         try {
+            if (!user || !changed(user.description, userData?.description)) return
             await updateProfile({ description: userData?.description ?? '' } as any)
             setPopup({ type: 'confirmation', message: 'Description saved.' })
         } catch (err: any) {
@@ -200,7 +201,6 @@ const ProfileScreen: React.FC = () => {
             setPopup({ type: 'confirmation', message: 'Account deleted successfully!' })
             setShowDeleteModal(false)
             setDeleteConfirmation('')
-            setTimeout(() => navigate('/'), 1200)
         } catch (e: any) {
             setPopup({ type: 'error', message: e?.message || 'Failed to delete account. Please try again.' })
         }
