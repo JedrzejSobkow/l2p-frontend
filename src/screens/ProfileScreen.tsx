@@ -1,46 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom'; 
-import Popup from '../components/Popup'; 
-import { handleResetPassword, saveDescription, saveUsername, handlePictureSelect, fetchUserData, handleDeleteAccount } from '../utils/profileUtils'; 
+import Popup from '../components/Popup'
+import { useAuth } from '../components/AuthContext'
+import type { User } from '../services/auth';
 
 const ProfileScreen: React.FC = () => {
-    const navigate = useNavigate(); 
-    const [description, setDescription] = useState('');
-    const [selectedPictureId, setSelectedPictureId] = useState<number | null>(null);
-    const [currentPassword, setCurrentPassword] = useState('');
+    const navigate = useNavigate()
+    const { user, updateProfile, deleteAccount } = useAuth()
+    const [userData,setUserData] = useState<Partial<User>|null>(null)
+
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState(''); 
+
+    const [selectedPictureId, setSelectedPictureId] = useState<number | null>(null);
     const [isEditingUsername, setIsEditingUsername] = useState(false);
-    const [username, setUsername] = useState(''); 
     const [isPasswordValid, setIsPasswordValid] = useState(true); 
     const [showDeleteModal, setShowDeleteModal] = useState(false); 
-    const [deleteConfirmation, setDeleteConfirmation] = useState(''); 
-    const [email, setEmail] = useState(''); 
-    const [profilePicturePath, setProfilePicturePath] = useState<string | null>(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');  
     const [usernameError, setUsernameError] = useState(false); 
     const [popup, setPopup] = useState<{ type: 'error' | 'informative' | 'confirmation'; message: string } | null>(null); 
     const [descriptionOutline, setDescriptionOutline] = useState<string>('rgba(47, 46, 54, 0.5)'); 
-    const [descriptionTimeout, setDescriptionTimeout] = useState<NodeJS.Timeout | null>(null); 
-    const [isCurrentPasswordVisible, setIsCurrentPasswordVisible] = useState(false); 
+    const descTimerRef = useRef<number | null>(null)
     const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false); 
     const [isConfirmNewPasswordVisible, setIsConfirmNewPasswordVisible] = useState(false); 
     const maxChars = 64;
     const maxUsernameLength = 20;
 
-    const pictures = Array.from({ length: 16 }, (_, index) => `/src/assets/images/avatar/${index + 1}.png`);
+    const pictures = Array.from({ length: 16 }, (_, index) => `src/assets/images/avatar/${index + 1}.png`);
 
-    const togglePasswordVisibility = (type: 'current' | 'new') => {
-        if (type === 'current') {
-            setIsCurrentPasswordVisible((prev) => !prev);
-        } else {
-            setIsNewPasswordVisible((prev) => !prev);
-        }
-    };
-
-    const handlePasswordVisibility = (type: 'current' | 'new' | 'confirm', isVisible: boolean) => {
-        if (type === 'current') {
-            setIsCurrentPasswordVisible(isVisible);
-        } else if (type === 'new') {
+    const handlePasswordVisibility = (type: 'new' | 'confirm', isVisible: boolean) => {
+        if (type === 'new') {
             setIsNewPasswordVisible(isVisible);
         } else {
             setIsConfirmNewPasswordVisible(isVisible);
@@ -51,81 +40,103 @@ const ProfileScreen: React.FC = () => {
         filter: 'invert(52%) sepia(96%) saturate(746%) hue-rotate(1deg) brightness(102%) contrast(101%)', 
     };
 
+        // derive local editable data from auth user
     useEffect(() => {
-        const login = async () => {
-            try {
-                const response = await fetch('http://127.0.0.1:8000/v1/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'accept': 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        grant_type: 'password',
-                        username: 'user@example.com',
-                        password: 'zaq1@WSX',
-                        scope: '',
-                        client_id: 'string',
-                        client_secret: '********',
-                    }),
-                    credentials: 'include', 
-                });
+        if (!user) return;
+        setUserData({
+            email: user.email,
+            nickname: user.nickname,
+            description: user.description,
+            pfp_path: user.pfp_path
+        })
+    }, [user?.id]);
 
-                if (response.ok) {
-                    console.log('Login successful');
-                    fetchUserData(setUsername, setEmail, setDescription, setProfilePicturePath, setSelectedPictureId, setPopup); 
-                } else {
-                    console.error('Login failed:', response.statusText);
-                }
-            } catch (error) {
-                console.error('Error during login:', error);
+    // cleanup any pending debounce timer on unmount
+    useEffect(() => {
+        return () => {
+            if (descTimerRef.current) {
+                window.clearTimeout(descTimerRef.current)
+                descTimerRef.current = null
             }
-        };
+        }
+    }, [])
 
-        login();
-    }, []);
+    const norm = (v: unknown) => typeof v === 'string' ? v.trim() : v
+    const changed = (prev: unknown, next: unknown) => norm(prev) !== norm(next)
 
     const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         let value = e.target.value;
         value = value.replace(/\n/g, ''); 
         if (value.length <= maxChars) {
-            setDescription(value);
+            setUserData(prev => {
+                const next: Partial<User> = {
+                    ...prev,
+                    description: value
+                }
+                return next
+            })
 
-            if (descriptionTimeout) {
-                clearTimeout(descriptionTimeout);
+                        if (descTimerRef.current) {
+                window.clearTimeout(descTimerRef.current)
             }
 
-            setDescriptionOutline('rgba(59, 130, 246, 0.4)'); 
+            setDescriptionOutline('rgba(59, 130, 246, 0.4)');
 
-            const timeout = setTimeout(() => {
-                setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
-                saveDescription(value, setPopup); 
-            }, 2000);
-            setDescriptionTimeout(timeout); 
+            descTimerRef.current = window.setTimeout(async () => {
+                setDescriptionOutline('rgba(47, 46, 54, 0.5)')
+                if (!user || !changed(user.description, value)) return
+                try {
+                    await updateProfile({ description: value } as any)
+                    setPopup({ type: 'confirmation', message: 'Description saved.' })
+                } catch (err) {
+                    setPopup({ type: 'error', message: (err as any)?.message || 'Failed to save description.' })
+                }
+            }, 2000) 
         }
     };
 
     const handleDescriptionBlur = async () => {
         setDescriptionOutline('rgba(47, 46, 54, 0.5)'); 
-        await saveDescription(description, setPopup); 
+        try {
+            if (!user || !changed(user.description, userData?.description)) return
+            await updateProfile({ description: userData?.description ?? '' } as any)
+            setPopup({ type: 'confirmation', message: 'Description saved.' })
+        } catch (err: any) {
+            setPopup({ type: 'error', message: err?.message || 'Failed to save description.' })
+        }
     };
 
+
     const handlePictureSelection = async (id: number) => {
-        await handlePictureSelect(id, setSelectedPictureId, setProfilePicturePath, setPopup); 
+        const path = `/images/avatar/${id + 1}.png`
+        try {
+            await updateProfile({ pfp_path: path } as any)
+            setSelectedPictureId(id)
+            setUserData(prev => {
+                const next: Partial<User> = {
+                    ...prev,
+                    pfp_path: path
+                }
+                return next
+            })
+            setPopup({ type: 'confirmation', message: 'Profile picture updated.' })
+        } catch (e: any) {
+            setPopup({ type: 'error', message: e?.message || 'Failed to update profile picture.' })
+        }
     };
 
     const getDisplayedPicture = () => {
         if (selectedPictureId !== null) {
             return pictures[selectedPictureId];
         }
-        if (profilePicturePath) {
-            const match = profilePicturePath.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
+        if (userData?.pfp_path) {
+            const match = userData?.pfp_path.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
             if (match) {
                 const id = parseInt(match[1], 10) - 1; 
                 return pictures[id];
             }
         }
-        return '/src/assets/images/profile-picture.png'; 
+        return 'src/assets/images/profile-picture.png'; 
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'confirm') => {
@@ -146,7 +157,13 @@ const ProfileScreen: React.FC = () => {
     const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         if (/^[a-zA-Z0-9_]*$/.test(value) && value.length <= maxUsernameLength) {
-            setUsername(value);
+            setUserData(prev=> {
+                const next: Partial<User> = {
+                    ...prev,
+                    nickname: value
+                }
+                return next
+            });
         }
     };
 
@@ -156,23 +173,52 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-    const handleUsernameSave = async () => {
-        await saveUsername(username, setPopup, setIsEditingUsername, setUsernameError); 
+        const handleUsernameSave = async () => {
+        // only persist if changed
+        if (user && (user.nickname || '').trim() === (userData?.nickname ?? '').trim()) {
+            setIsEditingUsername(false)
+            setUsernameError(false)
+            return
+        }
+        try {
+            await updateProfile({ nickname: (userData?.nickname ?? '').trim() } as any)
+            setIsEditingUsername(false)
+            setUsernameError(false)
+            setPopup({ type: 'confirmation', message: 'Username updated.' })
+        } catch (e: any) {
+            setUsernameError(true)
+            setPopup({ type: 'error', message: e?.message || 'Failed to update username.' })
+        }
     };
 
     const handleAccountDeletion = async () => {
-        await handleDeleteAccount(deleteConfirmation, setPopup, setShowDeleteModal, setDeleteConfirmation, navigate);
+        if (deleteConfirmation !== 'delete') {
+            alert('Please type "delete" to confirm.')
+            return
+        }
+        try {
+            await deleteAccount()
+            setPopup({ type: 'confirmation', message: 'Account deleted successfully!' })
+            setShowDeleteModal(false)
+            setDeleteConfirmation('')
+        } catch (e: any) {
+            setPopup({ type: 'error', message: e?.message || 'Failed to delete account. Please try again.' })
+        }
     };
 
     const handlePasswordReset = async () => {
-        await handleResetPassword(
-            newPassword,
-            confirmNewPassword,
-            isPasswordValid,
-            setPopup,
-            setNewPassword,
-            setConfirmNewPassword
-        );
+        if (!(newPassword && confirmNewPassword && isPasswordValid && newPassword === confirmNewPassword)) {
+            setPopup({ type: 'error', message: 'Passwords do not match or are invalid.' })
+            return
+        }
+        try {
+            await updateProfile({ password: newPassword } as any)
+            setPopup({ type: 'confirmation', message: 'Password updated successfully!' })
+            setNewPassword('')
+            setConfirmNewPassword('')
+        } catch (e: any) {
+            setPopup({ type: 'error', message: e?.message || 'Failed to update password. Please try again.' })
+        }
     };
 
     const isResetEnabled = newPassword && confirmNewPassword && isPasswordValid && newPassword === confirmNewPassword;
@@ -197,7 +243,7 @@ const ProfileScreen: React.FC = () => {
                     {/* Username */}
                     <div className="flex items-center gap-4 text-lg font-normal">
                         <img
-                            src="/src/assets/icons/user.png"
+                            src="src/assets/icons/user.png"
                             alt="User Icon"
                             className="w-6 h-6"
                         />
@@ -205,7 +251,7 @@ const ProfileScreen: React.FC = () => {
                             <div className="flex items-center gap-2">
                                 <input
                                     type="text"
-                                    value={username}
+                                    value={userData?.nickname}
                                     onChange={handleUsernameChange}
                                     onKeyDown={handleUsernameKeyDown} 
                                     className={`px-2 py-1 border rounded ${
@@ -224,12 +270,12 @@ const ProfileScreen: React.FC = () => {
                                 onClick={() => setIsEditingUsername(true)}
                                 className="cursor-pointer hover:underline"
                             >
-                                {username}
+                                {userData?.nickname}
                             </span>
                         )}
                         {!isEditingUsername && (
                             <img
-                                src="/src/assets/icons/edit.png"
+                                src="src/assets/icons/edit.png"
                                 alt="Edit Icon"
                                 className="w-6 h-6 cursor-pointer"
                                 onClick={() => setIsEditingUsername(true)}
@@ -250,7 +296,7 @@ const ProfileScreen: React.FC = () => {
                             placeholder="Tell us something about you..."
                             name="about-me"
                             spellCheck="false"
-                            value={description}
+                            value={userData?.description}
                             rows={3}
                             onChange={handleDescriptionChange}
                             onBlur={handleDescriptionBlur} 
@@ -267,7 +313,7 @@ const ProfileScreen: React.FC = () => {
                         <div className="flex justify-between w-full mt-2">
                             <div></div> 
                             <div className="text-xs text-paragraph">
-                                {maxChars - description.length} characters left
+                                {maxChars - (userData?.description?.length || 0)} characters left
                             </div>
                         </div>
                     </div>
@@ -326,7 +372,7 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isNewPasswordVisible ? '/src/assets/icons/eye-off.png' : '/src/assets/icons/eye.png'} 
+                            src={isNewPasswordVisible ? 'src/assets/icons/eye-off.png' : 'src/assets/icons/eye.png'} 
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
                             style={handlePasswordIconStyle} 
@@ -360,7 +406,7 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isConfirmNewPasswordVisible ? '/src/assets/icons/eye-off.png' : '/src/assets/icons/eye.png'} 
+                            src={isConfirmNewPasswordVisible ? 'src/assets/icons/eye-off.png' : 'src/assets/icons/eye.png'} 
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
                             style={handlePasswordIconStyle} 
@@ -390,7 +436,7 @@ const ProfileScreen: React.FC = () => {
 
                 {/* Email Address */}
                 <div className="text-highlight text-lg font-bold pt-[25px]">
-                    e-mail address <span className="text-headline/35 font-normal pl-[20px]">{email}</span>
+                    e-mail address <span className="text-headline/35 font-normal pl-[20px]">{userData?.email}</span>
                 </div>
 
                 {/* Delete Account Button */}
@@ -469,3 +515,10 @@ const ProfileScreen: React.FC = () => {
 };
 
 export default ProfileScreen;
+
+
+
+
+
+
+
