@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-interface PopupProps {
+export interface PopupProps {
     type: 'informative' | 'error' | 'confirmation';
     message: string;
     onClose: () => void;
