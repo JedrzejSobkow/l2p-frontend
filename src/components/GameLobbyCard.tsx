@@ -38,14 +38,29 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
 
       {/* Player Slots */}
       <div className="flex justify-center w-full">
-        <div className="grid grid-rows-3 md:grid-rows-2 grid-cols-2 md:grid-cols-3 gap-4">
+        <div
+          className={`grid gap-4 ${
+            maxPlayers === 1
+              ? 'grid-cols-1'
+              : maxPlayers === 2
+              ? 'grid-cols-2'
+              : maxPlayers === 3
+              ? 'grid-cols-2 sm:grid-cols-3'
+              : maxPlayers === 4
+              ? 'grid-cols-2'
+              : maxPlayers === 5
+              ? 'grid-cols-2 sm:grid-cols-3 sm:grid-rows-2'
+              : maxPlayers === 6
+              ? 'grid-cols-2 sm:grid-cols-3'
+              : ''
+          }`}
+        >
           {Array.from({ length: maxPlayers }).map((_, index) => (
             <div
               key={index}
               className={`flex items-center gap-2 p-2 border rounded-lg ${
-                players[index] ? 'border-gray-300' : 'border-headline h-0'
+                players[index] ? 'border-gray-300' : 'border-headline'
               }`}
-              style={{ height: 'auto' }}
             >
               {players[index] ? (
                 <>
@@ -68,11 +83,13 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
                 </>
               ) : (
                 <>
+                <div className='h-10 content-center'>
                   <img
                     src="/src/assets/icons/add-player.png"
                     alt="Add Player"
                     className="w-7 cursor-pointer"
                   />
+                  </div>
                   <span
                     className="text-sm text-highlight break-words"
                     style={{
