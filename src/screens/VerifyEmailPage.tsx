@@ -18,10 +18,17 @@ const VerifyEmailPage: React.FC = () => {
 
       try {
         await verifyUser({ token });
-        setPopup({ type: 'informative', message: 'Activated account' });
-        setTimeout(() => navigate('/login'), 500);
+        localStorage.setItem(
+          'popupData',
+          JSON.stringify({ type: 'confirmation', message: 'Account activated. Please log in.' })
+        );
       } catch (error) {
-        setPopup({ type: 'error', message: 'Error verifying account. Please try again.' });
+        localStorage.setItem(
+            'popupData',
+            JSON.stringify({ type: 'error', message: 'Error verifying account. Please try again.' })
+          );
+      } finally {
+        navigate('/login');
       }
     };
 
