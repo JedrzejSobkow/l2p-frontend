@@ -87,7 +87,7 @@ const ProfileScreen: React.FC = () => {
                 if (!user || !changed(user.description, value)) return
                 try {
                     await updateProfile({ description: value } as any)
-                    setPopup({ type: 'confirmation', message: 'Description saved.' })
+                    setPopup({ type: 'confirmation', message: 'Description updated.' })
                 } catch (err) {
                     setPopup({ type: 'error', message: (err as any)?.message || 'Failed to save description.' })
                 }
@@ -100,7 +100,7 @@ const ProfileScreen: React.FC = () => {
         try {
             if (!user || !changed(user.description, userData?.description)) return
             await updateProfile({ description: userData?.description ?? '' } as any)
-            setPopup({ type: 'confirmation', message: 'Description saved.' })
+            setPopup({ type: 'confirmation', message: 'Description updated.' })
         } catch (err: any) {
             setPopup({ type: 'error', message: err?.message || 'Failed to save description.' })
         }
