@@ -10,18 +10,22 @@ const Layout = () => {
 
     const friendsMock = [
         {
+            id: 1,
             nickname: 'asd',
             status: 'Online'
         },
         {
+            id: 2,
             nickname: 'asd',
             status: 'Online'
         },
         {
+            id: 3,
             nickname: 'asd',
             status: 'Online'
         },
         {
+            id: 4,
             nickname: 'asd',
             status: 'Online'
         }
@@ -31,10 +35,10 @@ const Layout = () => {
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header onToggleFriends = {()=> setFriendsOpen(true)}/>
             <Outlet/>
-            <FriendsPanel open={isFriendsOpen} onClose={()=>setFriendsOpen(false)}>
-                {friendsMock.map((friend)=>(
-                    <FriendCard nickname={friend.nickname} status={friend.status}></FriendCard>
-                ))}
+            <FriendsPanel 
+              open={isFriendsOpen} 
+              onClose={()=>setFriendsOpen(false)}
+              friends={friendsMock}>
             </FriendsPanel>
             <Footer />
         </div>

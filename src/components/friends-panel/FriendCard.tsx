@@ -3,7 +3,7 @@ import { FiSend } from 'react-icons/fi'
 
 type FriendStatus = 'Playing' | 'In Lobby' | 'Creating Lobby' | 'Online' | 'Offline'
 
-type FriendProps = {
+export type FriendProps = {
   nickname: string
   status: FriendStatus
   avatarUrl?: string
