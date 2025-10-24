@@ -12,6 +12,7 @@ import FindGamesScreen from "./screens/FindGamesScreen";
 import FindLobbiesScreen from "./screens/FindLobbiesScreen";
 import LobbyScreen from "./screens/LobbyScreen";
 import GameScreen from "./screens/GameScreen";
+import FriendsScreen from "./screens/FriendsScreen";
 
 export const router = createBrowserRouter([
     {
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
             {
                 path: 'lobby/:lobbyName',
                 element: <RequireGuest> <LobbyScreen /> </RequireGuest>
+            },
+            {
+                path: 'friends',
+                element: <RequireAuth><FriendsScreen /></RequireAuth>
             }
         ] 
     }

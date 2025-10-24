@@ -1,18 +1,34 @@
-
+import { type FC, type MouseEvent } from 'react'
 import { FiSend } from 'react-icons/fi'
 
 type FriendStatus = 'Playing' | 'In Lobby' | 'Creating Lobby' | 'Online' | 'Offline'
 
 export type FriendProps = {
+  id?: string | number
   nickname: string
   status: FriendStatus
+  description?: string
+  lobbyId?: string
   avatarUrl?: string
+  rank?: string
+  favoriteGame?: string
+  isSelected?: boolean
   onClick?: () => void
   onSpectate?: () => void
   onMessage?: () => void
 }
 
-const FriendCard: React.FC<FriendProps> = ({ nickname, status, avatarUrl, onClick, onSpectate, onMessage }) => {
+const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
+
+const FriendCard: FC<FriendProps> = ({
+  nickname,
+  status,
+  avatarUrl,
+  onClick,
+  onSpectate,
+  onMessage,
+  isSelected
+}) => {
   const normalized = (status || 'Offline').trim() as Exclude<FriendStatus, ' Creating Lobby'> | 'Creating Lobby'
   const colorClass =
     normalized === 'Online'
@@ -23,11 +39,11 @@ const FriendCard: React.FC<FriendProps> = ({ nickname, status, avatarUrl, onClic
 
   const showSpectate = normalized === 'Playing' || normalized === 'In Lobby'
   const handleCardClick = () => onClick?.()
-  const handleSpectate = (e: React.MouseEvent) => {
+  const handleSpectate = (e: MouseEvent) => {
     e.stopPropagation()
     onSpectate?.()
   }
-  const handleMessage = (e: React.MouseEvent) => {
+  const handleMessage = (e: MouseEvent) => {
     e.stopPropagation()
     onMessage?.()
   }
@@ -35,7 +51,12 @@ const FriendCard: React.FC<FriendProps> = ({ nickname, status, avatarUrl, onClic
   return (
     <div
       onClick={handleCardClick}
-      className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[rgba(31,30,43,0.95)] px-3 py-2 hover:border-orange-400/40 transition"
+      className={cn(
+        'flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 transition',
+        isSelected
+          ? 'border-orange-400/70 bg-[rgba(45,44,63,0.95)] shadow-[0_12px_28px_rgba(255,149,0,0.18)]'
+          : 'border-white/10 bg-[rgba(31,30,43,0.95)] hover:border-orange-400/40'
+      )}
       role="button"
       tabIndex={0}
     >
