@@ -40,19 +40,19 @@ export const router = createBrowserRouter([
             },
             { 
                 path: "profile", 
-                element: <RequireAuth><ProfileScreen></ProfileScreen></RequireAuth> 
+                element: <RequireAuth> <ProfileScreen /> </RequireAuth>
             },
             {
                 path: 'find_games/:searchPhrase?',
-                element: <RequireGuest> <FindGamesScreen /> </RequireGuest>
+                element:  <FindGamesScreen />
             },
             {
                 path: 'game/:gameName?',
-                element: <RequireGuest> <GameScreen /> </RequireGuest>
+                element: <GameScreen /> 
             },
             {
                 path: 'lobby/:lobbyName',
-                element: <RequireGuest> <LobbyScreen /> </RequireGuest>
+                element: <LobbyScreen />
             }
         ] 
     }
