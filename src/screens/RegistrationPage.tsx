@@ -13,6 +13,7 @@ const RegistrationPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [popup,setPopup] = useState<PopupProps|null>(null)
+  const [passwordsMatch, setPasswordsMatch] = useState(true)
 
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -124,6 +125,12 @@ const RegistrationPage = () => {
                 type="password"
                 autoComplete="new-password"
                 required
+                onInput={(e) => {
+                  const confirmPasswordInput = document.querySelector<HTMLInputElement>('input[name="confirmPassword"]');
+                  if (confirmPasswordInput) {
+                    setPasswordsMatch(e.currentTarget.value === confirmPasswordInput.value);
+                  }
+                }}
               />
               {fieldErrors.password && (
                 <p className="text-red-300 text-xs" role="alert">{fieldErrors.password}</p>
@@ -132,11 +139,17 @@ const RegistrationPage = () => {
             <label className="auth-label">
               <span>Confirm password</span>
               <input
-                className="auth-input"
+                className={`auth-input ${!passwordsMatch ? 'border-red-500' : ''}`}
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
                 required
+                onInput={(e) => {
+                  const passwordInput = document.querySelector<HTMLInputElement>('input[name="password"]');
+                  if (passwordInput) {
+                    setPasswordsMatch(e.currentTarget.value === passwordInput.value);
+                  }
+                }}
               />
               {fieldErrors.confirmPassword && (
                 <p className="text-red-300 text-xs" role="alert">{fieldErrors.confirmPassword}</p>
