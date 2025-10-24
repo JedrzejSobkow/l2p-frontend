@@ -72,7 +72,7 @@ const Header = ({ onToggleFriends }:{
                     <>
                         <Link to="/profile">
                             <img
-                                src="/src/assets/images/pfp.png"
+                                src={"/src/assets/" + user?.pfp_path || "/src/assets/avatars/default.png"}
                                 alt="User Icon"
                                 className="w-10 h-10 rounded-full cursor-pointer"
                             />
