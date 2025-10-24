@@ -45,8 +45,7 @@ const RegistrationPage = () => {
         return
       }
       await register({ nickname , email, password })
-      await login({ email , password, remember: true })
-      navigate('/', { replace: true })
+      navigate('/login', { replace: true })
      
     } catch (err: any) {
       let message = ''
