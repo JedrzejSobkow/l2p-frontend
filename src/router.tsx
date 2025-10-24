@@ -9,9 +9,9 @@ import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
 import FindGamesScreen from "./screens/FindGamesScreen";
-import FindLobbiesScreen from "./screens/FindLobbiesScreen";
 import LobbyScreen from "./screens/LobbyScreen";
 import GameScreen from "./screens/GameScreen";
+import VerifyEmailPage from './screens/VerifyEmailPage';
 
 export const router = createBrowserRouter([
     {
@@ -53,6 +53,10 @@ export const router = createBrowserRouter([
             {
                 path: 'lobby/:lobbyName',
                 element: <LobbyScreen />
+            },
+            {
+                path: 'verify-email',
+                element: <VerifyEmailPage />,
             }
         ] 
     }

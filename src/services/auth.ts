@@ -31,6 +31,10 @@ export type ResetPasswordPayload = {
   password: string
 }
 
+export type ActivateUserPayload = {
+  token: string
+}
+
 // /auth/ endpoints
 
 
@@ -73,6 +77,15 @@ export async function resetPassword(payload: ResetPasswordPayload): Promise<stri
   const res = await request<string>('/auth/reset-password', {
     method: 'POST',
     body: { token: payload.token, password: payload.password },
+    auth: false,
+  })
+  return res
+}
+
+export async function verifyUser(payload: ActivateUserPayload): Promise<string | undefined> {
+  const res = await request<string>('/auth/verify', {
+    method: 'POST',
+    body: { token: payload.token},
     auth: false,
   })
   return res
