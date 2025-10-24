@@ -28,6 +28,11 @@ const RegistrationPage = () => {
       const confirmPassword = String(form.get('confirmPassword') || '')
 
       const errors: Record<string,string> = {}
+      const nicknamePattern = /^[a-zA-Z0-9_]*$/;
+
+      if (!nicknamePattern.test(nickname)) {
+        errors.nickname = 'Nickname can only contain letters, numbers, and underscores.';
+      }
       if (!passwordPolicy.test(password)) {
         errors.password = 'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, and a number.';
       }
@@ -86,6 +91,10 @@ const RegistrationPage = () => {
               type="text"
               autoComplete="nickname"
               required
+              onInput={(e) => {
+                const input = e.currentTarget;
+                input.value = input.value.replace(/[^a-zA-Z0-9_]/g, ''); // Allow only letters, numbers, and underscores
+              }}
             />
             {fieldErrors.nickname && (
               <p className="text-red-300 text-xs" role="alert">{fieldErrors.nickname}</p>
