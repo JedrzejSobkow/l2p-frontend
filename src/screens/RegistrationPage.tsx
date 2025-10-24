@@ -18,9 +18,9 @@ const RegistrationPage = () => {
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setFieldErrors({})
+    e.preventDefault();
+    setSubmitting(true);
+    setFieldErrors({}); // Clear field errors at the start of submission
     try {
       const form = new FormData(e.currentTarget)
       const nickname  = String(form.get('nickname') || '')
@@ -54,17 +54,16 @@ const RegistrationPage = () => {
       navigate('/login', { replace: true })
      
     } catch (err: any) {
-      let message = ''
-      if (err instanceof ApiError && err.message === 'REGISTER_USER_ALREADY_EXISTS'){
-        message = 'User with this email already exists'
-        fieldErrors.email = 'User with this email already exists'
-        setFieldErrors(fieldErrors)
+      if (err instanceof ApiError) {
+        console.log(`ApiError message: ${err.message}`);
+        console.log('ApiError detail:', err.detail); // Log the detail field
+        if (err.detail) {
+          fieldErrors[err.detail.field] = err.detail.message; // Set field-specific error
+          setFieldErrors(fieldErrors);
+        }
+      } else {
+        console.log('Unexpected error:', JSON.stringify(err, null, 2));
       }
-      else {
-        message = 'Registration failed'
-      }
-      setPopup({type: 'error', message: message, onClose: () => setPopup(null)})
-
     } finally {
       setSubmitting(false)
     }

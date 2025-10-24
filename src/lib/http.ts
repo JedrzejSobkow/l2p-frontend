@@ -7,15 +7,14 @@ export type ApiErrorShape = {
   fields?: Record<string, string>
 }
 
-export class ApiError extends Error implements ApiErrorShape {
-  status: number
-  code?: string
-  fields?: Record<string, string>
-  constructor(shape: ApiErrorShape) {
-    super(shape.message)
-    this.status = shape.status
-    this.code = shape.code
-    this.fields = shape.fields
+export class ApiError extends Error {
+  status: number;
+  detail?: { field: string; message: string }; // Add detail field
+
+  constructor(status: number, message: string, detail?: { field: string; message: string }) {
+    super(message);
+    this.status = status;
+    this.detail = detail; // Assign detail field
   }
 }
 
@@ -104,7 +103,7 @@ async function parseError(res: Response): Promise<ApiError> {
   if (payload?.errors && typeof payload.errors === 'object') {
     fields = { ...(fields ?? {}), ...(payload.errors as Record<string, string>) }
   }
-  return new ApiError({ status: res.status, code, message, fields })
+  return new ApiError(res.status, message, detail)
 }
 
 export async function request<T = any>(path: string, options: RequestOptions = {}): Promise<T> {
