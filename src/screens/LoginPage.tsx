@@ -1,5 +1,5 @@
 import type { FormEventHandler } from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
@@ -12,7 +12,14 @@ const LoginPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [popup, setPopup] = useState<PopupProps | null>(null); 
-  
+
+  useEffect(() => {
+    const popupData = localStorage.getItem('popupData');
+    if (popupData) {
+      setPopup(JSON.parse(popupData));
+      localStorage.removeItem('popupData'); // Clear popup data after displaying
+    }
+  }, []);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
