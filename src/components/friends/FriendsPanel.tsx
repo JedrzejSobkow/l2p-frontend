@@ -1,6 +1,7 @@
 import { useMemo, useState, type FC, type ChangeEvent } from 'react'
 import { FiChevronDown, FiSearch, FiUserPlus } from 'react-icons/fi'
 import FriendCard, { type FriendProps } from './FriendCard'
+import { useChatDock } from '../chat/ChatDockContext'
 
 type FriendsPanelProps = {
   friends?: FriendProps[]
@@ -70,6 +71,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   }, [friends, searchTerm, mode])
 
   const selectedKey = selectedFriendId !== undefined && selectedFriendId !== null ? String(selectedFriendId) : undefined
+  const { openChat } = useChatDock()
 
   const renderFriend = (friend: FriendProps) => {
     const fallbackKey = `${friend.nickname}-${friend.status}`
@@ -83,6 +85,10 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         onClick={() => {
           onFriendSelect?.(friend)
           friend.onClick?.()
+        }}
+        onMessage={() => {
+          if (!friend.nickname) return
+          openChat({ id: key, nickname: friend.nickname, avatarUrl: friend.avatarUrl })
         }}
       />
     )
@@ -242,4 +248,3 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
 }
 
 export default FriendsPanel
-

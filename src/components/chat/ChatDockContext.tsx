@@ -1,0 +1,96 @@
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import type { ChatMessage } from '../friends/ChatWindow'
+import { useAuth } from '../AuthContext'
+import type { FriendProps } from '../friends/FriendCard'
+
+
+export type ChatSession = {
+  target: FriendProps
+  messages: ChatMessage[]
+  minimized: boolean
+}
+
+type ChatDockState = {
+  sessions: Record<string, ChatSession>
+}
+
+type ChatDockContextValue = {
+  sessions: ChatSession[]
+  openChat: (target: FriendProps) => void
+  closeChat: (targetId: string) => void
+  minimizeChat: (targetId: string, minimized?: boolean) => void
+  sendMessage: (targetId: string, text: string) => void
+}
+
+const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefined)
+
+export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth()
+  const [state, setState] = useState<ChatDockState>({ sessions: {} })
+
+  const openChat = useCallback((target: FriendProps) => {
+    setState((prev) => {
+      const id = String(target.id)
+      const existing = prev.sessions[id]
+      if (existing) {
+        return { sessions: { ...prev.sessions, [id]: { ...existing, minimized: false } } }
+      }
+      const session: ChatSession = {
+        target: { id, nickname: target.nickname, avatarUrl: target.avatarUrl,status: target.status },
+        messages: [],
+        minimized: false,
+      }
+      return { sessions: { ...prev.sessions, [id]: session } }
+    })
+  }, [])
+
+  const closeChat = useCallback((targetId: string) => {
+    setState((prev) => {
+      const copy = { ...prev.sessions }
+      delete copy[String(targetId)]
+      return { sessions: copy }
+    })
+  }, [])
+
+  const minimizeChat = useCallback((targetId: string, minimized: boolean = true) => {
+    setState((prev) => {
+      const s = prev.sessions[String(targetId)]
+      if (!s) return prev
+      return { sessions: { ...prev.sessions, [String(targetId)]: { ...s, minimized } } }
+    })
+  }, [])
+
+  const sendMessage = useCallback(
+    (targetId: string, text: string) => {
+      const senderId = user?.id != null ? String(user.id) : 'me'
+      setState((prev) => {
+        const s = prev.sessions[String(targetId)]
+        if (!s) return prev
+        const msg: ChatMessage = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          senderId,
+          senderName: 'You',
+          avatarUrl: undefined,
+          content: text,
+          createdAt: new Date().toISOString(),
+        }
+        return { sessions: { ...prev.sessions, [String(targetId)]: { ...s, messages: [...s.messages, msg] } } }
+      })
+    },
+    [user?.id],
+  )
+
+  const value = useMemo<ChatDockContextValue>(() => {
+    const sessions = Object.values(state.sessions)
+    return { sessions, openChat, closeChat, minimizeChat, sendMessage }
+  }, [state.sessions, openChat, closeChat, minimizeChat, sendMessage])
+
+  return <ChatDockContext.Provider value={value}>{children}</ChatDockContext.Provider>
+}
+
+export const useChatDock = () => {
+  const ctx = useContext(ChatDockContext)
+  if (!ctx) throw new Error('useChatDock must be used within ChatDockProvider')
+  return ctx
+}
+

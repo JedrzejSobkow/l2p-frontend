@@ -5,6 +5,7 @@ import { StrictMode } from "react";
 import { router } from './router'
 import './index.css'
 import { AuthProvider } from "./components/AuthContext";
+import { ChatDockProvider } from "./components/chat/ChatDockContext";
 
 const root = document.getElementById("root");
 if (!root) {
@@ -14,7 +15,9 @@ if (!root) {
 ReactDOM.createRoot(root).render(
   <StrictMode>
     <AuthProvider>
+      <ChatDockProvider>
       <RouterProvider router={router} />
+      </ChatDockProvider>
     </AuthProvider>
   </StrictMode>
 );
