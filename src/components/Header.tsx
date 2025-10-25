@@ -7,6 +7,7 @@ const Header = ({ onToggleFriends }:{
     }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
+    const isFriendsScreen = location.pathname.startsWith('/friends');
 
     const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 
@@ -114,7 +115,7 @@ const Header = ({ onToggleFriends }:{
                 )}
             </div>
             {/* Menu Button */}
-            {isAuthenticated &&(
+            {isAuthenticated && !isFriendsScreen && (
                 <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
                     onClick={onToggleFriends}

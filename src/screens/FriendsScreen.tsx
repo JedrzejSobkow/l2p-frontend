@@ -2,6 +2,7 @@ import { useMemo, useState, type FC } from 'react'
 import ChatWindow, { type ChatMessage } from '../components/friends/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import type { FriendProps } from '../components/friends/FriendCard'
+import BackButton from '../components/BackButton'
 
 const currentUserId = 'current-user'
 
@@ -160,16 +161,11 @@ const FriendsScreen: FC = () => {
           <>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl font-bold tracking-tight">Chat with {selectedFriend.nickname}</h1>
-                <p className="text-sm text-white/60">Direct messages support attachments and voice invites.</p>
+                <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedFriend(null)}
-                className="rounded-full border border-white/20 px-4 py-2 text-sm text-white transition hover:border-orange-400/50 hover:text-orange-200"
-              >
-                Close chat
-              </button>
+              <BackButton label='Go back'>
+
+              </BackButton>
             </div>
 
             <ChatWindow
@@ -184,9 +180,9 @@ const FriendsScreen: FC = () => {
           </>
         ) : (
           <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-[32px] border border-dashed border-white/15 bg-white/5 px-6 text-center">
-            <p className="text-base font-medium text-white/80">Select a friend to start chatting.</p>
+            <p className="text-base font-medium text-white/80">Add some friends to start chatting.</p>
             <p className="mt-2 text-sm text-white/60">
-              Your direct message history will appear here once you pick someone from the list.
+              Your direct message history will appear here once you add someone to friends and pick them from the list.
             </p>
           </div>
         )}
@@ -229,7 +225,7 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove, onJ
 
   const metaData = [
     friend.rank ? { label: 'Rank', value: friend.rank } : null,
-    friend.favoriteGame ? { label: 'Favourite Game', value: friend.favoriteGame } : null,
+    // friend.favoriteGame ? { label: 'Favourite Game', value: friend.favoriteGame } : null,
     friend.lobbyId && normalizedStatus === 'In Lobby'
       ? { label: 'Lobby', value: `#${friend.lobbyId}` }
       : null
