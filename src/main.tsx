@@ -6,6 +6,7 @@ import { router } from './router'
 import './index.css'
 import { AuthProvider } from "./components/AuthContext";
 import { ChatDockProvider } from "./components/chat/ChatDockContext";
+import { ChatProvider } from "./components/chat/ChatProvider";
 
 const root = document.getElementById("root");
 if (!root) {
@@ -15,9 +16,11 @@ if (!root) {
 ReactDOM.createRoot(root).render(
   <StrictMode>
     <AuthProvider>
-      <ChatDockProvider>
-      <RouterProvider router={router} />
-      </ChatDockProvider>
+      <ChatProvider>
+        <ChatDockProvider>
+          <RouterProvider router={router} />
+        </ChatDockProvider>
+      </ChatProvider>
     </AuthProvider>
   </StrictMode>
 );

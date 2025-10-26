@@ -1,10 +1,12 @@
-import { useMemo, useState, type FC } from 'react'
+import { useMemo, useState, type FC, useEffect } from 'react'
 import ChatWindow, { type ChatMessage } from '../components/friends/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import type { FriendProps } from '../components/friends/FriendCard'
+import { useAuth } from '../components/AuthContext'
+import { useChat } from '../components/chat/ChatProvider'
 import BackButton from '../components/BackButton'
 
-const currentUserId = 'current-user'
+const currentUserIdFallback = 'current-user'
 
 const friendsMock: FriendProps[] = [
   {
@@ -55,95 +57,36 @@ const friendsMock: FriendProps[] = [
   }
 ]
 
-const dmConversations: Record<string, ChatMessage[]> = {
-  '1': [
-    {
-      id: 'd1',
-      senderId: '1',
-      senderName: 'Alicia Frost',
-      content: 'Ready for the match later?',
-      createdAt: new Date()
-    },
-    {
-      id: 'd2',
-      senderId: currentUserId,
-      senderName: 'You',
-      content: 'Absolutely. Want to review strategies?',
-      createdAt: new Date()
-    }
-  ],
-  '2': [
-    {
-      id: 'd3',
-      senderId: '2',
-      senderName: 'Brandon Rivers',
-      content: 'GGs earlier!',
-      createdAt: new Date()
-    }
-  ],
-  '5': [
-    {
-      id: 'd4',
-      senderId: '5',
-      senderName: 'Evelyn Park',
-      content: 'Lobby is ready whenever you are!',
-      createdAt: new Date()
-    }
-  ]
-}
-
 const FriendsScreen: FC = () => {
   const [selectedFriend, setSelectedFriend] = useState<FriendProps | null>(friendsMock[0] ?? null)
 
+  const { user } = useAuth()
+  const chat = useChat()
   const selectedFriendKey = selectedFriend ? String(selectedFriend.id ?? selectedFriend.nickname) : undefined
 
-  const activeMessages = useMemo<ChatMessage[]>(() => {
-    if (!selectedFriendKey) {
-      return []
+  useEffect(() => {
+    if (selectedFriendKey && selectedFriend) {
+      chat.ensureConversation({ id: selectedFriendKey, nickname: selectedFriend.nickname, avatarUrl: selectedFriend.avatarUrl })
     }
-    return dmConversations[selectedFriendKey] ?? []
   }, [selectedFriendKey])
 
-  const handleSend = async ({ text, attachment }: { text: string; attachment?: File | null }) => {
-    if (!selectedFriendKey || !selectedFriend) {
-      return
-    }
+  const activeMessages = useMemo<ChatMessage[]>(() => {
+    if (!selectedFriendKey) return []
+    return chat.getMessages(selectedFriendKey) ?? []
+  }, [selectedFriendKey, chat])
 
-    console.log('Sending direct message', {
-      friendId: selectedFriendKey,
-      friendName: selectedFriend.nickname,
-      text,
-      attachment
-    })
+  const handleSend = async ({ text }: { text: string; attachment?: File | null }) => {
+    if (!selectedFriendKey) return
+    chat.sendMessage(selectedFriendKey, text)
   }
 
-  const handleSelectFriend = (friend: FriendProps) => {
-    setSelectedFriend(friend)
-  }
-
+  const handleSelectFriend = (friend: FriendProps) => setSelectedFriend(friend)
   const handleRemoveFriend = () => {
-    if (!selectedFriendKey || !selectedFriend) {
-      return
-    }
+    if (!selectedFriendKey || !selectedFriend) return
     console.log('Removing friend', { friendId: selectedFriendKey, friendName: selectedFriend.nickname })
-    setSelectedFriend(null)
   }
-
-  const handleJoinLobby = () => {
-    if (!selectedFriend) {
-      return
-    }
-    if (selectedFriend.lobbyId) {
-      console.log('Joining lobby', { lobbyId: selectedFriend.lobbyId, host: selectedFriend.nickname })
-    }
-  }
-
-  const handleReportFriend = () => {
-    if (!selectedFriendKey || !selectedFriend) {
-      return
-    }
-    console.log('Reporting friend', { friendId: selectedFriendKey, friendName: selectedFriend.nickname })
-  }
+  const handleJoinLobby = () => { console.log('Join lobby') }
+  const handleReportFriend = () => { console.log('Report friend') }
 
   return (
     <div className="flex h-full min-h-[calc(100vh-6rem)] flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)]">
@@ -164,14 +107,13 @@ const FriendsScreen: FC = () => {
                 <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
               </div>
               <BackButton label='Go back'>
-
               </BackButton>
             </div>
 
             <ChatWindow
               title={selectedFriend.nickname}
               messages={activeMessages}
-              currentUserId={currentUserId}
+              currentUserId={user?.id != null ? String(user.id) : currentUserIdFallback}
               allowAttachments
               onSend={handleSend}
               typingUsers={['Typing...']}

@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 import type { ChatMessage } from '../friends/ChatWindow'
 import { useAuth } from '../AuthContext'
 import type { FriendProps } from '../friends/FriendCard'
+import { useChat } from './ChatProvider'
 
 
 export type ChatSession = {
@@ -26,6 +27,7 @@ const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefine
 
 export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth()
+  const chat = useChat()
   const [state, setState] = useState<ChatDockState>({ sessions: {} })
 
   const openChat = useCallback((target: FriendProps) => {
@@ -40,6 +42,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
         messages: [],
         minimized: false,
       }
+      try { chat.ensureConversation({ id, nickname: target.nickname, avatarUrl: target.avatarUrl }) } catch {}
       return { sessions: { ...prev.sessions, [id]: session } }
     })
   }, [])
@@ -60,25 +63,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [])
 
-  const sendMessage = useCallback(
-    (targetId: string, text: string) => {
-      const senderId = user?.id != null ? String(user.id) : 'me'
-      setState((prev) => {
-        const s = prev.sessions[String(targetId)]
-        if (!s) return prev
-        const msg: ChatMessage = {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          senderId,
-          senderName: 'You',
-          avatarUrl: undefined,
-          content: text,
-          createdAt: new Date().toISOString(),
-        }
-        return { sessions: { ...prev.sessions, [String(targetId)]: { ...s, messages: [...s.messages, msg] } } }
-      })
-    },
-    [user?.id],
-  )
+  const sendMessage = useCallback((targetId: string, text: string) => chat.sendMessage(targetId, text), [chat])
 
   const value = useMemo<ChatDockContextValue>(() => {
     const sessions = Object.values(state.sessions)
@@ -93,4 +78,3 @@ export const useChatDock = () => {
   if (!ctx) throw new Error('useChatDock must be used within ChatDockProvider')
   return ctx
 }
-

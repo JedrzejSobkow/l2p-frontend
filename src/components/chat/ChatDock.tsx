@@ -2,10 +2,12 @@ import { FiMinus, FiX } from 'react-icons/fi'
 import ChatWindow, { type ChatMessage } from '../friends/ChatWindow'
 import { useChatDock } from './ChatDockContext'
 import { useAuth } from '../AuthContext'
+import { useChat } from './ChatProvider'
 
 const ChatDock = () => {
-  const { sessions, minimizeChat, closeChat, sendMessage } = useChatDock()
+  const { sessions, minimizeChat, closeChat } = useChatDock()
   const { user } = useAuth()
+  const chat = useChat()
   const currentUserId = user?.id != null ? String(user.id) : 'me'
 
   const openSessions = sessions.filter((s) => !s.minimized)
@@ -39,9 +41,9 @@ const ChatDock = () => {
             </div>
             <ChatWindow
               title={s.target.nickname}
-              messages={s.messages as ChatMessage[]}
+              messages={chat.getMessages(s.target.id) as ChatMessage[]}
               currentUserId={currentUserId}
-              onSend={async ({ text }) => sendMessage(s.target.id, text)}
+              onSend={async ({ text }) => chat.sendMessage(s.target.id, text)}
               placeholder={`Message ${s.target.nickname}...`}
             />
           </div>
@@ -73,4 +75,3 @@ const ChatDock = () => {
 }
 
 export default ChatDock
-
