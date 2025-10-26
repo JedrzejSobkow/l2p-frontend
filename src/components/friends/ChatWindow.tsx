@@ -163,7 +163,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
                 <img
-                  src={message.avatarUrl || '/assets/images/pfp.png'}
+                  src={message.avatarUrl || 'src/assets/images/pfp.png'}
                   alt={message.senderName}
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
@@ -182,7 +182,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               </div>
               {isOwn && (
                 <img
-                  src={message.avatarUrl || '/assets/images/pfp.png'}
+                  src={message.avatarUrl || 'src/assets/images/pfp.png'}
                   alt="You"
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />

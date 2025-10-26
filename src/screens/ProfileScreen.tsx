@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; 
 import Popup from '../components/Popup'
 import { useAuth } from '../components/AuthContext'
 import type { User } from '../services/auth';
 
 const ProfileScreen: React.FC = () => {
-    const navigate = useNavigate()
     const { user, updateProfile, deleteAccount } = useAuth()
     const [userData,setUserData] = useState<Partial<User>|null>(null)
 
@@ -130,7 +128,7 @@ const ProfileScreen: React.FC = () => {
             return pictures[selectedPictureId];
         }
         if (userData?.pfp_path) {
-            const match = userData?.pfp_path.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
+            const match = userData?.pfp_path.match(/^\/src\/assets\/images\/avatar\/([1-9]|1[0-6])\.png$/);
             if (match) {
                 const id = parseInt(match[1], 10) - 1; 
                 return pictures[id];
