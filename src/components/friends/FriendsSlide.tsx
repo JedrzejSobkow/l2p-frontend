@@ -6,6 +6,7 @@ import type { FriendProps } from './FriendCard'
 import { useAuth } from '../AuthContext'
 import { FaUserFriends } from 'react-icons/fa'
 import { CgProfile } from 'react-icons/cg'
+import { AiFillHome } from 'react-icons/ai'
 
 type FriendsSlideProps = {
   open: boolean
@@ -17,7 +18,6 @@ type FriendsSlideProps = {
 }
 
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, friends, onFriendSelect, title, selectedFriendId }) => {
-  const navigate = useNavigate()
   const { user } = useAuth()
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation()
@@ -39,17 +39,17 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, friends, onFriendS
         onClick={handleContentClick}
       >
         <div className="relative flex h-full flex-col bg-background-secondary">
-          <div className="flex flex-col gap-3 border-b border-white/10 p-5">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="flex flex-col border-b border-white/10">
+            <div className="flex items-center gap-3 min-w-0 border-b-1 border-separator p-5">
               <img
                 src={(user?.pfp_path ?  user.pfp_path : '/assets/images/pfp.png')}
                 alt={user?.nickname || 'User Avatar'}
                 className="h-15 w-15 rounded-full border border-white/10 object-cover"
               />
               <div className="min-w-0">
-                <div className="truncate text-2xl font-semibold text-white">{user?.nickname || 'Guest'}</div>
+                <div className="truncate text-2xl font-semibold text-headline">{user?.nickname || 'Guest'}</div>
               </div>
-              <button 
+              <button
                 onClick={onClose}
                 type="button"
                 className="flex w-8 h-8 items-center justify-center rounded-full ml-auto border border-transparent text-button transition hover:border-white/30"
@@ -58,23 +58,31 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, friends, onFriendS
                 <FiX className="h-8 w-8" />
               </button>
             </div>
-            <div className='flex flex-row gap-4'>
+            <div className='flex flex-row items-center justify-center gap-5'>
+              <Link 
+                to='/'
+                className='slider-link'
+                onClick={onClose}>
+                  <AiFillHome className='w-8 h-8'></AiFillHome>
+                  <span>Home</span>
+              </Link>
               <Link 
                 to='/profile'
                 className='slider-link'
                 onClick={onClose}
                 >
-                <CgProfile className='w-8 h-8'></CgProfile>
-                <span>Profile</span>
+                  <CgProfile className='w-8 h-8'></CgProfile>
+                  <span>Profile</span>
               </Link>
               <Link 
                 to='/friends' 
                 className='slider-link'
                 onClick={onClose}
                 >
-                <FaUserFriends className='w-8 h-8'></FaUserFriends>
-                <span>Friends</span>
+                  <FaUserFriends className='w-8 h-8'></FaUserFriends>
+                  <span>Friends</span>
               </Link>
+              
             </div>
           </div>
           <FriendsPanel

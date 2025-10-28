@@ -21,6 +21,7 @@
   --color-first-place: #ffd700;
   --color-second-place: #c0c0c0;
   --color-third-place: #cd7f32;
+  --color-separator: #303030;
 }
 
 @layer base{

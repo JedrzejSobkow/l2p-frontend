@@ -97,22 +97,22 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   return (
     <div
       className={cn(
-        'flex h-full w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.98)]',
+        'flex h-full w-full flex-col overflow-hidden rounded-3xl border border-separator bg-background-secondary',
         className
       )}
     >
-      <header className="border-b border-white/10 px-6 py-4">
+      <header className="border-b border-separator px-6 py-4">
         <div className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <div className="relative flex-1">
-              <FiSearch className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+              <FiSearch className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
               <input
                 type="search"
                 value={searchTerm}
                 onChange={handleSearchChange}
                 placeholder="Search friends..."
-                className="w-full rounded-full border border-transparent bg-white/10 px-12 py-3 text-sm text-white placeholder:text-white/40 outline-none transition focus:border-orange-400/60 focus:bg-white/5 focus:shadow-[0_0_0_3px_rgba(255,149,0,0.15)]"
+                className="w-full rounded-2xl border border-transparent bg-white/10 px-8 pr-1.5 py-3 text-sm text-white placeholder:text-white/40 outline-none transition focus:border-orange-400/60 focus:bg-white/5 "
               />
             </div>
             <button
@@ -136,7 +136,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                 }
               }}
               className={cn(
-                'grid h-11 w-11 flex-shrink-0 place-items-center rounded-full border transition',
+                'grid h-11 w-11 flex-shrink-0 place-items-center rounded-full border transition ml-auto',
                 mode === 'friends'
                   ? 'border-white/15 text-white/80 hover:border-orange-400/40 hover:text-white disabled:opacity-50'
                   : 'border-orange-400/60 text-orange-300 hover:border-orange-300 hover:text-orange-200'

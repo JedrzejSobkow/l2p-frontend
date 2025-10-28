@@ -135,13 +135,17 @@ const ChatWindow: FC<ChatWindowProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-1 h-full min-h-0 w-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[rgba(20,19,32,0.95)] max-h-[77vh]',
+        'flex flex-1 h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl rounded-b-none border border-separator bg-background-secondary max-h-[77vh]',
         className
       )}
     >
       {title && (
-        <header className="border-b border-white/10 px-6 py-4">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
+          <img
+            className='w-12 h-12 rounded-full'
+            src='src/assets/images/pfp.png'></img>
+          <h2 className="text-s font-semibold text-headline">{title}</h2>
+          
         </header>
       )}
 
@@ -200,18 +204,18 @@ const ChatWindow: FC<ChatWindowProps> = ({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-white/10 px-6 py-5">
-        <div className="relative flex items-end gap-4">
+      <form onSubmit={handleSubmit} className="border-t-1 border-separator">
+        <div className="relative items-center flex px-2 gap-2">
           {allowAttachments && (
             <>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-full border border-white/15 text-white/80 transition hover:border-orange-400/40 hover:text-white"
+                className="grid h-11 w-11 absolute flex-shrink-0 z-30 place-items-center rounded-2xl border border-transparent text-button transition hover:border-orange-400/40"
                 aria-label="Add attachment"
                 disabled={isComposerDisabled}
               >
-                <FiPaperclip className="h-5 w-5" />
+                <FiPaperclip className="h-6 w-6" />
               </button>
               <input
                 ref={fileInputRef}
@@ -229,8 +233,8 @@ const ChatWindow: FC<ChatWindowProps> = ({
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
-              rows={2}
-              className="w-full resize-none rounded-3xl border border-transparent bg-white text-sm text-black/90 outline-none transition focus:border-orange-400/60 focus:shadow-[0_0_0_4px_rgba(255,149,0,0.25)] px-5 py-4 pr-16"
+              rows={1}
+              className="w-full resize-none rounded-2xl border border-transparent bg-separator text-sm text-black/90 outline-none transition focus:border-orange-400/60 px-10 py-4 pr-16"
               disabled={isComposerDisabled}
             />
             <button

@@ -43,18 +43,18 @@ const ChatDock = () => {
             {/* controls */}
             <div className="pointer-events-auto absolute right-2 top-2 z-10 flex gap-2">
               <button
-                className="rounded-full border border-white/20 p-1 text-white/80 hover:border-white/40 hover:text-white"
+                className="chat-dock-control"
                 title="Minimize"
                 onClick={() => minimizeChat(s.target.id, true)}
               >
-                <FiMinus className="h-4 w-4" />
+                <FiMinus className="h-5 w-5" />
               </button>
               <button
-                className="rounded-full border border-white/20 p-1 text-white/80 hover:border-white/40 hover:text-white"
+                className="chat-dock-control"
                 title="Close"
                 onClick={() => closeChat(s.target.id)}
               >
-                <FiX className="h-4 w-4" />
+                <FiX className="h-5 w-5" />
               </button>
             </div>
             <ChatWindow
