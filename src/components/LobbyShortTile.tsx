@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface LobbyShortTileProps {
     title: string;
@@ -10,8 +11,17 @@ interface LobbyShortTileProps {
 }
 
 const LobbyTile: React.FC<LobbyShortTileProps> = ({ title, occupiedSlots, totalSlots, creator, timeAgo, profileImagePath }) => {
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+        navigate(`/lobby/${title}`);
+    };
+
     return (
-        <div className="bg-background-tertiary p-4 rounded-lg shadow-md text-white flex items-center">
+        <div
+            className="bg-background-tertiary p-4 rounded-lg shadow-md text-white flex items-center transform transition-transform duration-200 hover:scale-105 cursor-pointer"
+            onClick={handleClick}
+        >
             <img 
                 src={profileImagePath} 
                 alt={`${creator}'s profile`} 
