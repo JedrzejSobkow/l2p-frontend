@@ -14,13 +14,31 @@ const ChatDock = () => {
   const minimized = sessions.filter((s) => s.minimized)
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-end gap-2 p-4">
-      {/* Row of open chat windows */}
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-row-reverse items-end gap-1 p-5">
+      {minimized.length > 0 && (
+        <div className="pointer-events-auto flex flex-col flex-wrap gap-2 ">
+          {minimized.map((s) => (
+            <button
+              key={s.target.id}
+              onClick={() => minimizeChat(s.target.id, false)}
+              className="flex items-center gap-2 rounded-full border text-headline border-white/15 bg-[rgba(21,20,34,0.98)] hover:border-white/30 hover:text-white"
+              title={s.target.nickname}
+            >
+              <img
+                src={s.target.avatarUrl || '/assets/images/pfp.png'}
+                alt={s.target.nickname}
+                className="h-15 w-15 rounded-full"
+              />
+              <span className="max-w-[80px] min-w-[80px] truncate">{s.target.nickname}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="pointer-events-auto flex max-w-full flex-row-reverse flex-wrap gap-3">
         {openSessions.map((s) => (
           <div
             key={s.target.id}
-            className="relative w-[360px] max-w-[94vw]"
+            className="relative w-[360px] max-w-[60vw]"
           >
             {/* controls */}
             <div className="pointer-events-auto absolute right-2 top-2 z-10 flex gap-2">
@@ -45,32 +63,11 @@ const ChatDock = () => {
               currentUserId={currentUserId}
               onSend={async ({ text }) => chat.sendMessage(s.target.id, text)}
               placeholder={`Message ${s.target.nickname}...`}
-              className='max-h-[80vh]'
+              className='max-h-[450px] min-h-[450px]'
             />
           </div>
         ))}
       </div>
-
-      {/* Minimized tray */}
-      {minimized.length > 0 && (
-        <div className="pointer-events-auto flex flex-row-reverse flex-wrap gap-2">
-          {minimized.map((s) => (
-            <button
-              key={s.target.id}
-              onClick={() => minimizeChat(s.target.id, false)}
-              className="flex items-center gap-2 rounded-full border border-white/15 bg-[rgba(21,20,34,0.98)] px-3 py-2 text-xs text-white/80 hover:border-white/30 hover:text-white"
-              title={s.target.nickname}
-            >
-              <img
-                src={s.target.avatarUrl || '/assets/images/pfp.png'}
-                alt={s.target.nickname}
-                className="h-6 w-6 rounded-full"
-              />
-              <span className="max-w-[120px] truncate">{s.target.nickname}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

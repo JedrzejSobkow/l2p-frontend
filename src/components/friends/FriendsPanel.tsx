@@ -88,7 +88,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         }}
         onMessage={() => {
           if (!friend.nickname) return
-          openChat({ id: key, nickname: friend.nickname, avatarUrl: friend.avatarUrl })
+          openChat({ id: key, nickname: friend.nickname, avatarUrl: friend.avatarUrl,status: friend.status })
         }}
       />
     )

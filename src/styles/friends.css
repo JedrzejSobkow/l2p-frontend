@@ -1,0 +1,9 @@
+@layer components {
+    .slider-link {
+        @apply flex items-center gap-2 border-1 border-transparent rounded-2xl flex-col min-w-[80px] text-button hover:border-button;
+    }
+
+    .slider-link span {
+        @apply text-headline;
+    }
+}

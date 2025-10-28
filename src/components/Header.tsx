@@ -119,7 +119,7 @@ const Header = ({ onToggleFriends }:{
                 <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
                     onClick={onToggleFriends}
-                    src="/src/assets/icons/people.png"
+                    src="/src/assets/icons/menu.png"
                     alt="Menu Icon"
                     className="w-9 h-9"
                 />

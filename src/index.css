@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './styles/auth.css';
+@import './styles/friends.css';
 
 @theme {
   --color-background: #0f0e17;
