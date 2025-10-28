@@ -24,8 +24,8 @@ const GameScreen: React.FC = () => {
     `;
 
     const lobbies = [
-        { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 4, creator: 'player222', timeAgo: '120 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
-        { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/4.png' },
+        { title: 'ttt_adventure', occupiedSlots: 1, totalSlots: 4, creator: 'player222', timeAgo: '120 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
+        { title: 'ttt_adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/4.png' },
         { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 3, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/3.png' },
         { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 4, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
         { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/3.png' },
@@ -43,7 +43,7 @@ const GameScreen: React.FC = () => {
     );
 
     return (
-        <main className="w-4/7 mx-auto py-8">
+        <main className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">
             <GameHeader 
                 title="Tic-tac-toe" 
                 minPlayers={2} 
@@ -51,17 +51,17 @@ const GameScreen: React.FC = () => {
                 estimatedPlaytime="20 minutes" 
                 path="/src/assets/images/tic-tac-toe.png" 
             />
-            <div className="">
+            <div className="mt-4">
                 <SectionButton
                     options={['Available Lobbies', 'Game Rules']}
                     selectedOption={selectedSection}
                     onSelect={setSelectedSection}
                 />
             </div>
-            <div className="mt-4 px-4">
+            <div className="mt-4">
                 {selectedSection === 'Available Lobbies' && (
                     <>
-                    <div className='bg-background-secondary p-7 pt-4 rounded-lg'>
+                    <div className='bg-background-secondary p-4 sm:p-6 md:p-7 rounded-lg'>
                         <RangeSlider 
                             min={2} 
                             max={10} 
@@ -69,7 +69,7 @@ const GameScreen: React.FC = () => {
                             onChange={setPlayerCount} 
                             icon={<FaUsers />} 
                         />
-                        <div className="grid grid-cols-3 gap-6 mt-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
                             {filteredLobbies.map((lobby, index) => (
                                 <LobbyShortTile 
                                     key={index} 
@@ -86,8 +86,8 @@ const GameScreen: React.FC = () => {
                     </>
                 )}
                 {selectedSection === 'Game Rules' && (
-                    <div className="bg-background-secondary p-7 pt-4 rounded-lg">
-                        <p className="text-base text-headline">{gameRules}</p>
+                    <div className="bg-background-secondary p-4 sm:p-6 md:p-7 rounded-lg">
+                        <p className="text-sm sm:text-base text-headline">{gameRules}</p>
                     </div>
                 )}
             </div>

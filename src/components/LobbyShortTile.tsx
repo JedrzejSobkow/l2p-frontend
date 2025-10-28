@@ -18,7 +18,7 @@ const LobbyTile: React.FC<LobbyShortTileProps> = ({ title, occupiedSlots, totalS
                 className="w-16 h-16 rounded-full mr-4" 
             />
             <div>
-                <h3 className="text-lg font-bold mb-1">{title}</h3>
+                <h3 className="text-lg font-bold mb-1 break-all">{title}</h3>
                 <p className="text-sm">slots: {occupiedSlots}/{totalSlots}</p>
                 <p className="text-sm">by: {creator}</p>
                 <p className="text-xs text-gray-400">{timeAgo}</p>

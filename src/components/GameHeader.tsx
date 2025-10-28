@@ -11,12 +11,12 @@ interface GameHeaderProps {
 
 const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, estimatedPlaytime, path }) => {
     return (
-        <div className="game-header flex items-center w-full p-4 gap-4"> 
-            <div className="game-header-icon mr-4">
+        <div className="game-header flex flex-wrap w-full py-4 gap-4 items-center sm:flex-nowrap"> 
+            <div className="game-header-icon w-full sm:w-auto flex justify-center sm:mr-4">
                 <img src={path} alt={`${title} icon`} style={{ maxWidth: '150px', maxHeight: '150px' }} />
             </div>
-            <div className="bg-background-secondary w-full h-[150px] p-6 rounded-lg flex items-center justify-between ">
-                <div className="game-header-details">
+            <div className="bg-background-secondary w-full h-auto p-6 rounded-lg flex flex-wrap items-center justify-center gap-4 sm:justify-between text-center mx-auto flex-col sm:flex-row min-w-[290px]">
+                <div className="game-header-details max-w-[250px] mx-auto">
                     <h1 className="game-header-title text-3xl font-bold text-headline">{title}</h1>
                     <p className="game-header-info text-paragraph">
                         Minimum number of players: {minPlayers}<br />
@@ -24,7 +24,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         Estimated playtime: {estimatedPlaytime}
                     </p>
                 </div>
-                <div className="game-header-actions ml-auto flex gap-3 justify-center">
+                <div className="game-header-actions mt-4 sm:mt-0 flex flex-wrap gap-3 justify-center mx-auto">
                     <button className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15">
                         <FaLink /> Join
                     </button>
