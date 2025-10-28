@@ -13,6 +13,8 @@ interface GameHeaderProps {
 const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, estimatedPlaytime, path }) => {
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
+    const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
+    const [newLobbyName, setNewLobbyName] = useState('');
     const navigate = useNavigate();
 
     const handleJoinClick = () => {
@@ -20,12 +22,24 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     };
 
     const handleNewLobbyClick = () => {
-        console.log('New Lobby button clicked');
+        setShowNewLobbyModal(true);
     };
 
     const handleCloseModal = () => {
         setShowJoinModal(false);
         setJoinCodeParts(['', '', '', '', '', '']);
+    };
+
+    const handleCreateLobby = () => {
+        console.log('Creating new lobby with name:', newLobbyName);
+        setShowNewLobbyModal(false);
+        setNewLobbyName('');
+        navigate(`/lobby/${newLobbyName}`);
+    };
+
+    const handleLobbyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 25); // Allow alphanumeric, hyphens, underscores, and limit to 25 chars
+        setNewLobbyName(value);
     };
 
     const handlePartChange = (index: number, value: string, inputs: NodeListOf<HTMLInputElement>) => {
@@ -73,7 +87,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         <FaLink /> Join
                     </button>
                     <button
-                        className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15 transform transition-transform duration-200 hover:scale-110"
+                        className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15 transform transition-transform duration-200 hover:scale-110 cursor-pointer"
                         onClick={handleNewLobbyClick}
                     >
                         <FaPlus /> New Lobby
@@ -117,9 +131,9 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleConfirmJoin}
-                                className={`px-4 py-2 rounded ${
+                                className={`px-4 py-2 rounded transform transition-transform duration-200 ${
                                     isJoinCodeComplete
-                                        ? 'bg-highlight text-white cursor-pointer'
+                                        ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
                                 disabled={!isJoinCodeComplete}
@@ -128,7 +142,55 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                             </button>
                             <button
                                 onClick={handleCloseModal}
-                                className="px-4 py-2 bg-gray-300 text-black rounded"
+                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showNewLobbyModal && (
+                <div
+                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+                    style={{ backdropFilter: 'blur(8px)' }}
+                    onClick={() => setShowNewLobbyModal(false)}
+                >
+                    <div
+                        className="bg-background p-6 rounded-lg shadow-lg text-center"
+                        style={{
+                            outline: '2px solid var(--color-highlight)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className="text-highlight text-xl font-bold mb-4">Create New Lobby</h2>
+                        <p className="text-paragraph mb-4">
+                            Enter a name for your new lobby.
+                        </p>
+                        <input
+                            type="text"
+                            value={newLobbyName}
+                            onChange={handleLobbyNameChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded mb-4 text-highlight"
+                            placeholder="Lobby Name"
+                            spellCheck="false"
+                        />
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={handleCreateLobby}
+                                className={`px-4 py-2 rounded transform transition-transform duration-200 ${
+                                    newLobbyName.trim()
+                                        ? 'bg-highlight text-white cursor-pointer hover:scale-105'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                                disabled={!newLobbyName.trim()}
+                            >
+                                Create
+                            </button>
+                            <button
+                                onClick={() => setShowNewLobbyModal(false)}
+                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105"
                             >
                                 Cancel
                             </button>

@@ -12,8 +12,8 @@ const SectionButton: React.FC<SectionButtonProps> = ({ options, selectedOption, 
       {options.map((option, index) => (
         <button
           key={option}
-          className={`flex-1 px-6 py-1 text-lg font-bold ${
-            selectedOption === option ? 'bg-highlight text-background' : 'bg-background text-highlight'
+          className={`flex-1 px-6 py-1 text-lg font-bold transition-all duration-200 ${
+            selectedOption === option ? 'bg-highlight text-background' : 'bg-background text-highlight hover:text-xl'
           } ${index === 0 ? 'rounded-l-lg' : ''} ${index === options.length - 1 ? 'rounded-r-lg' : ''}`}
           onClick={() => onSelect(option)}
         >
