@@ -2,13 +2,14 @@ import React from 'react';
 
 interface LobbyShortTileProps {
     title: string;
-    slots: string;
+    occupiedSlots: number;
+    totalSlots: number;
     creator: string;
     timeAgo: string;
     profileImagePath: string;
 }
 
-const LobbyTile: React.FC<LobbyShortTileProps> = ({ title, slots, creator, timeAgo, profileImagePath }) => {
+const LobbyTile: React.FC<LobbyShortTileProps> = ({ title, occupiedSlots, totalSlots, creator, timeAgo, profileImagePath }) => {
     return (
         <div className="bg-background-tertiary p-4 rounded-lg shadow-md text-white flex items-center">
             <img 
@@ -18,7 +19,7 @@ const LobbyTile: React.FC<LobbyShortTileProps> = ({ title, slots, creator, timeA
             />
             <div>
                 <h3 className="text-lg font-bold mb-1">{title}</h3>
-                <p className="text-sm">slots: {slots}</p>
+                <p className="text-sm">slots: {occupiedSlots}/{totalSlots}</p>
                 <p className="text-sm">by: {creator}</p>
                 <p className="text-xs text-gray-400">{timeAgo}</p>
             </div>
