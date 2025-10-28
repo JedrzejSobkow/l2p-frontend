@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import type { ChatMessage } from '../friends/ChatWindow'
+import type { ChatMessage } from './ChatWindow'
 import { useAuth } from '../AuthContext'
 import type { FriendProps } from '../friends/FriendCard'
 import { useChat } from './ChatProvider'
@@ -31,21 +31,24 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<ChatDockState>({ sessions: {} })
 
   const openChat = useCallback((target: FriendProps) => {
+    const id = String(target.id)
     setState((prev) => {
-      const id = String(target.id)
       const existing = prev.sessions[id]
       if (existing) {
         return { sessions: { ...prev.sessions, [id]: { ...existing, minimized: false } } }
       }
       const session: ChatSession = {
-        target: { id, nickname: target.nickname, avatarUrl: target.avatarUrl,status: target.status },
+        target: { id, nickname: target.nickname, avatarUrl: target.avatarUrl, status: target.status },
         messages: [],
         minimized: false,
       }
-      try { chat.ensureConversation({ id, nickname: target.nickname, avatarUrl: target.avatarUrl }) } catch {}
       return { sessions: { ...prev.sessions, [id]: session } }
     })
-  }, [])
+    // schedule ensuring the conversation after render to avoid cross-render setState
+    setTimeout(() => {
+      try { chat.ensureConversation({ id, nickname: target.nickname, avatarUrl: target.avatarUrl }) } catch {}
+    }, 0)
+  }, [chat])
 
   const closeChat = useCallback((targetId: string) => {
     setState((prev) => {

@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, useState, type ReactNode, useCallback } from 'react'
-import type { ChatMessage } from '../friends/ChatWindow'
+import type { ChatMessage } from './ChatWindow'
 import { useAuth } from '../AuthContext'
 
 export type ConversationTarget = {

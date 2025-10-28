@@ -135,7 +135,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   return (
     <div
       className={cn(
-        'flex h-full min-h-[480px] w-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[rgba(20,19,32,0.95)] shadow-[0_15px_45px_rgba(0,0,0,0.45)]',
+        'flex flex-1 h-full min-h-0 w-full flex-col overflow-hidden rounded-[32px] border border-white/10 bg-[rgba(20,19,32,0.95)] max-h-[77vh]',
         className
       )}
     >
@@ -145,7 +145,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
         </header>
       )}
 
-      <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-6 py-6">
+      <div ref={scrollRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6">
         {messages.map((message) => {
           const isOwn = message.senderId === currentUserId
           if (message.isSystem) {

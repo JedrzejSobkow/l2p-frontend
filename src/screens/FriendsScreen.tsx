@@ -1,5 +1,5 @@
 import { useMemo, useState, type FC, useEffect } from 'react'
-import ChatWindow, { type ChatMessage } from '../components/friends/ChatWindow'
+import ChatWindow, { type ChatMessage } from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import type { FriendProps } from '../components/friends/FriendCard'
 import { useAuth } from '../components/AuthContext'
@@ -99,7 +99,7 @@ const FriendsScreen: FC = () => {
           selectedFriendId={selectedFriend?.id}
         />
       </div>
-      <div className="order-3 flex w-full flex-1 flex-col gap-4 lg:order-2">
+      <div className="order-3 flex w-full h-full flex-1 flex-col min-h-0 gap-4 lg:order-2">
         {selectedFriend ? (
           <>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -116,7 +116,6 @@ const FriendsScreen: FC = () => {
               currentUserId={user?.id != null ? String(user.id) : currentUserIdFallback}
               allowAttachments
               onSend={handleSend}
-              typingUsers={['Typing...']}
               placeholder="Send a direct message..."
             />
           </>

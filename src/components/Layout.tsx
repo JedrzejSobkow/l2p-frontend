@@ -32,14 +32,17 @@ const Layout = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
                 <Header onToggleFriends = {()=> setFriendsOpen(true)}/>
                 <Outlet/>
-                <FriendsSlide 
-                  open={isFriendsOpen} 
-                  onClose={()=>setFriendsOpen(false)}
-                  friends={friendsMock}
-                  >
-                </FriendsSlide>
+                <div className=''>
+                    <FriendsSlide 
+                        open={isFriendsOpen} 
+                        onClose={()=>setFriendsOpen(false)}
+                        friends={friendsMock}
+                    >
+                    </FriendsSlide>
+                
+                </div>
+                
                 <Footer />
-                {/* Global chat dock overlay */}
                 <ChatDock />
                 </div>
     );
