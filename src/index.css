@@ -3,7 +3,8 @@
 
 @theme {
   --color-background: #0f0e17;
-  --color-background-secondary:#181720 ;
+  --color-background-secondary: #181720;
+  --color-background-tertiary: #2f2e36;
   --color-button: #ff8906;
   --color-headline: #fffffe;
   --color-button-text: #fffffe;

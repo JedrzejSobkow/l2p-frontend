@@ -51,6 +51,10 @@ const RegistrationPage = () => {
         return
       }
       await register({ nickname , email, password })
+      localStorage.setItem(
+        'popupData',
+        JSON.stringify({ type: 'informative', message: 'Account created. Please verify your email to log in.' })
+      );
       navigate('/login', { replace: true })
      
     } catch (err: any) {
