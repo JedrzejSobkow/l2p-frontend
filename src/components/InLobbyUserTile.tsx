@@ -1,46 +1,58 @@
 import React from 'react';
-import { FaCrown } from 'react-icons/fa';
+import { FaCrown, FaUserTimes } from 'react-icons/fa';
+import { LuCrown } from 'react-icons/lu';
 
 interface InLobbyUserTileProps {
   avatar: string;
   username: string;
-  status: 'ready' | 'not_ready';
   place: number;
   isReady: boolean;
   isHost: boolean;
   isMe: boolean;
+  onCrownClick?: () => void;
+  onKickClick?: () => void;
 }
 
-const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, status, place, isReady, isHost, isMe }) => {
-  const statusColors = {
-    ready: 'text-green-500',
-    not_ready: 'text-red-500',
-  };
+const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, isMe, onCrownClick, onKickClick }) => {
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 rounded-lg bg-background-secondary shadow-md max-w-[250px] ${
+      className={`flex items-center justify-between gap-4 p-4 rounded-lg bg-background-tertiary shadow-md ${
         isReady ? 'border border-2 border-green-500' : 'border border-2 border-red-500'
       }`}
     >
-      {/* Place */}
-      <span className="text-sm font-bold text-gray-500">{place}.</span>
-      {/* Avatar with Crown */}
-      <div className="relative w-12 h-12">
-        {isHost && (
-          <FaCrown className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-500" size={16} />
-        )}
-        <img
-          src={avatar}
-          alt={`${username}'s avatar`}
-          className="w-full h-full rounded-full"
-        />
+      {/* Left Side: Place and Avatar */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-bold text-gray-500">{place}.</span>
+        <div className="relative w-12 h-12">
+          {isHost && (
+            <FaCrown className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-yellow-500" size={24} />
+          )}
+          <img
+            src={avatar}
+            alt={`${username}'s avatar`}
+            className="w-full h-full rounded-full"
+          />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-headline text-ellipsis overflow-hidden whitespace-nowrap">
+            {username}
+          </span>
+        </div>
       </div>
-      {/* User Info */}
-      <div className="flex flex-col">
-        <span className="text-sm font-medium text-headline">
-          {username}
-        </span>
+
+      {/* Right Side: Buttons */}
+      <div className="flex flex-col items-end gap-2">
+        {!isHost && (
+          <button onClick={onCrownClick} className="focus:outline-none">
+            <LuCrown className="text-highlight" size={20} />
+          </button>
+        )}
+        {!isMe && (
+          <button onClick={onKickClick} className="focus:outline-none">
+            <FaUserTimes className="text-highlight" size={20} />
+          </button>
+        )}
       </div>
     </div>
   );
