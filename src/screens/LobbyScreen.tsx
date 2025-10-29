@@ -1,9 +1,11 @@
 import React from 'react';
 import InLobbyUserTile from '../components/InLobbyUserTile';
+import Setting from '../components/Setting';
 import { FaRegEdit } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { FaRegFolderOpen } from 'react-icons/fa6';
-
+import { LuTimer, LuUsers } from 'react-icons/lu';
+import { FiLock } from 'react-icons/fi';
 
 const LobbyScreen: React.FC = () => {
     // Mocked data
@@ -12,12 +14,38 @@ const LobbyScreen: React.FC = () => {
         name: "Tic-Tac-Toe",
         rules: "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Expedita, voluptatum eum impedit optio eos, ratione minima consequatur totam similique laborum, suscipit odio animi error rerum exercitationem facilis incidunt cumque obcaecati",
         img_path: "/src/assets/images/tic-tac-toe.png"
-    }
+    };
     const users = [
         { avatar: "/src/assets/images/avatar/15.png", username: "JohnDoe", place: 1, isReady: false, isHost: false, isMe: false },
         { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false, isMe: false },
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: true, isMe: true },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false, isMe: false },
+    ];
+
+    // Mocked Lobby Settings
+    const lobbySettings = [
+        {
+            label: "Visibility",
+            icon: <FiLock size={20} />,
+            availableValues: ["Private", "Public"],
+            defaultValue: "Private",
+        },
+    ];
+
+    // Mocked Game Settings
+    const gameSettings = [
+        {
+            label: "Players",
+            icon: <LuUsers size={20} />,
+            availableValues: ["2", "4", "6", "8"],
+            defaultValue: "6",
+        },
+        {
+            label: "Game time [min]",
+            icon: <LuTimer size={20} />,
+            availableValues: ["2", "4", "6", "8"],
+            defaultValue: "6",
+        },
     ];
 
     return (
@@ -51,7 +79,7 @@ const LobbyScreen: React.FC = () => {
             </div>
 
             {/* Second Column: Game Info */}
-            <div className="flex items-start">
+            <div className="flex flex-col gap-4">
                 <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
                     <div className="flex items-center gap-4">
                         <img
@@ -69,6 +97,41 @@ const LobbyScreen: React.FC = () => {
                         <button className="focus:outline-none">
                             <FaRegFolderOpen className="text-highlight" size={30} />
                         </button>
+                    </div>
+                </div>
+
+                {/* Settings Section */}
+                <div className="w-full p-4 bg-background-secondary rounded-lg shadow-md">
+                    {/* Lobby Settings */}
+                    <div className="mb-4">
+                        <h3 className="text-lg font-bold text-white mb-2">Lobby Settings</h3>
+                        <div className="flex flex-col gap-y-2">
+                            {lobbySettings.map((setting, index) => (
+                                <Setting
+                                    key={index}
+                                    label={setting.label}
+                                    icon={setting.icon}
+                                    availableValues={setting.availableValues}
+                                    defaultValue={setting.defaultValue}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Game Settings */}
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-2">Game Settings</h3>
+                        <div className="flex flex-col gap-y-2">
+                            {gameSettings.map((setting, index) => (
+                                <Setting
+                                    key={index}
+                                    label={setting.label}
+                                    icon={setting.icon}
+                                    availableValues={setting.availableValues}
+                                    defaultValue={setting.defaultValue}
+                                />
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
