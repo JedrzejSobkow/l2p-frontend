@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
+import LobbyChat from '../components/LobbyChat';
 import { FaRegEdit } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { FaRegFolderOpen } from 'react-icons/fa6';
@@ -22,6 +23,12 @@ const LobbyScreen: React.FC = () => {
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: true, isMe: true },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false, isMe: false },
     ];
+
+    const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
+
+    const handleSendMessage = (message: string) => {
+        setMessages((prev) => [...prev, { username: "You", text: message }]);
+    };
 
     // State for the Ready button
     const [isReady, setIsReady] = useState(false);
@@ -58,6 +65,8 @@ const LobbyScreen: React.FC = () => {
 
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
+            {/* First Column: Players and chat */}
+
             <div className="flex flex-col items-center gap-4">
                 <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
                     <span className="text-lg font-bold text-white">{lobbyName}</span>
@@ -83,10 +92,8 @@ const LobbyScreen: React.FC = () => {
                     <InviteToLobbyUserTile onInviteClick={() => console.log('Invite clicked')} />
                 </div>
 
-                {/* Chat Section Placeholder */}
-                <div className="w-full p-4 bg-background-secondary rounded-lg shadow-md">
-                    <span className="text-gray-500">Chat section goes here</span>
-                </div>
+                {/* Chat Section */}
+                <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
             </div>
 
             {/* Second Column: Game Info */}
@@ -151,9 +158,8 @@ const LobbyScreen: React.FC = () => {
                     {/* Ready Button */}
                     <button
                         onClick={toggleReady}
-                        className={`px-6 py-3 text-white font-bold rounded-lg focus:outline-none ${
-                            isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-                        }`}
+                        className={`px-6 py-3 text-white font-bold rounded-lg focus:outline-none ${isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                            }`}
                     >
                         {isReady ? 'Ready' : 'Not Ready'}
                     </button>
