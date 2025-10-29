@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import Setting from '../components/Setting';
 import { FaRegEdit } from 'react-icons/fa';
@@ -21,6 +21,13 @@ const LobbyScreen: React.FC = () => {
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: true, isMe: true },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false, isMe: false },
     ];
+
+    // State for the Ready button
+    const [isReady, setIsReady] = useState(false);
+
+    const toggleReady = () => {
+        setIsReady((prev) => !prev);
+    };
 
     // Mocked Lobby Settings
     const lobbySettings = [
@@ -133,6 +140,24 @@ const LobbyScreen: React.FC = () => {
                             ))}
                         </div>
                     </div>
+                </div>
+
+                {/* New Section */}
+                <div className="w-full p-4 rounded-lg shadow-md flex items-center justify-center gap-4">
+                    {/* Ready Button */}
+                    <button
+                        onClick={toggleReady}
+                        className={`px-6 py-3 text-white font-bold rounded-lg focus:outline-none ${
+                            isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                        }`}
+                    >
+                        {isReady ? 'Ready' : 'Not Ready'}
+                    </button>
+
+                    {/* Start Button */}
+                    <button className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none">
+                        Start
+                    </button>
                 </div>
             </div>
         </main>
