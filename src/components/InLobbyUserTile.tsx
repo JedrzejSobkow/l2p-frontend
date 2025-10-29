@@ -8,12 +8,13 @@ interface InLobbyUserTileProps {
   place: number;
   isReady: boolean;
   isHost: boolean;
-  isMe: boolean;
+  displayPassHost: boolean;
+  displayKickOut: boolean;
   onCrownClick?: () => void;
   onKickClick?: () => void;
 }
 
-const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, isMe, onCrownClick, onKickClick }) => {
+const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, onCrownClick, onKickClick }) => {
 
   return (
     <div
@@ -43,12 +44,12 @@ const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, pla
 
       {/* Right Side: Buttons */}
       <div className="flex flex-col items-end gap-2">
-        {!isHost && (
+        {displayPassHost && (
           <button onClick={onCrownClick} className="focus:outline-none">
             <LuCrown className="text-highlight" size={20} />
           </button>
         )}
-        {!isMe && (
+        {displayKickOut && (
           <button onClick={onKickClick} className="focus:outline-none">
             <FaUserTimes className="text-highlight" size={20} />
           </button>

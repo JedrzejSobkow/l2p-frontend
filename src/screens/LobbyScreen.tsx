@@ -10,7 +10,9 @@ import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
 
 const LobbyScreen: React.FC = () => {
-    // Mocked data
+    // Mocked myUsername
+    const myUsername = "cool_user";
+
     const lobbyName = "Tiririri-kantiri";
     const game = {
         name: "Tic-Tac-Toe",
@@ -18,11 +20,14 @@ const LobbyScreen: React.FC = () => {
         img_path: "/src/assets/images/tic-tac-toe.png"
     };
     const users = [
-        { avatar: "/src/assets/images/avatar/15.png", username: "JohnDoe", place: 1, isReady: false, isHost: false, isMe: false },
-        { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false, isMe: false },
-        { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: true, isMe: true },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false, isMe: false },
+        { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: true },
+        { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
+        { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false },
     ];
+
+    // Mocked friends
+    const friends = ["JohnDoe", "Friend2", "Friend3", "Friend4", "Friend5"];
 
     const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
 
@@ -84,7 +89,8 @@ const LobbyScreen: React.FC = () => {
                             place={user.place}
                             isReady={user.isReady}
                             isHost={user.isHost}
-                            isMe={user.isMe}
+                            displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
+                            displayKickOut={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
                         />
                     ))}
                     {/* Add empty seats */}
