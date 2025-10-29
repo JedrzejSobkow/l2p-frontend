@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import InLobbyUserTile from '../components/InLobbyUserTile';
+import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
 import { FaRegEdit } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
@@ -77,6 +78,9 @@ const LobbyScreen: React.FC = () => {
                             isMe={user.isMe}
                         />
                     ))}
+                    {/* Add empty seats */}
+                    <InviteToLobbyUserTile onInviteClick={() => console.log('Invite clicked')} />
+                    <InviteToLobbyUserTile onInviteClick={() => console.log('Invite clicked')} />
                 </div>
 
                 {/* Chat Section Placeholder */}
