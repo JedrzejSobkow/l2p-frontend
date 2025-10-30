@@ -10,11 +10,12 @@ interface InLobbyUserTileProps {
   isHost: boolean;
   displayPassHost: boolean;
   displayKickOut: boolean;
+  isYou: boolean;
   onCrownClick?: () => void;
   onKickClick?: () => void;
 }
 
-const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, onCrownClick, onKickClick }) => {
+const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, isYou, onCrownClick, onKickClick }) => {
 
   return (
     <div
@@ -36,7 +37,7 @@ const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, pla
           />
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-headline text-ellipsis overflow-hidden whitespace-nowrap">
+          <span className={`text-sm font-medium text-headline text-ellipsis overflow-hidden whitespace-nowrap ${isYou ? 'underline' : ''}`}>
             {username}
           </span>
         </div>

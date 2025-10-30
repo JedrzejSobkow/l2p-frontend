@@ -89,6 +89,7 @@ const LobbyScreen: React.FC = () => {
                             place={user.place}
                             isReady={user.isReady}
                             isHost={user.isHost}
+                            isYou={myUsername === user.username}
                             displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
                             displayKickOut={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
                         />
