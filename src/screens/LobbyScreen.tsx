@@ -149,32 +149,32 @@ const LobbyScreen: React.FC = () => {
     return (
         <main className="flex flex-col bg-background-primary min-h-screen">
             {/* Top Bar with Leave Button */}
-            <div className="flex justify-start px-8 pt-4">
+            <div className="flex justify-start px-4 sm:px-6 lg:px-8 pt-4 pb-2">
                 <button
                     onClick={handleLeaveClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 hover:scale-105 transition-transform focus:outline-none"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-red-700 hover:scale-105 transition-transform focus:outline-none"
                 >
                     <FaSignOutAlt size={20} />
-                    Leave
+                    <span className="hidden sm:inline">Leave</span>
                 </button>
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-2 gap-8 p-8 flex-1">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 lg:p-8 flex-1 overflow-auto">
                 {/* First Column: Players and chat */}
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
-                        <span className="text-lg font-bold text-white">{editedLobbyName}</span>
+                <div className="flex flex-col items-center gap-3 sm:gap-4">
+                    <div className="w-full flex items-center justify-between p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
+                        <span className="text-base sm:text-lg font-bold text-white truncate">{editedLobbyName}</span>
                         <button 
                             disabled={!isUserHost}
                             onClick={() => setIsEditingLobbyName(true)}
-                            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
+                            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer ml-2 flex-shrink-0"
                         >
-                            <FaRegEdit className="text-highlight" size={30} />
+                            <FaRegEdit className="text-highlight" size={24} />
                         </button>
                     </div>
 
-                    <div className="w-full grid grid-cols-2 gap-4 p-4 bg-background-secondary rounded-lg shadow-md">
+                    <div className="w-full grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4 p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
                         {users.map((user, index) => (
                             <InLobbyUserTile
                                 key={index}
@@ -195,44 +195,61 @@ const LobbyScreen: React.FC = () => {
                         ))}
                     </div>
 
+                    {/* Action Buttons Section - visible on mobile */}
+                    <div className="w-full lg:hidden p-3 sm:p-4 rounded-lg shadow-md flex flex-col items-center justify-center gap-3">
+                        {/* Ready Button */}
+                        <button
+                            onClick={toggleReady}
+                            className={`w-full px-4 py-2 text-white font-bold text-sm rounded-lg focus:outline-none ${isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                                }`}
+                        >
+                            {isReady ? 'Ready' : 'Not Ready'}
+                        </button>
+
+                        {/* Start Button */}
+                        <button disabled={!canStartGame} className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                            Start
+                        </button>
+                    </div>
+
                     {/* Chat Section */}
                     <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
                 </div>
 
                 {/* Second Column: Game Info */}
-                <div className="flex flex-col gap-4">
-                    <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
-                        <div className="flex items-center gap-4">
+                <div className="flex flex-col gap-3 sm:gap-4">
+                    <div className="w-full flex items-center justify-between gap-2 p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
+                        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                             <img
                                 src={game.img_path}
                                 alt={`${game.name} image`}
-                                className="h-7 w-auto"
+                                className="h-5 sm:h-7 w-auto flex-shrink-0"
                             />
-                            <span className="text-lg font-bold text-white">{game.name}</span>
+                            <span className="text-sm sm:text-lg font-bold text-white truncate">{game.name}</span>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             <button 
                                 onClick={() => setIsShowingGameInfo(true)}
-                                className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
+                                className="focus:outline-none hover:scale-105 transition-transform cursor-pointer p-1"
                             >
-                                <AiOutlineInfoCircle className="text-highlight" size={30} />
+                                <AiOutlineInfoCircle className="text-highlight" size={24} />
                             </button>
                             <button 
                                 disabled={!isUserHost}
                                 onClick={() => setIsShowingCatalogue(true)}
-                                className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
+                                className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer p-1"
                             >
-                                <FaRegFolderOpen className="text-highlight" size={30} />
+                                <FaRegFolderOpen className="text-highlight" size={24} />
                             </button>
                         </div>
                     </div>
 
                     {/* Settings Section */}
-                    <div className="w-full p-4 bg-background-secondary rounded-lg shadow-md">
+                    <div className="w-full p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md overflow-y-auto max-h-96 lg:max-h-none">
                         {/* Lobby Settings */}
-                        <div className="mb-4">
-                            <h3 className="text-lg font-bold text-white mb-2">Lobby Settings</h3>
+                        <div className="mb-3 sm:mb-4">
+                            <h3 className="text-base sm:text-lg font-bold text-white mb-2">Lobby Settings</h3>
                             <div className="flex flex-col gap-y-2">
                                 {lobbySettings.map((setting, index) => (
                                     <Setting
@@ -249,7 +266,7 @@ const LobbyScreen: React.FC = () => {
 
                         {/* Game Settings */}
                         <div>
-                            <h3 className="text-lg font-bold text-white mb-2">Game Settings</h3>
+                            <h3 className="text-base sm:text-lg font-bold text-white mb-2">Game Settings</h3>
                             <div className="flex flex-col gap-y-2">
                                 {gameSettings.map((setting, index) => (
                                     <Setting
@@ -267,19 +284,19 @@ const LobbyScreen: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* New Section */}
-                    <div className="w-full p-4 rounded-lg shadow-md flex items-center justify-center gap-4">
+                    {/* Action Buttons Section - visible on desktop */}
+                    <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                         {/* Ready Button */}
                         <button
                             onClick={toggleReady}
-                            className={`px-6 py-3 text-white font-bold rounded-lg focus:outline-none ${isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                            className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-white font-bold text-sm sm:text-base rounded-lg focus:outline-none ${isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
                                 }`}
                         >
                             {isReady ? 'Ready' : 'Not Ready'}
                         </button>
 
                         {/* Start Button */}
-                        <button disabled={!canStartGame} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                        <button disabled={!canStartGame} className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
                             Start
                         </button>
                     </div>
