@@ -3,6 +3,10 @@ import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
 import LobbyChat from '../components/LobbyChat';
+import EditLobbyNameModal from '../components/EditLobbyNameModal';
+import GameInfoModal from '../components/GameInfoModal';
+import CatalogueModal from '../components/CatalogueModal';
+import PassHostModal from '../components/PassHostModal';
 import { FaRegEdit } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { FaRegFolderOpen } from 'react-icons/fa6';
@@ -19,16 +23,15 @@ const LobbyScreen: React.FC = () => {
         rules: "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Expedita, voluptatum eum impedit optio eos, ratione minima consequatur totam similique laborum, suscipit odio animi error rerum exercitationem facilis incidunt cumque obcaecati",
         img_path: "/src/assets/images/tic-tac-toe.png"
     };
-    const users = [
+
+    const [users, setUsers] = useState([
         { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: true },
         { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
-
-
-    ];
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice1", place: 4, isReady: true, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice2", place: 5, isReady: true, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice3", place: 6, isReady: true, isHost: false },
+    ]);
 
     // Mocked friends
     const friends = ["JohnDoe", "Friend2", "Friend3", "Friend4", "Friend5"];
@@ -107,13 +110,36 @@ const LobbyScreen: React.FC = () => {
 
     const canStartGame = isUserHost && allUsersReady && currentPlayerCount === selectedPlayerCount;
 
+    const handleSaveLobbyName = (newName: string) => {
+        // TODO: Implement lobby name update logic
+        setEditedLobbyName(newName);
+        setIsEditingLobbyName(false);
+    };
+
+    const handlePassHost = (newHostUsername: string) => {
+        setUsers(prevUsers =>
+            prevUsers.map(user => ({
+                ...user,
+                isHost: user.username === newHostUsername
+            }))
+        );
+    };
+
+    const [passHostUsername, setPassHostUsername] = useState<string>("");
+    const [isPassHostModalOpen, setIsPassHostModalOpen] = useState(false);
+
+    const handlePassHostClick = (username: string) => {
+        setPassHostUsername(username);
+        setIsPassHostModalOpen(true);
+    };
+
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
             {/* First Column: Players and chat */}
 
             <div className="flex flex-col items-center gap-4">
                 <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
-                    <span className="text-lg font-bold text-white">{lobbyName}</span>
+                    <span className="text-lg font-bold text-white">{editedLobbyName}</span>
                     <button 
                         disabled={!isUserHost}
                         onClick={() => setIsEditingLobbyName(true)}
@@ -135,6 +161,7 @@ const LobbyScreen: React.FC = () => {
                             isYou={myUsername === user.username}
                             displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
                             displayKickOut={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
+                            onPassHost={() => handlePassHostClick(user.username)}
                         />
                     ))}
                     {/* Add empty seats */}
@@ -233,146 +260,37 @@ const LobbyScreen: React.FC = () => {
                 </div>
             </div>
 
-            {/* Edit Lobby Name Modal */}
-            {isEditingLobbyName && (
-                <div
-                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
-                    style={{ backdropFilter: 'blur(8px)' }}
-                    onClick={() => setIsEditingLobbyName(false)}
-                >
-                    <div
-                        className="bg-background p-6 rounded-lg shadow-lg text-center"
-                        style={{
-                            outline: '2px solid var(--color-highlight)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h2 className="text-highlight text-xl font-bold mb-4">Edit Lobby Name</h2>
-                        <p className="text-paragraph mb-4">
-                            Enter a new name for your lobby.
-                        </p>
-                        <input
-                            type="text"
-                            value={editedLobbyName}
-                            onChange={(e) => setEditedLobbyName(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-400 rounded mb-4 text-headline"
-                            placeholder="Lobby Name"
-                        />
-                        <div className="flex justify-center gap-4">
-                            <button
-                                onClick={() => {
-                                    // TODO: Implement lobby name update logic
-                                    setIsEditingLobbyName(false);
-                                }}
-                                disabled={!editedLobbyName.trim()}
-                                className={`px-4 py-2 rounded ${
-                                    editedLobbyName.trim()
-                                        ? 'bg-highlight text-white cursor-pointer hover:scale-105'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                } transition-transform`}
-                            >
-                                Save
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setIsEditingLobbyName(false);
-                                    setEditedLobbyName(lobbyName);
-                                }}
-                                className="bg-gray-300 text-black px-4 py-2 rounded hover:scale-105 transition-transform"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Modals */}
+            <EditLobbyNameModal
+                isOpen={isEditingLobbyName}
+                currentName={editedLobbyName}
+                onSave={handleSaveLobbyName}
+                onCancel={() => setIsEditingLobbyName(false)}
+            />
 
-            {/* Game Info Modal */}
-            {isShowingGameInfo && (
-                <div
-                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
-                    style={{ backdropFilter: 'blur(8px)' }}
-                    onClick={() => setIsShowingGameInfo(false)}
-                >
-                    <div
-                        className="bg-background p-6 rounded-lg shadow-lg text-center max-w-md max-h-96 overflow-y-auto"
-                        style={{
-                            outline: '2px solid var(--color-highlight)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h2 className="text-highlight text-xl font-bold mb-4">{game.name}</h2>
-                        <p className="text-paragraph mb-4">
-                            {game.rules}
-                        </p>
-                        <button
-                            onClick={() => setIsShowingGameInfo(false)}
-                            className="bg-highlight text-white px-4 py-2 rounded hover:scale-105 transition-transform"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
+            <GameInfoModal
+                isOpen={isShowingGameInfo}
+                gameName={game.name}
+                gameRules={game.rules}
+                onClose={() => setIsShowingGameInfo(false)}
+            />
 
-            {/* Catalogue Modal */}
-            {isShowingCatalogue && (
-                <div
-                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
-                    style={{ backdropFilter: 'blur(8px)' }}
-                    onClick={() => setIsShowingCatalogue(false)}
-                >
-                    <div
-                        className="bg-background p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col"
-                        style={{
-                            outline: '2px solid var(--color-highlight)',
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h2 className="text-highlight text-xl font-bold mb-4">Game Catalogue</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-grow overflow-y-auto">
-                            {mockGames.map((gameItem, index) => {
-                                const isAvailable = isGameAvailable(gameItem.supportedPlayers);
-                                return (
-                                    <div
-                                        key={index}
-                                        className={`flex flex-col items-center gap-2 p-4 rounded-lg cursor-pointer transition-transform ${
-                                            isAvailable
-                                                ? 'bg-background-secondary hover:bg-background-primary hover:scale-105'
-                                                : 'bg-gray-600 opacity-50 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        <img
-                                            src={gameItem.src}
-                                            alt={gameItem.gameName}
-                                            className="w-20 h-20 rounded-lg object-cover"
-                                        />
-                                        <span className="text-sm font-medium text-headline text-center">
-                                            {gameItem.gameName}
-                                        </span>
-                                        <span className="text-xs text-paragraph">
-                                            {gameItem.supportedPlayers.join(', ')} player{gameItem.supportedPlayers.length > 1 ? 's' : ''}
-                                        </span>
-                                        {!isAvailable && (
-                                            <span className="text-xs text-red-400 font-semibold">
-                                                Not available
-                                            </span>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div className="flex justify-center mt-4 pt-4">
-                            <button
-                                onClick={() => setIsShowingCatalogue(false)}
-                                className="bg-highlight text-white px-4 py-2 rounded hover:scale-105 transition-transform"
-                            >
-                                Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CatalogueModal
+                isOpen={isShowingCatalogue}
+                games={mockGames}
+                currentPlayerCount={currentPlayerCount}
+                onClose={() => setIsShowingCatalogue(false)}
+            />
+
+            <PassHostModal
+                username={passHostUsername}
+                isOpen={isPassHostModalOpen}
+                onConfirm={() => {
+                    handlePassHost(passHostUsername);
+                    setIsPassHostModalOpen(false);
+                }}
+                onCancel={() => setIsPassHostModalOpen(false)}
+            />
         </main>
     );
 }

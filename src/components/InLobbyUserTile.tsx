@@ -11,12 +11,11 @@ interface InLobbyUserTileProps {
   displayPassHost: boolean;
   displayKickOut: boolean;
   isYou: boolean;
-  onCrownClick?: () => void;
+  onPassHost?: () => void;
   onKickClick?: () => void;
 }
 
-const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, isYou, onCrownClick, onKickClick }) => {
-
+const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, isYou, onPassHost, onKickClick }) => {
   return (
     <div
       className={`flex items-center justify-between gap-4 p-4 rounded-lg bg-background-tertiary shadow-md ${
@@ -46,12 +45,18 @@ const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, pla
       {/* Right Side: Buttons */}
       <div className="flex flex-col items-end gap-2">
         {displayPassHost && (
-          <button onClick={onCrownClick} className="focus:outline-none">
+          <button 
+            onClick={onPassHost}
+            className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
+          >
             <LuCrown className="text-highlight" size={20} />
           </button>
         )}
         {displayKickOut && (
-          <button onClick={onKickClick} className="focus:outline-none">
+          <button 
+            onClick={onKickClick}
+            className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
+          >
             <FaUserTimes className="text-highlight" size={20} />
           </button>
         )}
