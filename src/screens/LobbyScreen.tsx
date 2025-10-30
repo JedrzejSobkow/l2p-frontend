@@ -7,7 +7,8 @@ import EditLobbyNameModal from '../components/EditLobbyNameModal';
 import GameInfoModal from '../components/GameInfoModal';
 import CatalogueModal from '../components/CatalogueModal';
 import PassHostModal from '../components/PassHostModal';
-import { FaRegEdit } from 'react-icons/fa';
+import LeaveModal from '../components/LeaveModal';
+import { FaRegEdit, FaSignOutAlt } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { FaRegFolderOpen } from 'react-icons/fa6';
 import { LuTimer, LuUsers } from 'react-icons/lu';
@@ -133,130 +134,155 @@ const LobbyScreen: React.FC = () => {
         setIsPassHostModalOpen(true);
     };
 
+    const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+
+    const handleLeaveClick = () => {
+        setIsLeaveModalOpen(true);
+    };
+
+    const handleConfirmLeave = () => {
+        // TODO: Implement actual leave logic (navigate away, API call, etc.)
+        console.log('User left the lobby');
+        setIsLeaveModalOpen(false);
+    };
+
     return (
-        <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
-            {/* First Column: Players and chat */}
-
-            <div className="flex flex-col items-center gap-4">
-                <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
-                    <span className="text-lg font-bold text-white">{editedLobbyName}</span>
-                    <button 
-                        disabled={!isUserHost}
-                        onClick={() => setIsEditingLobbyName(true)}
-                        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
-                    >
-                        <FaRegEdit className="text-highlight" size={30} />
-                    </button>
-                </div>
-
-                <div className="w-full grid grid-cols-2 gap-4 p-4 bg-background-secondary rounded-lg shadow-md">
-                    {users.map((user, index) => (
-                        <InLobbyUserTile
-                            key={index}
-                            avatar={user.avatar}
-                            username={user.username}
-                            place={user.place}
-                            isReady={user.username === myUsername ? isReady : user.isReady}
-                            isHost={user.isHost}
-                            isYou={myUsername === user.username}
-                            displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
-                            displayKickOut={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
-                            onPassHost={() => handlePassHostClick(user.username)}
-                        />
-                    ))}
-                    {/* Add empty seats */}
-                    {Array.from({ length: selectedPlayerCount - currentPlayerCount }).map((_, index) => (
-                        <InviteToLobbyUserTile key={`empty-${index}`} onInviteClick={() => console.log('Invite clicked')} />
-                    ))}
-                </div>
-
-                {/* Chat Section */}
-                <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
+        <main className="flex flex-col bg-background-primary min-h-screen">
+            {/* Top Bar with Leave Button */}
+            <div className="flex justify-start px-8 pt-4">
+                <button
+                    onClick={handleLeaveClick}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 hover:scale-105 transition-transform focus:outline-none"
+                >
+                    <FaSignOutAlt size={20} />
+                    Leave
+                </button>
             </div>
 
-            {/* Second Column: Game Info */}
-            <div className="flex flex-col gap-4">
-                <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
-                    <div className="flex items-center gap-4">
-                        <img
-                            src={game.img_path}
-                            alt={`${game.name} image`}
-                            className="h-7 w-auto"
-                        />
-                        <span className="text-lg font-bold text-white">{game.name}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <button 
-                            onClick={() => setIsShowingGameInfo(true)}
-                            className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
-                        >
-                            <AiOutlineInfoCircle className="text-highlight" size={30} />
-                        </button>
+            {/* Main Content */}
+            <div className="grid grid-cols-2 gap-8 p-8 flex-1">
+                {/* First Column: Players and chat */}
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
+                        <span className="text-lg font-bold text-white">{editedLobbyName}</span>
                         <button 
                             disabled={!isUserHost}
-                            onClick={() => setIsShowingCatalogue(true)}
+                            onClick={() => setIsEditingLobbyName(true)}
                             className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
                         >
-                            <FaRegFolderOpen className="text-highlight" size={30} />
+                            <FaRegEdit className="text-highlight" size={30} />
                         </button>
                     </div>
+
+                    <div className="w-full grid grid-cols-2 gap-4 p-4 bg-background-secondary rounded-lg shadow-md">
+                        {users.map((user, index) => (
+                            <InLobbyUserTile
+                                key={index}
+                                avatar={user.avatar}
+                                username={user.username}
+                                place={user.place}
+                                isReady={user.username === myUsername ? isReady : user.isReady}
+                                isHost={user.isHost}
+                                isYou={myUsername === user.username}
+                                displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
+                                displayKickOut={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
+                                onPassHost={() => handlePassHostClick(user.username)}
+                            />
+                        ))}
+                        {/* Add empty seats */}
+                        {Array.from({ length: selectedPlayerCount - currentPlayerCount }).map((_, index) => (
+                            <InviteToLobbyUserTile key={`empty-${index}`} onInviteClick={() => console.log('Invite clicked')} />
+                        ))}
+                    </div>
+
+                    {/* Chat Section */}
+                    <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
                 </div>
 
-                {/* Settings Section */}
-                <div className="w-full p-4 bg-background-secondary rounded-lg shadow-md">
-                    {/* Lobby Settings */}
-                    <div className="mb-4">
-                        <h3 className="text-lg font-bold text-white mb-2">Lobby Settings</h3>
-                        <div className="flex flex-col gap-y-2">
-                            {lobbySettings.map((setting, index) => (
-                                <Setting
-                                    key={index}
-                                    label={setting.label}
-                                    icon={setting.icon}
-                                    availableValues={setting.availableValues}
-                                    defaultValue={setting.defaultValue}
-                                    disabled={!isUserHost}
-                                />
-                            ))}
+                {/* Second Column: Game Info */}
+                <div className="flex flex-col gap-4">
+                    <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
+                        <div className="flex items-center gap-4">
+                            <img
+                                src={game.img_path}
+                                alt={`${game.name} image`}
+                                className="h-7 w-auto"
+                            />
+                            <span className="text-lg font-bold text-white">{game.name}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button 
+                                onClick={() => setIsShowingGameInfo(true)}
+                                className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
+                            >
+                                <AiOutlineInfoCircle className="text-highlight" size={30} />
+                            </button>
+                            <button 
+                                disabled={!isUserHost}
+                                onClick={() => setIsShowingCatalogue(true)}
+                                className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
+                            >
+                                <FaRegFolderOpen className="text-highlight" size={30} />
+                            </button>
                         </div>
                     </div>
 
-                    {/* Game Settings */}
-                    <div>
-                        <h3 className="text-lg font-bold text-white mb-2">Game Settings</h3>
-                        <div className="flex flex-col gap-y-2">
-                            {gameSettings.map((setting, index) => (
-                                <Setting
-                                    key={index}
-                                    label={setting.label}
-                                    icon={setting.icon}
-                                    availableValues={setting.availableValues}
-                                    defaultValue={setting.defaultValue}
-                                    disabled={!isUserHost}
-                                    disabledValues={index === 0 ? disabledPlayerCounts : []}
-                                    onChange={index === 0 ? (value) => setSelectedPlayerCount(parseInt(value)) : undefined}
-                                />
-                            ))}
+                    {/* Settings Section */}
+                    <div className="w-full p-4 bg-background-secondary rounded-lg shadow-md">
+                        {/* Lobby Settings */}
+                        <div className="mb-4">
+                            <h3 className="text-lg font-bold text-white mb-2">Lobby Settings</h3>
+                            <div className="flex flex-col gap-y-2">
+                                {lobbySettings.map((setting, index) => (
+                                    <Setting
+                                        key={index}
+                                        label={setting.label}
+                                        icon={setting.icon}
+                                        availableValues={setting.availableValues}
+                                        defaultValue={setting.defaultValue}
+                                        disabled={!isUserHost}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Game Settings */}
+                        <div>
+                            <h3 className="text-lg font-bold text-white mb-2">Game Settings</h3>
+                            <div className="flex flex-col gap-y-2">
+                                {gameSettings.map((setting, index) => (
+                                    <Setting
+                                        key={index}
+                                        label={setting.label}
+                                        icon={setting.icon}
+                                        availableValues={setting.availableValues}
+                                        defaultValue={setting.defaultValue}
+                                        disabled={!isUserHost}
+                                        disabledValues={index === 0 ? disabledPlayerCounts : []}
+                                        onChange={index === 0 ? (value) => setSelectedPlayerCount(parseInt(value)) : undefined}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* New Section */}
-                <div className="w-full p-4 rounded-lg shadow-md flex items-center justify-center gap-4">
-                    {/* Ready Button */}
-                    <button
-                        onClick={toggleReady}
-                        className={`px-6 py-3 text-white font-bold rounded-lg focus:outline-none ${isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
-                            }`}
-                    >
-                        {isReady ? 'Ready' : 'Not Ready'}
-                    </button>
+                    {/* New Section */}
+                    <div className="w-full p-4 rounded-lg shadow-md flex items-center justify-center gap-4">
+                        {/* Ready Button */}
+                        <button
+                            onClick={toggleReady}
+                            className={`px-6 py-3 text-white font-bold rounded-lg focus:outline-none ${isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+                                }`}
+                        >
+                            {isReady ? 'Ready' : 'Not Ready'}
+                        </button>
 
-                    {/* Start Button */}
-                    <button disabled={!canStartGame} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
-                        Start
-                    </button>
+                        {/* Start Button */}
+                        <button disabled={!canStartGame} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                            Start
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -290,6 +316,12 @@ const LobbyScreen: React.FC = () => {
                     setIsPassHostModalOpen(false);
                 }}
                 onCancel={() => setIsPassHostModalOpen(false)}
+            />
+
+            <LeaveModal
+                isOpen={isLeaveModalOpen}
+                onConfirm={handleConfirmLeave}
+                onCancel={() => setIsLeaveModalOpen(false)}
             />
         </main>
     );
