@@ -213,7 +213,10 @@ const LobbyScreen: React.FC = () => {
                     </div>
 
                     {/* Chat Section */}
-                    <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
+                    <div className="w-full bg-background-secondary rounded-lg shadow-md p-3 sm:p-4">
+                        <h3 className="text-base sm:text-lg font-bold text-white mb-2">Chat</h3>
+                        <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
+                    </div>
                 </div>
 
                 {/* Second Column: Game Info */}
