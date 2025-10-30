@@ -24,6 +24,10 @@ const LobbyScreen: React.FC = () => {
         { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false },
+
+
     ];
 
     // Mocked friends
@@ -75,6 +79,7 @@ const LobbyScreen: React.FC = () => {
     const [editedLobbyName, setEditedLobbyName] = useState(lobbyName);
     const [isShowingGameInfo, setIsShowingGameInfo] = useState(false);
     const [isShowingCatalogue, setIsShowingCatalogue] = useState(false);
+    const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
 
     const mockGames = [
         { gameName: 'Tic Tac Toe', src: '/src/assets/images/tic-tac-toe.png', supportedPlayers: [2, 3, 4] },
@@ -94,6 +99,8 @@ const LobbyScreen: React.FC = () => {
     const allUsersReady = users.every(user => 
         user.username === myUsername ? isReady : user.isReady
     );
+
+    const canStartGame = isUserHost && allUsersReady && currentPlayerCount === selectedPlayerCount;
 
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
@@ -126,8 +133,9 @@ const LobbyScreen: React.FC = () => {
                         />
                     ))}
                     {/* Add empty seats */}
-                    <InviteToLobbyUserTile onInviteClick={() => console.log('Invite clicked')} />
-                    <InviteToLobbyUserTile onInviteClick={() => console.log('Invite clicked')} />
+                    {Array.from({ length: selectedPlayerCount - currentPlayerCount }).map((_, index) => (
+                        <InviteToLobbyUserTile key={`empty-${index}`} onInviteClick={() => console.log('Invite clicked')} />
+                    ))}
                 </div>
 
                 {/* Chat Section */}
@@ -212,7 +220,7 @@ const LobbyScreen: React.FC = () => {
                     </button>
 
                     {/* Start Button */}
-                    <button disabled={!isUserHost || !allUsersReady} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                    <button disabled={!canStartGame} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
                         Start
                     </button>
                 </div>
