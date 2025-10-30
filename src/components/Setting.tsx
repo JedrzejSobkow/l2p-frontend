@@ -5,14 +5,27 @@ interface SettingProps {
   icon: React.ReactNode;
   availableValues: string[];
   defaultValue: string;
+  disabled?: boolean;
 }
 
-const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, defaultValue }) => {
+const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, defaultValue, disabled = false }) => {
   const [selectedValue, setSelectedValue] = useState(defaultValue);
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedValue(event.target.value);
   };
+
+  if (disabled) {
+    return (
+      <div className="flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
+        <div className="flex items-center gap-2">
+          <div className="text-highlight">{icon}</div>
+          <span className="text-sm font-medium text-gray-300">{label}</span>
+        </div>
+        <span className="text-gray-400 h-8">{selectedValue}</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">

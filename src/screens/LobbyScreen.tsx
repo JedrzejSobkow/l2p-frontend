@@ -20,7 +20,7 @@ const LobbyScreen: React.FC = () => {
         img_path: "/src/assets/images/tic-tac-toe.png"
     };
     const users = [
-        { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: true },
+        { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: false },
         { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false },
@@ -34,6 +34,9 @@ const LobbyScreen: React.FC = () => {
     const handleSendMessage = (message: string) => {
         setMessages((prev) => [...prev, { username: "You", text: message }]);
     };
+
+    // Check if current user is host
+    const isUserHost = users.some(u => u.username === myUsername && u.isHost);
 
     // State for the Ready button
     const [isReady, setIsReady] = useState(false);
@@ -75,7 +78,10 @@ const LobbyScreen: React.FC = () => {
             <div className="flex flex-col items-center gap-4">
                 <div className="w-full flex items-center justify-between p-4 bg-background-secondary rounded-lg shadow-md">
                     <span className="text-lg font-bold text-white">{lobbyName}</span>
-                    <button className="focus:outline-none">
+                    <button 
+                        disabled={!isUserHost}
+                        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                         <FaRegEdit className="text-highlight" size={30} />
                     </button>
                 </div>
@@ -119,7 +125,10 @@ const LobbyScreen: React.FC = () => {
                         <button className="focus:outline-none">
                             <AiOutlineInfoCircle className="text-highlight" size={30} />
                         </button>
-                        <button className="focus:outline-none">
+                        <button 
+                            disabled={!isUserHost}
+                            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                             <FaRegFolderOpen className="text-highlight" size={30} />
                         </button>
                     </div>
@@ -138,6 +147,7 @@ const LobbyScreen: React.FC = () => {
                                     icon={setting.icon}
                                     availableValues={setting.availableValues}
                                     defaultValue={setting.defaultValue}
+                                    disabled={!isUserHost}
                                 />
                             ))}
                         </div>
@@ -154,6 +164,7 @@ const LobbyScreen: React.FC = () => {
                                     icon={setting.icon}
                                     availableValues={setting.availableValues}
                                     defaultValue={setting.defaultValue}
+                                    disabled={!isUserHost}
                                 />
                             ))}
                         </div>
@@ -172,7 +183,7 @@ const LobbyScreen: React.FC = () => {
                     </button>
 
                     {/* Start Button */}
-                    <button className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none">
+                    <button disabled={!isUserHost} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
                         Start
                     </button>
                 </div>
