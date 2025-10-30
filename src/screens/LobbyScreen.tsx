@@ -74,6 +74,22 @@ const LobbyScreen: React.FC = () => {
     const [isEditingLobbyName, setIsEditingLobbyName] = useState(false);
     const [editedLobbyName, setEditedLobbyName] = useState(lobbyName);
     const [isShowingGameInfo, setIsShowingGameInfo] = useState(false);
+    const [isShowingCatalogue, setIsShowingCatalogue] = useState(false);
+
+    const mockGames = [
+        { gameName: 'Tic Tac Toe', src: '/src/assets/images/tic-tac-toe.png', supportedPlayers: [2, 3, 4] },
+        { gameName: 'Clobber', src: '/src/assets/images/clobber.png', supportedPlayers: [2, 3, 4, 5, 6] },
+        { gameName: 'Chess', src: '/src/assets/images/clobber.png', supportedPlayers: [2] },
+        { gameName: 'Checkers', src: '/src/assets/images/clobber.png', supportedPlayers: [2, 3, 4, 5] },
+        { gameName: 'Sudoku', src: '/src/assets/images/clobber.png', supportedPlayers: [1, 2, 3, 4, 5, 6, 7, 8] },
+        { gameName: 'Minesweeper', src: '/src/assets/images/clobber.png', supportedPlayers: [1, 2, 3, 4] },
+    ];
+
+    const currentPlayerCount = users.length;
+
+    const isGameAvailable = (supportedPlayers: number[]) => {
+        return supportedPlayers.includes(currentPlayerCount);
+    };
 
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
@@ -135,7 +151,8 @@ const LobbyScreen: React.FC = () => {
                         </button>
                         <button 
                             disabled={!isUserHost}
-                            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setIsShowingCatalogue(true)}
+                            className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
                         >
                             <FaRegFolderOpen className="text-highlight" size={30} />
                         </button>
@@ -275,6 +292,65 @@ const LobbyScreen: React.FC = () => {
                         >
                             Close
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Catalogue Modal */}
+            {isShowingCatalogue && (
+                <div
+                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+                    style={{ backdropFilter: 'blur(8px)' }}
+                    onClick={() => setIsShowingCatalogue(false)}
+                >
+                    <div
+                        className="bg-background p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto flex flex-col"
+                        style={{
+                            outline: '2px solid var(--color-highlight)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className="text-highlight text-xl font-bold mb-4">Game Catalogue</h2>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-grow overflow-y-auto">
+                            {mockGames.map((gameItem, index) => {
+                                const isAvailable = isGameAvailable(gameItem.supportedPlayers);
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`flex flex-col items-center gap-2 p-4 rounded-lg cursor-pointer transition-transform ${
+                                            isAvailable
+                                                ? 'bg-background-secondary hover:bg-background-primary hover:scale-105'
+                                                : 'bg-gray-600 opacity-50 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        <img
+                                            src={gameItem.src}
+                                            alt={gameItem.gameName}
+                                            className="w-20 h-20 rounded-lg object-cover"
+                                        />
+                                        <span className="text-sm font-medium text-headline text-center">
+                                            {gameItem.gameName}
+                                        </span>
+                                        <span className="text-xs text-paragraph">
+                                            {gameItem.supportedPlayers.join(', ')} player{gameItem.supportedPlayers.length > 1 ? 's' : ''}
+                                        </span>
+                                        {!isAvailable && (
+                                            <span className="text-xs text-red-400 font-semibold">
+                                                Not available
+                                            </span>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <div className="flex justify-center mt-4 pt-4">
+                            <button
+                                onClick={() => setIsShowingCatalogue(false)}
+                                className="bg-highlight text-white px-4 py-2 rounded hover:scale-105 transition-transform"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
