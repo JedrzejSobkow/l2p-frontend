@@ -25,7 +25,7 @@ const LobbyScreen: React.FC = () => {
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
 
 
     ];
@@ -95,6 +95,11 @@ const LobbyScreen: React.FC = () => {
     const isGameAvailable = (supportedPlayers: number[]) => {
         return supportedPlayers.includes(currentPlayerCount);
     };
+
+    // Calculate disabled player count values (less than current player count)
+    const disabledPlayerCounts = gameSettings[0].availableValues.filter(
+        value => parseInt(value) < currentPlayerCount
+    );
 
     const allUsersReady = users.every(user => 
         user.username === myUsername ? isReady : user.isReady
@@ -202,6 +207,8 @@ const LobbyScreen: React.FC = () => {
                                     availableValues={setting.availableValues}
                                     defaultValue={setting.defaultValue}
                                     disabled={!isUserHost}
+                                    disabledValues={index === 0 ? disabledPlayerCounts : []}
+                                    onChange={index === 0 ? (value) => setSelectedPlayerCount(parseInt(value)) : undefined}
                                 />
                             ))}
                         </div>

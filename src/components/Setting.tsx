@@ -6,13 +6,19 @@ interface SettingProps {
   availableValues: string[];
   defaultValue: string;
   disabled?: boolean;
+  disabledValues?: string[];
+  onChange?: (value: string) => void;
 }
 
-const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, defaultValue, disabled = false }) => {
+const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, defaultValue, disabled = false, disabledValues = [], onChange }) => {
   const [selectedValue, setSelectedValue] = useState(defaultValue);
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedValue(event.target.value);
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newValue = e.target.value;
+    if (!disabledValues.includes(newValue)) {
+      setSelectedValue(newValue);
+      onChange?.(newValue);
+    }
   };
 
   if (disabled) {
@@ -39,10 +45,11 @@ const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, def
       <select
         value={selectedValue}
         onChange={handleChange}
-        className="w-20 h-8 bg-background-tertiary text-white text-sm font-bold rounded-lg text-center focus:outline-none"
+        disabled={disabled}
+        className="w-20 h-8 bg-background-tertiary text-white text-sm font-bold rounded-lg text-center focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {availableValues.map((value, index) => (
-          <option key={index} value={value}>
+          <option key={index} value={value} disabled={disabledValues.includes(value)}>
             {value}
           </option>
         ))}
