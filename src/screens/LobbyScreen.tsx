@@ -23,7 +23,7 @@ const LobbyScreen: React.FC = () => {
         { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: true },
         { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false },
+        { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: true, isHost: false },
     ];
 
     // Mocked friends
@@ -91,6 +91,10 @@ const LobbyScreen: React.FC = () => {
         return supportedPlayers.includes(currentPlayerCount);
     };
 
+    const allUsersReady = users.every(user => 
+        user.username === myUsername ? isReady : user.isReady
+    );
+
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
             {/* First Column: Players and chat */}
@@ -114,7 +118,7 @@ const LobbyScreen: React.FC = () => {
                             avatar={user.avatar}
                             username={user.username}
                             place={user.place}
-                            isReady={user.isReady}
+                            isReady={user.username === myUsername ? isReady : user.isReady}
                             isHost={user.isHost}
                             isYou={myUsername === user.username}
                             displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
@@ -208,7 +212,7 @@ const LobbyScreen: React.FC = () => {
                     </button>
 
                     {/* Start Button */}
-                    <button disabled={!isUserHost} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                    <button disabled={!isUserHost || !allUsersReady} className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
                         Start
                     </button>
                 </div>
