@@ -73,6 +73,7 @@ const LobbyScreen: React.FC = () => {
 
     const [isEditingLobbyName, setIsEditingLobbyName] = useState(false);
     const [editedLobbyName, setEditedLobbyName] = useState(lobbyName);
+    const [isShowingGameInfo, setIsShowingGameInfo] = useState(false);
 
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
@@ -126,7 +127,10 @@ const LobbyScreen: React.FC = () => {
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <button className="focus:outline-none">
+                        <button 
+                            onClick={() => setIsShowingGameInfo(true)}
+                            className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
+                        >
                             <AiOutlineInfoCircle className="text-highlight" size={30} />
                         </button>
                         <button 
@@ -243,6 +247,34 @@ const LobbyScreen: React.FC = () => {
                                 Cancel
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Game Info Modal */}
+            {isShowingGameInfo && (
+                <div
+                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+                    style={{ backdropFilter: 'blur(8px)' }}
+                    onClick={() => setIsShowingGameInfo(false)}
+                >
+                    <div
+                        className="bg-background p-6 rounded-lg shadow-lg text-center max-w-md max-h-96 overflow-y-auto"
+                        style={{
+                            outline: '2px solid var(--color-highlight)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className="text-highlight text-xl font-bold mb-4">{game.name}</h2>
+                        <p className="text-paragraph mb-4">
+                            {game.rules}
+                        </p>
+                        <button
+                            onClick={() => setIsShowingGameInfo(false)}
+                            className="bg-highlight text-white px-4 py-2 rounded hover:scale-105 transition-transform"
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             )}
