@@ -20,7 +20,7 @@ const LobbyScreen: React.FC = () => {
         img_path: "/src/assets/images/tic-tac-toe.png"
     };
     const users = [
-        { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: false },
+        { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: true },
         { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
         { avatar: "/src/assets/images/avatar/9.png", username: "Alice", place: 4, isReady: false, isHost: false },
@@ -71,6 +71,9 @@ const LobbyScreen: React.FC = () => {
         },
     ];
 
+    const [isEditingLobbyName, setIsEditingLobbyName] = useState(false);
+    const [editedLobbyName, setEditedLobbyName] = useState(lobbyName);
+
     return (
         <main className="grid grid-cols-2 gap-8 p-8 bg-background-primary">
             {/* First Column: Players and chat */}
@@ -80,7 +83,8 @@ const LobbyScreen: React.FC = () => {
                     <span className="text-lg font-bold text-white">{lobbyName}</span>
                     <button 
                         disabled={!isUserHost}
-                        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => setIsEditingLobbyName(true)}
+                        className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer"
                     >
                         <FaRegEdit className="text-highlight" size={30} />
                     </button>
@@ -188,6 +192,60 @@ const LobbyScreen: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Edit Lobby Name Modal */}
+            {isEditingLobbyName && (
+                <div
+                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+                    style={{ backdropFilter: 'blur(8px)' }}
+                    onClick={() => setIsEditingLobbyName(false)}
+                >
+                    <div
+                        className="bg-background p-6 rounded-lg shadow-lg text-center"
+                        style={{
+                            outline: '2px solid var(--color-highlight)',
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2 className="text-highlight text-xl font-bold mb-4">Edit Lobby Name</h2>
+                        <p className="text-paragraph mb-4">
+                            Enter a new name for your lobby.
+                        </p>
+                        <input
+                            type="text"
+                            value={editedLobbyName}
+                            onChange={(e) => setEditedLobbyName(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-400 rounded mb-4 text-headline"
+                            placeholder="Lobby Name"
+                        />
+                        <div className="flex justify-center gap-4">
+                            <button
+                                onClick={() => {
+                                    // TODO: Implement lobby name update logic
+                                    setIsEditingLobbyName(false);
+                                }}
+                                disabled={!editedLobbyName.trim()}
+                                className={`px-4 py-2 rounded ${
+                                    editedLobbyName.trim()
+                                        ? 'bg-highlight text-white cursor-pointer hover:scale-105'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                } transition-transform`}
+                            >
+                                Save
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsEditingLobbyName(false);
+                                    setEditedLobbyName(lobbyName);
+                                }}
+                                className="bg-gray-300 text-black px-4 py-2 rounded hover:scale-105 transition-transform"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }
