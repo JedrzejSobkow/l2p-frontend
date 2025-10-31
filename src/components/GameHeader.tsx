@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { createLobby } from '../services/lobby';
 
 interface GameHeaderProps {
     title: string;
@@ -15,6 +16,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
     const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
     const [newLobbyName, setNewLobbyName] = useState('');
+    const [isCreatingLobby, setIsCreatingLobby] = useState(false);
     const navigate = useNavigate();
 
     const handleJoinClick = () => {
@@ -30,11 +32,19 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         setJoinCodeParts(['', '', '', '', '', '']);
     };
 
-    const handleCreateLobby = () => {
-        console.log('Creating new lobby with name:', newLobbyName);
-        setShowNewLobbyModal(false);
-        setNewLobbyName('');
-        navigate(`/lobby/${newLobbyName}`);
+    const handleCreateLobby = async () => {
+        setIsCreatingLobby(true);
+        try {
+            const response = await createLobby({ max_players: 6 });
+            setShowNewLobbyModal(false);
+            setNewLobbyName('');
+            navigate(`/lobby/${response.lobby_code}`);
+        } catch (error) {
+            console.error('Failed to create lobby:', error);
+            alert('Failed to create lobby. Please try again.');
+        } finally {
+            setIsCreatingLobby(false);
+        }
     };
 
     const handleLobbyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,18 +189,19 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleCreateLobby}
+                                disabled={isCreatingLobby}
                                 className={`px-4 py-2 rounded transform transition-transform duration-200 ${
-                                    newLobbyName.trim()
+                                    !isCreatingLobby
                                         ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
-                                disabled={!newLobbyName.trim()}
                             >
-                                Create
+                                {isCreatingLobby ? 'Creating...' : 'Create'}
                             </button>
                             <button
                                 onClick={() => setShowNewLobbyModal(false)}
-                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105"
+                                disabled={isCreatingLobby}
+                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50"
                             >
                                 Cancel
                             </button>
