@@ -61,7 +61,7 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
 })
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth()
+  const { user,isAuthenticated } = useAuth()
   const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {} })
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
@@ -96,8 +96,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (loadingConversationsRef.current.has(conversationId)) return
       loadingConversationsRef.current.add(conversationId)
       try {
+        console.log('Fetching conversation history for', conversationId)
         const history = await fetchChatHistory(toApiId(conversationId))
-        const transformed = history.messages.map(mapDtoToChatMessage)
+        const transformed = history.messages.map(mapDtoToChatMessage).reverse()
         replaceMessages(conversationId, transformed)
         loadedConversationsRef.current.add(conversationId)
       } catch (error) {

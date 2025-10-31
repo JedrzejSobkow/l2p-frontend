@@ -1,7 +1,8 @@
 import { request } from '../lib/http'
+import { withAssetsPrefix } from './auth'
 import { io, type Socket } from 'socket.io-client'
 
-const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL ?? '') as string
+const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
 const TRIMMED_BASE = API_BASE_URL.replace(/\/$/, '')
 const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/chat` : '/chat'
 const SOCKET_PATH = '/socket.io'

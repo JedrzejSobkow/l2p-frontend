@@ -1,5 +1,5 @@
 import { request } from '../lib/http'
-
+import {withAssetsPrefix} from './auth'
 export type FriendshipStatus = 'pending' | 'accepted' | 'blocked'
 
 export type Friendship = {
@@ -34,19 +34,20 @@ export async function searchFriends(query: string, page: number = 1, pageSize: n
   params.set('page', page.toString())
   params.set('page_size', pageSize.toString())
 
-  return await request<SearchFriendsPayload>(`/friends/search?${params.toString()}`, { method: 'GET', auth: true })
+  const res =  await request<SearchFriendsPayload>(`/friends/search?${params.toString()}`, { method: 'GET', auth: true })
+  return res
 }
 
-export async function sendFriendRequest(friend_user_id: string | number): Promise<Friendship> {
-  return await request<Friendship>(`/friends/request`, {
+export async function sendFriendRequest(friend_user_id: string | number): Promise<{status: string, created_at: string}> {
+  return await request<{status: string, created_at: string}>(`/friends/request`, {
     method: 'POST',
     body: { friend_user_id },
     auth: true,
   })
 }
 
-export async function acceptFriendRequest(friend_user_id: string | number): Promise<Friendship> {
-  return await request<Friendship>(`/friends/accept`, {
+export async function acceptFriendRequest(friend_user_id: string | number): Promise<{status: string, created_at: string}> {
+  return await request<{status: string, created_at: string}>(`/friends/accept`, {
     method: 'POST',
     body: { friend_user_id },
     auth: true,
@@ -54,9 +55,7 @@ export async function acceptFriendRequest(friend_user_id: string | number): Prom
 }
 
 export async function declineFriendRequest(friend_user_id: string | number): Promise<void> {
-  const params = new URLSearchParams()
-  params.set('friend_user_id', friend_user_id.toString())
-  await request<void>(`/friends?${params.toString()}`, { method: 'DELETE', auth: true })
+  await request<void>(`/friends/${friend_user_id.toString()}`, { method: 'DELETE', auth: true })
 }
 
 export async function deleteFriend(friend_user_id: string | number): Promise<void> {
@@ -70,5 +69,9 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
   }
   const query = params.toString()
   const path = query ? `/friends?${query}` : '/friends'
-  return await request<Friendship[]>(path, { method: 'GET', auth: true })
-}
+  const res = await request<Friendship[]>(path, { method: 'GET', auth: true })
+  return res.map(friend => ({
+    ...friend,
+    friend_pfp_path: withAssetsPrefix(friend.friend_pfp_path)
+  })) };
+

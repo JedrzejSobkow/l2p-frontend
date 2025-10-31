@@ -44,7 +44,12 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true)
     try {
       const data = await getFriendsList()
-      setFriendships(data)
+      const normalized = Array.isArray(data)
+        ? data
+        : Array.isArray((data as any)?.friendships)
+        ? ((data as any).friendships as Friendship[])
+        : []
+      setFriendships(normalized)
     } finally {
       setIsLoading(false)
     }
@@ -67,6 +72,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       copy[idx] = entry
       return copy
     })
+    refreshFriends()
   }, [])
 
   const removeFriendship = useCallback((friend_user_id: number | string) => {
@@ -77,13 +83,13 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const sendRequestHandler = useCallback(async (friend_user_id: number | string) => {
-    const created = await sendFriendRequest(friend_user_id)
-    upsertFriendship(created)
+    await sendFriendRequest(friend_user_id)
+    refreshFriends()
   }, [upsertFriendship])
 
   const acceptRequestHandler = useCallback(async (friend_user_id: number | string) => {
-    const updated = await acceptFriendRequest(friend_user_id)
-    upsertFriendship(updated)
+    await acceptFriendRequest(friend_user_id)
+    refreshFriends()
   }, [upsertFriendship])
 
   const declineRequestHandler = useCallback(async (friend_user_id: number | string) => {
@@ -119,6 +125,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       }
     })
 
+    console.log({ accepted, incoming, outgoing })
     return {
       friends: accepted,
       incomingRequests: incoming,

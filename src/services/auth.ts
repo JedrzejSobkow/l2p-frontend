@@ -80,7 +80,7 @@ export async function resetPassword(payload: ResetPasswordPayload): Promise<stri
 
 // /users/ endpoints
 
-function withAssetsPrefix(p?: string): string | undefined {
+export function withAssetsPrefix(p?: string): string | undefined {
   if (!p) return undefined
   if (/^https?:\/\//i.test(p)) return p
   if (p.startsWith('/src/assets')) return p

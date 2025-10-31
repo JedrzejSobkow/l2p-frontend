@@ -4,6 +4,7 @@ import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
 import { useFriends } from './FriendsContext'
 import type { Friendship, FriendResult } from '../../services/friends'
+import Popup from '../Popup'
 
 type FriendsPanelProps = {
   onFriendSelect?: (friend: Friendship) => void
@@ -42,6 +43,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const [showIncoming, setShowIncoming] = useState(true)
   const [showOutgoing, setShowOutgoing] = useState(false)
   const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({})
+  const [popup, setPopup] = useState<{type: 'error' | 'confirmation'|'informative', message: string} | null>(null);
 
   const runSearch = useCallback(
     async (input: string) => {
@@ -53,7 +55,8 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
       setSearching(true)
       try {
         const res = await searchUsers(query)
-        setSearchResults(res.users ?? [])
+        if(searchResults !== res.users)
+          setSearchResults(res.users ?? [])
       } catch (error) {
         console.error('Failed to search users', error)
       } finally {
@@ -89,8 +92,10 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     markProcessing(id, true)
     try {
       await acceptRequest(friend.friend_user_id)
+      setPopup({type: 'confirmation', message: `Friend request from ${friend.friend_nickname} accepted.`})
     } catch (error) {
       console.error('Failed to accept friend request', error)
+      setPopup({type: 'error', message: 'Failed to accept friend request. Please try again later.'})
     } finally {
       markProcessing(id, false)
     }
@@ -115,15 +120,18 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     markProcessing(id, true)
     try {
       await sendRequest(user.user_id)
+      setPopup({type: 'confirmation', message: `Friend request sent to ${user.nickname}.`})
       setSearchResults((prev) => prev.filter((item) => normalizeId(item.user_id) !== id))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to send friend request', error)
+      setPopup({type: 'error', message: error.message || 'Failed to send friend request. Please try again later.'})
     } finally {
       markProcessing(id, false)
     }
   }
 
   const renderFriend = (friend: Friendship) => {
+    console.log('Rendering friend:', friend)
     const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
     const isSelected = selectedKey ? key === selectedKey : false
     return (
@@ -144,6 +152,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   }
 
   return (
+    <>
     <div
       className={cn(
         'flex h-full w-full flex-col overflow-hidden rounded-3xl border border-separator bg-background-secondary',
@@ -242,6 +251,32 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
           </section>
         ) : (
           <>
+          <section>
+              <button
+                type="button"
+                onClick={() => setShowFriendsList((prev) => !prev)}
+                className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide text-white/70 transition-colors hover:text-white"
+                aria-expanded={showFriendsList}
+              >
+                <span>Friends ({filteredFriends.length})</span>
+                <FiChevronDown
+                  className={`h-4 w-4 transition-transform ${showFriendsList ? 'rotate-0' : '-rotate-90'}`}
+                />
+              </button>
+              <div
+                className={`space-y-3 overflow-hidden transition-all duration-300 ease-out ${
+                  showFriendsList
+                    ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0'
+                    : 'max-h-0 opacity-0 -translate-y-2'
+                }`}
+              >
+                {!isLoading && filteredFriends.length === 0 && (
+                  <p className="text-sm text-white/50">No friends yet. Add someone to start chatting.</p>
+                )}
+                {isLoading && <p className="text-sm text-white/60">Loading friends...</p>}
+                {filteredFriends.length > 0 && filteredFriends.map(renderFriend)}
+              </div>
+            </section>
             <section>
               <button
                 type="button"
@@ -366,36 +401,21 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
               </div>
             </section>
 
-            <section>
-              <button
-                type="button"
-                onClick={() => setShowFriendsList((prev) => !prev)}
-                className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide text-white/70 transition-colors hover:text-white"
-                aria-expanded={showFriendsList}
-              >
-                <span>Friends ({filteredFriends.length})</span>
-                <FiChevronDown
-                  className={`h-4 w-4 transition-transform ${showFriendsList ? 'rotate-0' : '-rotate-90'}`}
-                />
-              </button>
-              <div
-                className={`space-y-3 overflow-hidden transition-all duration-300 ease-out ${
-                  showFriendsList
-                    ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0'
-                    : 'max-h-0 opacity-0 -translate-y-2'
-                }`}
-              >
-                {!isLoading && filteredFriends.length === 0 && (
-                  <p className="text-sm text-white/50">No friends yet. Add someone to start chatting.</p>
-                )}
-                {isLoading && <p className="text-sm text-white/60">Loading friends...</p>}
-                {filteredFriends.length > 0 && filteredFriends.map(renderFriend)}
-              </div>
-            </section>
+            
           </>
         )}
       </div>
+      
     </div>
+    {/* Error Popup */}
+            {popup && (
+                <Popup
+                    type={popup.type}
+                    message={popup.message}
+                    onClose={() => setPopup(null)}
+                />
+            )}
+    </>
   )
 }
 

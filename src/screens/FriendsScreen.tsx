@@ -6,6 +6,7 @@ import { useChat } from '../components/chat/ChatProvider'
 import BackButton from '../components/BackButton'
 import { useFriends } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 const currentUserIdFallback = 'current-user'
 const normalizeId = (value: string | number) => String(value)
@@ -14,6 +15,7 @@ const FriendsScreen: FC = () => {
   const { friends, removeFriend } = useFriends()
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
   const [removing, setRemoving] = useState(false)
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
 
   const { user } = useAuth()
   const chat = useChat()
@@ -52,17 +54,28 @@ const FriendsScreen: FC = () => {
     setSelectedFriendId(normalizeId(friend.friend_user_id))
   }
 
-  const handleRemoveFriend = async () => {
+  const handleRemoveRequest = () => {
+    if (!selectedFriend) return
+    setShowRemoveConfirm(true)
+  }
+
+  const handleConfirmRemove = async () => {
     if (!selectedFriend) return
     setRemoving(true)
     try {
       await removeFriend(selectedFriend.friend_user_id)
       setSelectedFriendId(null)
+      setShowRemoveConfirm(false)
     } catch (error) {
       console.error('Failed to remove friend', error)
     } finally {
       setRemoving(false)
     }
+  }
+
+  const handleCancelRemove = () => {
+    if (removing) return
+    setShowRemoveConfirm(false)
   }
 
   return (
@@ -106,17 +119,28 @@ const FriendsScreen: FC = () => {
       </div>
       <div className="order-2 w-full lg:order-3">
         {selectedFriend ? (
-          <FriendDetailsPanel
-            friend={selectedFriend}
-            onRemove={handleRemoveFriend}
-            removing={removing}
-          />
+          <FriendDetailsPanel friend={selectedFriend} onRemove={handleRemoveRequest} removing={removing} />
         ) : (
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.85)] px-6 text-center text-sm text-white/60">
             Choose someone from the list to see their profile and quick actions.
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={showRemoveConfirm}
+        title="Remove friend?"
+        description={
+          selectedFriend ? (
+            <span>
+              You are about to remove <strong>{selectedFriend.friend_nickname}</strong> from your friends list.
+            </span>
+          ) : undefined
+        }
+        confirmLabel="Remove"
+        onConfirm={handleConfirmRemove}
+        onCancel={handleCancelRemove}
+        loading={removing}
+      />
     </div>
   )
 }
@@ -125,7 +149,7 @@ export default FriendsScreen
 
 type FriendDetailsPanelProps = {
   friend: Friendship
-  onRemove: () => Promise<void> | void
+  onRemove: () => void
   removing?: boolean
 }
 
