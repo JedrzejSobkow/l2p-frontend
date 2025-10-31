@@ -5,7 +5,6 @@ import type { Friendship } from '../../services/friends'
 export type FriendCardProps = Friendship & {
   isSelected?: boolean
   onClick?: () => void
-  onSpectate?: () => void
   onMessage?: () => void
 }
 
@@ -18,22 +17,9 @@ const FriendCard: FC<FriendCardProps> = ({
   friend_pfp_path: avatarUrl,
   isSelected,
   onClick,
-  onSpectate,
-  onMessage
+  onMessage,
 }) => {
-  // const colorClass =
-  //   normalized === 'Online'
-  //     ? 'text-green-300'
-  //     : normalized === 'Offline'
-  //     ? 'text-white/50'
-  //     : 'text-orange-300'
-
-  // const showSpectate = normalized === 'Playing' || normalized === 'In Lobby'
   const handleCardClick = () => onClick?.()
-  const handleSpectate = (e: MouseEvent) => {
-    e.stopPropagation()
-    onSpectate?.()
-  }
   const handleMessage = (e: MouseEvent) => {
     e.stopPropagation()
     onMessage?.()
@@ -65,14 +51,6 @@ const FriendCard: FC<FriendCardProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-3">
-        {/* {showSpectate && (
-          <button
-            onClick={handleSpectate}
-            className="rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)]"
-          >
-            Spectate
-          </button>
-        )} */}
         <button
           onClick={handleMessage}
           className="grid h-8 w-8 place-items-center rounded-full border border-orange-400/40 text-orange-300 transition hover:border-orange-300 hover:text-orange-200"

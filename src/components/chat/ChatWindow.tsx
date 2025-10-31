@@ -30,6 +30,7 @@ export interface ChatWindowProps {
   isSending?: boolean
   typingUsers?: string[]
   onSend: (payload: { text: string; attachment?: File | null }) => Promise<void> | void
+  onTyping?: () => void
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
@@ -55,7 +56,8 @@ const ChatWindow: FC<ChatWindowProps> = ({
   className,
   isSending,
   typingUsers,
-  onSend
+  onSend,
+  onTyping,
 }) => {
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
@@ -230,7 +232,10 @@ const ChatWindow: FC<ChatWindowProps> = ({
           <div className="flex flex-1 flex-row place-items-center">
             <textarea
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => {
+                setDraft(event.target.value)
+                onTyping?.()
+              }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               rows={1}

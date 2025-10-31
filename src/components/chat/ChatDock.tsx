@@ -1,5 +1,5 @@
 import { FiMinus, FiX } from 'react-icons/fi'
-import ChatWindow, { type ChatMessage } from './ChatWindow'
+import ChatWindow from './ChatWindow'
 import { useChatDock } from './ChatDockContext'
 import { useAuth } from '../AuthContext'
 import { useChat } from './ChatProvider'
@@ -59,11 +59,13 @@ const ChatDock = () => {
             </div>
             <ChatWindow
               title={s.target.nickname}
-              messages={chat.getMessages(s.target.id) as ChatMessage[]}
+              messages={chat.getMessages(s.target.id)}
               currentUserId={currentUserId}
+              typingUsers={chat.getTypingUsers(s.target.id)}
               onSend={async ({ text }) => chat.sendMessage(s.target.id, text)}
+              onTyping={() => chat.sendTyping(s.target.id)}
               placeholder={`Message ${s.target.nickname}...`}
-              className='max-h-[450px] min-h-[450px]'
+              className="max-h-[450px] min-h-[450px]"
             />
           </div>
         ))}
@@ -73,4 +75,3 @@ const ChatDock = () => {
 }
 
 export default ChatDock
-

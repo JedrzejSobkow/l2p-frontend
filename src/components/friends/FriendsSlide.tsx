@@ -1,12 +1,13 @@
 import { useEffect, type FC, type MouseEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { FiX } from 'react-icons/fi'
 import FriendsPanel from './FriendsPanel'
 import { useAuth } from '../AuthContext'
 import { FaUserFriends } from 'react-icons/fa'
 import { CgProfile } from 'react-icons/cg'
 import { AiFillHome } from 'react-icons/ai'
-import { searchFriends, sendFriendRequest,getFriendsList, type SearchFriendsPayload, type Friendship } from '../../services/friends'
+import type { Friendship } from '../../services/friends'
+import { useFriends } from './FriendsContext'
 
 type FriendsSlideProps = {
   open: boolean
@@ -18,21 +19,16 @@ type FriendsSlideProps = {
 
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, title, selectedFriendId }) => {
   const { user } = useAuth()
+  const { refreshFriends } = useFriends()
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation()
   }
 
-  let friends: Friendship[] = []
   useEffect(() => {
-    const fetchFriends = async () => {
-      try {
-        friends = await getFriendsList('accepted')
-      } catch (error) {
-        console.error('Error fetching friends:', error)
-      }
-  }
-    fetchFriends()
-  }, [])
+    if (open) {
+      void refreshFriends()
+    }
+  }, [open, refreshFriends])
   return (
     <>
       <div
@@ -96,7 +92,6 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
             </div>
           </div>
           <FriendsPanel
-            friends={friends}
             onFriendSelect={onFriendSelect}
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}

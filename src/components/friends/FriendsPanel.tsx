@@ -1,96 +1,144 @@
-import { useMemo, useState, type FC, type ChangeEvent } from 'react'
+import { useCallback, useMemo, useState, type FC, type ChangeEvent } from 'react'
 import { FiChevronDown, FiSearch, FiUserPlus } from 'react-icons/fi'
-// import FriendCard, { type FriendProps } from './FriendCard'
+import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
-import type { Friendship, SearchFriendsPayload } from '../../services/friends'
+import { useFriends } from './FriendsContext'
+import type { Friendship, FriendResult } from '../../services/friends'
 
 type FriendsPanelProps = {
-  friends?: Friendship[]
-  onFriendSelect?: (friend: FriendProps) => void
+  onFriendSelect?: (friend: Friendship) => void
   title?: string
   className?: string
   selectedFriendId?: string | number
-  // Optional handlers for future backend integration
-  onSearchUsers?: (query: string) => Promise<SearchFriendsPayload>
-  onAddFriend?: (user_id: string | number) => Promise<void> | void
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
+const normalizeId = (value: string | number | undefined | null) =>
+  value !== undefined && value !== null ? String(value) : undefined
 
 const FriendsPanel: FC<FriendsPanelProps> = ({
-  friends = [],
   onFriendSelect,
   title = 'Friends',
   className,
   selectedFriendId,
-  onSearchUsers,
-  onAddFriend,
 }) => {
-  const [showOnline, setShowOnline] = useState(true)
-  const [showOffline, setShowOffline] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [mode, setMode] = useState<'friends' | 'discover'>('friends')
-  const [searchResults, setSearchResults] = useState<FriendProps[] | null>(null)
-  const [searching, setSearching] = useState(false)
+  const {
+    friends,
+    incomingRequests,
+    outgoingRequests,
+    searchUsers,
+    sendRequest,
+    acceptRequest,
+    declineRequest,
+    isLoading,
+  } = useFriends()
+  const { openChat } = useChatDock()
 
-  const handleSearchChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const q = e.target.value
-    setSearchTerm(q)
-    if (mode === 'discover') {
-      if (!q.trim()) {
-        setSearchResults(null)
+  const [mode, setMode] = useState<'friends' | 'discover'>('friends')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState<FriendResult[]>([])
+  const [searching, setSearching] = useState(false)
+  const [showFriendsList, setShowFriendsList] = useState(true)
+  const [showIncoming, setShowIncoming] = useState(true)
+  const [showOutgoing, setShowOutgoing] = useState(false)
+  const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({})
+
+  const runSearch = useCallback(
+    async (input: string) => {
+      const query = input.trim()
+      if (query.length < 3) {
+        setSearchResults([])
         return
       }
-      if (typeof onSearchUsers === 'function') {
-        try {
-          setSearching(true)
-          const res = await onSearchUsers(q.trim())
-          setSearchResults(res ?? [])
-        } finally {
-          setSearching(false)
-        }
+      setSearching(true)
+      try {
+        const res = await searchUsers(query)
+        setSearchResults(res.users ?? [])
+      } catch (error) {
+        console.error('Failed to search users', error)
+      } finally {
+        setSearching(false)
       }
+    },
+    [searchUsers],
+  )
+
+  const handleSearchChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value
+    setSearchTerm(value)
+    if (mode === 'discover') {
+      void runSearch(value)
     }
   }
 
-  const { onlineFriends, offlineFriends } = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase()
-    const base = mode === 'friends' && q ? friends.filter(f => f.friend_nickname.toLowerCase().includes(q)) : friends
-    const online: Friendship[] = []
-    const offline: Friendship[] = []
+  const filteredFriends = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query || mode === 'discover') return friends
+    return friends.filter((friend) => friend.friend_nickname.toLowerCase().includes(query))
+  }, [friends, mode, searchTerm])
 
-    base.forEach((friend) => {
-      const normalizedStatus = (friend.status || 'Offline').trim()
-      if (normalizedStatus === 'Offline') {
-        offline.push(friend)
-      } else {
-        online.push(friend)
-      }
-    })
+  const selectedKey = normalizeId(selectedFriendId)
 
-    return { onlineFriends: online, offlineFriends: offline }
-  }, [friends, searchTerm, mode])
+  const markProcessing = (id: string, value: boolean) => {
+    setProcessingMap((prev) => ({ ...prev, [id]: value }))
+  }
 
-  const selectedKey = selectedFriendId !== undefined && selectedFriendId !== null ? String(selectedFriendId) : undefined
-  const { openChat } = useChatDock()
+  const handleAcceptRequest = async (friend: Friendship) => {
+    const id = normalizeId(friend.friend_user_id)
+    if (!id) return
+    markProcessing(id, true)
+    try {
+      await acceptRequest(friend.friend_user_id)
+    } catch (error) {
+      console.error('Failed to accept friend request', error)
+    } finally {
+      markProcessing(id, false)
+    }
+  }
+
+  const handleDeclineRequest = async (friend: Friendship) => {
+    const id = normalizeId(friend.friend_user_id)
+    if (!id) return
+    markProcessing(id, true)
+    try {
+      await declineRequest(friend.friend_user_id)
+    } catch (error) {
+      console.error('Failed to decline friend request', error)
+    } finally {
+      markProcessing(id, false)
+    }
+  }
+
+  const handleSendRequest = async (user: FriendResult) => {
+    const id = normalizeId(user.user_id)
+    if (!id) return
+    markProcessing(id, true)
+    try {
+      await sendRequest(user.user_id)
+      setSearchResults((prev) => prev.filter((item) => normalizeId(item.user_id) !== id))
+    } catch (error) {
+      console.error('Failed to send friend request', error)
+    } finally {
+      markProcessing(id, false)
+    }
+  }
 
   const renderFriend = (friend: Friendship) => {
-    const fallbackKey = `${friend.friend_nickname}-${friend.status}`
-    const key = friend.friend_user_id !== undefined && friend.friend_user_id !== null ? String(friend.friend_user_id) : fallbackKey
+    const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
     const isSelected = selectedKey ? key === selectedKey : false
     return (
       <FriendCard
         key={key}
         {...friend}
         isSelected={isSelected}
-        onClick={() => {
-          onFriendSelect?.(friend)
-          // friend.onClick?.()
-        }}
-        onMessage={() => {
-          if (!friend.friend_nickname) return
-          openChat({ id: key, nickname: friend.friend_nickname, avatarUrl: friend.friend_pfp_path})
-        }}
+        onClick={() => onFriendSelect?.(friend)}
+        onMessage={() =>
+          openChat({
+            id: key,
+            nickname: friend.friend_nickname,
+            avatarUrl: friend.friend_pfp_path,
+          })
+        }
       />
     )
   }
@@ -99,7 +147,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     <div
       className={cn(
         'flex h-full w-full flex-col overflow-hidden rounded-3xl border border-separator bg-background-secondary',
-        className
+        className,
       )}
     >
       <header className="border-b border-separator px-6 py-4">
@@ -112,25 +160,17 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                 type="search"
                 value={searchTerm}
                 onChange={handleSearchChange}
-                placeholder="Search friends..."
+                placeholder={mode === 'discover' ? 'Search users...' : 'Search friends...'}
                 className="w-full rounded-2xl border border-transparent bg-white/10 px-8 pr-1.5 py-3 text-sm text-white placeholder:text-white/40 outline-none transition focus:border-orange-400/60 focus:bg-white/5 "
               />
             </div>
             <button
               type="button"
-              onClick={async () => {
+              onClick={() => {
                 if (mode === 'friends') {
                   setMode('discover')
-                  if (searchTerm.trim() && typeof onSearchUsers === 'function') {
-                    try {
-                      setSearching(true)
-                      const res = await onSearchUsers(searchTerm.trim())
-                      setSearchResults(res ?? [])
-                    } finally {
-                      setSearching(false)
-                    }
-                  } else {
-                    setSearchResults(null)
+                  if (searchTerm.trim().length >= 3) {
+                    void runSearch(searchTerm)
                   }
                 } else {
                   setMode('friends')
@@ -140,7 +180,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                 'grid h-11 w-11 flex-shrink-0 place-items-center rounded-full border transition ml-auto',
                 mode === 'friends'
                   ? 'border-white/15 text-white/80 hover:border-orange-400/40 hover:text-white disabled:opacity-50'
-                  : 'border-orange-400/60 text-orange-300 hover:border-orange-300 hover:text-orange-200'
+                  : 'border-orange-400/60 text-orange-300 hover:border-orange-300 hover:text-orange-200',
               )}
               title={mode === 'friends' ? 'Find new users' : 'Back to friends'}
               aria-label={mode === 'friends' ? 'Find new users' : 'Back to friends'}
@@ -155,41 +195,48 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         {mode === 'discover' ? (
           <section>
             {!searchTerm.trim() && (
-              <p className="text-sm text-white/60">Type in the search box to find new users.</p>
+              <p className="text-sm text-white/60">Type at least 3 characters to search for players.</p>
             )}
-            {searchTerm.trim() && searching && (
+            {searchTerm.trim().length >= 3 && searching && (
               <p className="text-sm text-white/60">Searching...</p>
             )}
-            {searchTerm.trim() && !searching && (searchResults?.length ?? 0) === 0 && (
+            {searchTerm.trim().length >= 3 && !searching && searchResults.length === 0 && (
               <p className="text-sm text-white/60">No users found.</p>
             )}
-            {searchTerm.trim() && !searching && (searchResults?.length ?? 0) > 0 && (
+            {searchResults.length > 0 && (
               <div className="space-y-3">
-                {searchResults!.map((u) => (
-                  <div
-                    key={String(u.id ?? `${u.nickname}-discover`)}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-[rgba(31,30,43,0.95)] px-3 py-2"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={u.avatarUrl || '/assets/images/pfp.png'}
-                        alt="Avatar"
-                        className="h-10 w-10 rounded-full object-cover"
-                      />
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-white">{u.nickname}</div>
-                        <div className="truncate text-xs text-white/60">{(u.status || 'Offline')}</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)]"
-                      onClick={() => onAddFriend?.(u)}
+                {searchResults.map((user) => {
+                  const id = normalizeId(user.user_id) ?? user.nickname
+                  const processing = !!(id && processingMap[id])
+                  return (
+                    <div
+                      key={id}
+                      className="flex items-center justify-between rounded-2xl border border-white/10 bg-[rgba(31,30,43,0.95)] px-3 py-2"
                     >
-                      Add
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <img
+                          src={user.pfp_path || '/assets/images/pfp.png'}
+                          alt="Avatar"
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-white">{user.nickname}</div>
+                          {user.description && (
+                            <div className="truncate text-xs text-white/60">{user.description}</div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)] disabled:opacity-60 disabled:hover:translate-y-0"
+                        onClick={() => handleSendRequest(user)}
+                        disabled={processing}
+                      >
+                        {processing ? 'Sending...' : 'Add'}
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </section>
@@ -198,47 +245,151 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
             <section>
               <button
                 type="button"
-                onClick={() => setShowOnline((prev) => !prev)}
+                onClick={() => setShowIncoming((prev) => !prev)}
                 className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide text-white/70 transition-colors hover:text-white"
-                aria-expanded={showOnline}
+                aria-expanded={showIncoming}
               >
-                <span>Online ({onlineFriends.length})</span>
-                <FiChevronDown className={`h-4 w-4 transition-transform ${showOnline ? 'rotate-0' : '-rotate-90'}`} />
+                <span>Incoming Requests ({incomingRequests.length})</span>
+                <FiChevronDown
+                  className={`h-4 w-4 transition-transform ${showIncoming ? 'rotate-0' : '-rotate-90'}`}
+                />
               </button>
               <div
                 className={`space-y-3 overflow-hidden transition-all duration-300 ease-out ${
-                  showOnline ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
+                  showIncoming ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
                 }`}
               >
-                {onlineFriends.length > 0 ? (
-                  onlineFriends.map(renderFriend)
-                ) : (
-                  <p className="text-sm text-white/50">No friends online right now.</p>
-                )}
+                {showIncoming &&
+                  (incomingRequests.length > 0 ? (
+                    incomingRequests.map((request) => {
+                      const id = normalizeId(request.friend_user_id) ?? request.friendship_id.toString()
+                      const processing = !!(id && processingMap[id])
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-[rgba(31,30,43,0.95)] px-3 py-2"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={request.friend_pfp_path || '/assets/images/pfp.png'}
+                              alt={request.friend_nickname}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold text-white">{request.friend_nickname}</div>
+                              {request.friend_description && (
+                                <div className="truncate text-xs text-white/60">{request.friend_description}</div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)] disabled:opacity-60 disabled:hover:translate-y-0"
+                              onClick={() => handleAcceptRequest(request)}
+                              disabled={processing}
+                            >
+                              {processing ? '...' : 'Accept'}
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-full border border-white/15 px-4 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-60"
+                              onClick={() => handleDeclineRequest(request)}
+                              disabled={processing}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <p className="text-sm text-white/50">No pending requests.</p>
+                  ))}
               </div>
             </section>
 
             <section>
               <button
                 type="button"
-                onClick={() => setShowOffline((prev) => !prev)}
+                onClick={() => setShowOutgoing((prev) => !prev)}
                 className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide text-white/70 transition-colors hover:text-white"
-                aria-expanded={showOffline}
+                aria-expanded={showOutgoing}
               >
-                <span>Offline ({offlineFriends.length})</span>
-                <FiChevronDown className={`h-4 w-4 transition-transform ${showOffline ? 'rotate-0' : '-rotate-90'}`} />
+                <span>Sent Requests ({outgoingRequests.length})</span>
+                <FiChevronDown
+                  className={`h-4 w-4 transition-transform ${showOutgoing ? 'rotate-0' : '-rotate-90'}`}
+                />
               </button>
               <div
                 className={`space-y-3 overflow-hidden transition-all duration-300 ease-out ${
-                  showOffline ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
+                  showOutgoing ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0' : 'max-h-0 opacity-0 -translate-y-2'
                 }`}
               >
-                {showOffline &&
-                  (offlineFriends.length > 0 ? (
-                    offlineFriends.map(renderFriend)
+                {showOutgoing &&
+                  (outgoingRequests.length > 0 ? (
+                    outgoingRequests.map((request) => {
+                      const id = normalizeId(request.friend_user_id) ?? request.friendship_id.toString()
+                      const processing = !!(id && processingMap[id])
+                      return (
+                        <div
+                          key={id}
+                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-[rgba(31,30,43,0.95)] px-3 py-2"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={request.friend_pfp_path || '/assets/images/pfp.png'}
+                              alt={request.friend_nickname}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                            <div className="min-w-0">
+                              <div className="truncate text-sm font-semibold text-white">{request.friend_nickname}</div>
+                              {request.friend_description && (
+                                <div className="truncate text-xs text-white/60">{request.friend_description}</div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            className="rounded-full border border-white/15 px-4 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-60"
+                            onClick={() => handleDeclineRequest(request)}
+                            disabled={processing}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )
+                    })
                   ) : (
-                    <p className="text-sm text-white/50">No friends offline.</p>
+                    <p className="text-sm text-white/50">You have no sent requests.</p>
                   ))}
+              </div>
+            </section>
+
+            <section>
+              <button
+                type="button"
+                onClick={() => setShowFriendsList((prev) => !prev)}
+                className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide text-white/70 transition-colors hover:text-white"
+                aria-expanded={showFriendsList}
+              >
+                <span>Friends ({filteredFriends.length})</span>
+                <FiChevronDown
+                  className={`h-4 w-4 transition-transform ${showFriendsList ? 'rotate-0' : '-rotate-90'}`}
+                />
+              </button>
+              <div
+                className={`space-y-3 overflow-hidden transition-all duration-300 ease-out ${
+                  showFriendsList
+                    ? 'mt-4 max-h-[1200px] opacity-100 translate-y-0'
+                    : 'max-h-0 opacity-0 -translate-y-2'
+                }`}
+              >
+                {!isLoading && filteredFriends.length === 0 && (
+                  <p className="text-sm text-white/50">No friends yet. Add someone to start chatting.</p>
+                )}
+                {isLoading && <p className="text-sm text-white/60">Loading friends...</p>}
+                {filteredFriends.length > 0 && filteredFriends.map(renderFriend)}
               </div>
             </section>
           </>
