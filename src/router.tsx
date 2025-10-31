@@ -9,10 +9,10 @@ import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
 import FindGamesScreen from "./screens/FindGamesScreen";
-import FindLobbiesScreen from "./screens/FindLobbiesScreen";
 import LobbyScreen from "./screens/LobbyScreen";
 import GameScreen from "./screens/GameScreen";
 import FriendsScreen from "./screens/FriendsScreen";
+import VerifyEmailPage from './screens/VerifyEmailPage';
 
 export const router = createBrowserRouter([
     {
@@ -41,15 +41,15 @@ export const router = createBrowserRouter([
             },
             { 
                 path: "profile", 
-                element: <RequireAuth><ProfileScreen></ProfileScreen></RequireAuth> 
+                element: <RequireAuth> <ProfileScreen /> </RequireAuth>
             },
             {
                 path: 'find_games/:searchPhrase?',
-                element: <RequireGuest> <FindGamesScreen /> </RequireGuest>
+                element:  <FindGamesScreen />
             },
             {
                 path: 'game/:gameName?',
-                element: <RequireGuest> <GameScreen /> </RequireGuest>
+                element: <GameScreen /> 
             },
             {
                 path: 'lobby/:lobbyName',
@@ -58,6 +58,10 @@ export const router = createBrowserRouter([
             {
                 path: 'friends',
                 element: <RequireAuth><FriendsScreen /></RequireAuth>
+            },
+            {
+                path: 'verify-email',
+                element: <VerifyEmailPage />,
             }
         ] 
     }

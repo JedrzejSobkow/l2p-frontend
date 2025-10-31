@@ -45,8 +45,17 @@ const ProfileScreen: React.FC = () => {
             email: user.email,
             nickname: user.nickname,
             description: user.description,
-            pfp_path: user.pfp_path
-        })
+            pfp_path: user.pfp_path,
+        });
+
+        // Set selectedPictureId based on user's current profile picture
+        if (user.pfp_path) {
+            const match = user.pfp_path.match(/^\/images\/avatar\/([1-9]|1[0-6])\.png$/);
+            if (match) {
+                const id = parseInt(match[1], 10) - 1;
+                setSelectedPictureId(id);
+            }
+        }
     }, [user?.id]);
 
     // cleanup any pending debounce timer on unmount
@@ -85,7 +94,7 @@ const ProfileScreen: React.FC = () => {
                 if (!user || !changed(user.description, value)) return
                 try {
                     await updateProfile({ description: value } as any)
-                    setPopup({ type: 'confirmation', message: 'Description saved.' })
+                    setPopup({ type: 'confirmation', message: 'Description updated.' })
                 } catch (err) {
                     setPopup({ type: 'error', message: (err as any)?.message || 'Failed to save description.' })
                 }
@@ -98,7 +107,7 @@ const ProfileScreen: React.FC = () => {
         try {
             if (!user || !changed(user.description, userData?.description)) return
             await updateProfile({ description: userData?.description ?? '' } as any)
-            setPopup({ type: 'confirmation', message: 'Description saved.' })
+            setPopup({ type: 'confirmation', message: 'Description updated.' })
         } catch (err: any) {
             setPopup({ type: 'error', message: err?.message || 'Failed to save description.' })
         }
@@ -171,7 +180,7 @@ const ProfileScreen: React.FC = () => {
         }
     };
 
-        const handleUsernameSave = async () => {
+    const handleUsernameSave = async () => {
         // only persist if changed
         if (user && (user.nickname || '').trim() === (userData?.nickname ?? '').trim()) {
             setIsEditingUsername(false)
@@ -184,8 +193,15 @@ const ProfileScreen: React.FC = () => {
             setUsernameError(false)
             setPopup({ type: 'confirmation', message: 'Username updated.' })
         } catch (e: any) {
-            setUsernameError(true)
-            setPopup({ type: 'error', message: e?.message || 'Failed to update username.' })
+            setUsernameError(true);
+            const statusCode = e?.response?.status || e?.status || e?.code; // Check multiple possible locations for the status code
+            if (statusCode === 422) {
+                setPopup({ type: 'error', message: 'String should have at least 3 characters.' });
+            } else if (statusCode === 400) {
+                setPopup({ type: 'error', message: 'Username is already taken.' });
+            } else {
+                setPopup({ type: 'error', message: e?.message || 'Failed to update username.' });
+            }
         }
     };
 

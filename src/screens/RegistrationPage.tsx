@@ -13,13 +13,14 @@ const RegistrationPage = () => {
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [popup,setPopup] = useState<PopupProps|null>(null)
+  const [passwordsMatch, setPasswordsMatch] = useState(true)
 
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
-    setFieldErrors({})
+    e.preventDefault();
+    setSubmitting(true);
+    setFieldErrors({}); // Clear field errors at the start of submission
     try {
       const form = new FormData(e.currentTarget)
       const nickname  = String(form.get('nickname') || '')
@@ -28,6 +29,11 @@ const RegistrationPage = () => {
       const confirmPassword = String(form.get('confirmPassword') || '')
 
       const errors: Record<string,string> = {}
+      const nicknamePattern = /^[a-zA-Z0-9_]*$/;
+
+      if (!nicknamePattern.test(nickname)) {
+        errors.nickname = 'Nickname can only contain letters, numbers, and underscores.';
+      }
       if (!passwordPolicy.test(password)) {
         errors.password = 'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, and a number.';
       }
@@ -45,21 +51,23 @@ const RegistrationPage = () => {
         return
       }
       await register({ nickname , email, password })
-      await login({ email , password, remember: true })
-      navigate('/', { replace: true })
+      localStorage.setItem(
+        'popupData',
+        JSON.stringify({ type: 'informative', message: 'Account created. Please verify your email to log in.' })
+      );
+      navigate('/login', { replace: true })
      
     } catch (err: any) {
-      let message = ''
-      if (err instanceof ApiError && err.message === 'REGISTER_USER_ALREADY_EXISTS'){
-        message = 'User with this email already exists'
-        fieldErrors.email = 'User with this email already exists'
-        setFieldErrors(fieldErrors)
+      if (err instanceof ApiError) {
+        console.log(`ApiError message: ${err.message}`);
+        console.log('ApiError detail:', err.detail); // Log the detail field
+        if (err.detail) {
+          fieldErrors[err.detail.field] = err.detail.message; // Set field-specific error
+          setFieldErrors(fieldErrors);
+        }
+      } else {
+        console.log('Unexpected error:', JSON.stringify(err, null, 2));
       }
-      else {
-        message = 'Registration failed'
-      }
-      setPopup({type: 'error', message: message, onClose: () => setPopup(null)})
-
     } finally {
       setSubmitting(false)
     }
@@ -87,6 +95,10 @@ const RegistrationPage = () => {
               type="text"
               autoComplete="nickname"
               required
+              onInput={(e) => {
+                const input = e.currentTarget;
+                input.value = input.value.replace(/[^a-zA-Z0-9_]/g, ''); // Allow only letters, numbers, and underscores
+              }}
             />
             {fieldErrors.nickname && (
               <p className="text-red-300 text-xs" role="alert">{fieldErrors.nickname}</p>
@@ -116,6 +128,12 @@ const RegistrationPage = () => {
                 type="password"
                 autoComplete="new-password"
                 required
+                onInput={(e) => {
+                  const confirmPasswordInput = document.querySelector<HTMLInputElement>('input[name="confirmPassword"]');
+                  if (confirmPasswordInput) {
+                    setPasswordsMatch(e.currentTarget.value === confirmPasswordInput.value);
+                  }
+                }}
               />
               {fieldErrors.password && (
                 <p className="text-red-300 text-xs" role="alert">{fieldErrors.password}</p>
@@ -124,11 +142,17 @@ const RegistrationPage = () => {
             <label className="auth-label">
               <span>Confirm password</span>
               <input
-                className="auth-input"
+                className={`auth-input ${!passwordsMatch ? 'border-red-500' : ''}`}
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
                 required
+                onInput={(e) => {
+                  const passwordInput = document.querySelector<HTMLInputElement>('input[name="password"]');
+                  if (passwordInput) {
+                    setPasswordsMatch(e.currentTarget.value === passwordInput.value);
+                  }
+                }}
               />
               {fieldErrors.confirmPassword && (
                 <p className="text-red-300 text-xs" role="alert">{fieldErrors.confirmPassword}</p>

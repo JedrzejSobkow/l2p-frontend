@@ -22,11 +22,12 @@ const Header = ({ onToggleFriends }:{
             <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-24 h-0.5 bg-highlight rounded"></div>
             {/* Logo */}
             <div className="flex items-center gap-2 pr-2 flex-shrink-0">
-                <Link to='/'><img
-                    src="/src/assets/images/logo.png"
-                    alt="L2P Logo"
-                    className="h-18 w-auto"
-                />
+                <Link to="/">
+                    <img
+                        src="/src/assets/images/logo.png"
+                        alt="L2P Logo"
+                        className="h-18 w-auto cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
+                    />
                 </Link>
             </div>
             {/* Header Elements */}
