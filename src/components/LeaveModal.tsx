@@ -20,7 +20,6 @@ const LeaveModal: React.FC<LeaveModalProps> = ({ isOpen, onConfirm, onCancel }) 
                 <p className="text-paragraph mb-6">
                     Are you sure you want to leave the lobby?
                     <br />
-                    <span className="text-red-400 font-semibold">You will lose all your progress and score for this session.</span>
                 </p>
                 <div className="flex justify-center gap-4">
                     <button
