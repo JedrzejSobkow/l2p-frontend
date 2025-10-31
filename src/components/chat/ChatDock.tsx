@@ -61,9 +61,11 @@ const ChatDock = () => {
               title={s.target.nickname}
               messages={chat.getMessages(s.target.id)}
               currentUserId={currentUserId}
+              friendId={s.target.id}
+              allowAttachments={true}
               typingUsers={chat.getTypingUsers(s.target.id)}
-              onSend={async ({ text }) => chat.sendMessage(s.target.id, text)}
-              onTyping={() => chat.sendTyping(s.target.id)}
+              onSend={async ({ text, attachment }) => chat.sendMessage(s.target.id, { text, attachment })}
+              onTyping={chat.sendTyping}
               placeholder={`Message ${s.target.nickname}...`}
               className="max-h-[450px] min-h-[450px]"
             />

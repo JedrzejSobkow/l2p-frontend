@@ -45,9 +45,9 @@ const FriendsScreen: FC = () => {
     return chat.getMessages(normalizeId(selectedFriend.friend_user_id))
   }, [chat, selectedFriend])
 
-  const handleSend = async ({ text }: { text: string; attachment?: File | null }) => {
+  const handleSend = async ({ text, attachment }: { text: string; attachment?: File | null }) => {
     if (!selectedFriend) return
-    await chat.sendMessage(normalizeId(selectedFriend.friend_user_id), text)
+    await chat.sendMessage(normalizeId(selectedFriend.friend_user_id), { text, attachment })
   }
 
   const handleSelectFriend = (friend: Friendship) => {
@@ -103,9 +103,12 @@ const FriendsScreen: FC = () => {
               title={selectedFriend.friend_nickname}
               messages={activeMessages}
               currentUserId={user?.id != null ? String(user.id) : currentUserIdFallback}
+              friendId={normalizeId(selectedFriend.friend_user_id)}
               allowAttachments
+              typingUsers={chat.getTypingUsers(normalizeId(selectedFriend.friend_user_id))}
               onSend={handleSend}
               placeholder="Send a direct message..."
+              onTyping={chat.sendTyping}
             />
           </>
         ) : (

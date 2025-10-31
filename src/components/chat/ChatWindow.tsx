@@ -17,6 +17,7 @@ export type ChatMessage = {
   avatarUrl?: string
   content: string
   createdAt: string | number | Date
+  imageUrl?: string
   isSystem?: boolean
 }
 
@@ -24,13 +25,14 @@ export interface ChatWindowProps {
   title?: string
   messages: ChatMessage[]
   currentUserId: string
+  friendId: string
   allowAttachments?: boolean
   placeholder?: string
   className?: string
   isSending?: boolean
   typingUsers?: string[]
   onSend: (payload: { text: string; attachment?: File | null }) => Promise<void> | void
-  onTyping?: () => void
+  onTyping?: (friend_user_id: string) => void
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
@@ -51,6 +53,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   title,
   messages,
   currentUserId,
+  friendId,
   allowAttachments = false,
   placeholder = 'Write a message...',
   className,
@@ -182,7 +185,16 @@ const ChatWindow: FC<ChatWindowProps> = ({
                   )}
                 >
                   {!isOwn && <span className="mb-1 text-xs font-semibold text-white/70">{message.senderName}</span>}
-                  <span className="whitespace-pre-wrap break-words leading-relaxed text-sm">{message.content}</span>
+                  {message.content && (
+                    <span className="whitespace-pre-wrap break-words leading-relaxed text-sm">{message.content}</span>
+                  )}
+                  {message.imageUrl && (
+                    <img
+                      src={message.imageUrl}
+                      alt="Attachment"
+                      className="mt-2 max-h-56 w-full rounded-2xl object-cover"
+                    />
+                  )}
                 </div>
                 <span className="block text-xs font-medium text-white/40">{formatTime(message.createdAt)}</span>
               </div>
@@ -234,7 +246,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value)
-                onTyping?.()
+                onTyping?.(friendId)
               }}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
@@ -245,7 +257,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
             <button
               type="submit"
               className=" grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white  transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:opacity-60 disabled:hover:scale-100"
-              disabled={isComposerDisabled}
+              disabled={isComposerDisabled || (!draft.trim() && !attachment)}
               aria-label="Send message"
             >
               <FiSend className="h-5 w-5" />

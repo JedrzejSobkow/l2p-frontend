@@ -17,11 +17,14 @@ import {
   getMessages as fetchChatHistory,
   sendMessage as emitChatMessage,
   sendTyping as emitTyping,
+  uploadImage,
+  type UploadImageResponse,
   type ChatMessageDTO,
   type Conversation,
   type ConversationUpdatedEvent,
   type UserTypingEvent,
 } from '../../services/chat'
+import { withAssetsPrefix } from '../../services/auth'
 
 export type ConversationTarget = {
   id: string
@@ -37,7 +40,7 @@ type ConversationsState = {
 
 type ChatContextValue = {
   getMessages: (conversationId: string) => ChatMessage[]
-  sendMessage: (conversationId: string, text: string) => Promise<void>
+  sendMessage: (conversationId: string, payload: { text?: string; attachment?: File | null }) => Promise<void>
   ensureConversation: (target: ConversationTarget) => void
   setIncomingMessage: (conversationId: string, msg: ChatMessage) => void
   getTarget: (conversationId: string) => ConversationTarget | undefined
@@ -58,14 +61,16 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
   avatarUrl: undefined,
   content: dto.content ?? '',
   createdAt: dto.created_at,
+  imageUrl: withAssetsPrefix(dto.image_url ?? undefined),
 })
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const { user,isAuthenticated } = useAuth()
+  const { user } = useAuth()
   const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {} })
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+  const typingThrottleRef = useRef<Map<string, number>>(new Map())
 
   const replaceMessages = useCallback((conversationId: string, messages: ChatMessage[]) => {
     setState((prev) => ({
@@ -80,11 +85,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (existing.some((msg) => msg.id === message.id)) {
         return prev
       }
+      const sanitized = !message.id.startsWith('temp-')
+        ? existing.filter(
+            (msg) =>
+              !msg.id.startsWith('temp-') ||
+              msg.senderId !== message.senderId ||
+              msg.content !== message.content ||
+              Boolean(msg.imageUrl) !== Boolean(message.imageUrl),
+          )
+        : existing
       return {
         ...prev,
         messagesById: {
           ...prev.messagesById,
-          [conversationId]: [...existing, message],
+          [conversationId]: [...sanitized, message],
         },
       }
     })
@@ -96,7 +110,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       if (loadingConversationsRef.current.has(conversationId)) return
       loadingConversationsRef.current.add(conversationId)
       try {
-        console.log('Fetching conversation history for', conversationId)
         const history = await fetchChatHistory(toApiId(conversationId))
         const transformed = history.messages.map(mapDtoToChatMessage).reverse()
         replaceMessages(conversationId, transformed)
@@ -126,27 +139,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     void fetchConversationHistory(id)
   }, [fetchConversationHistory])
 
-  const sendMessage = useCallback(
-    async (conversationId: string, text: string) => {
-      const trimmed = text.trim()
-      if (!trimmed) return
-      const me = user?.id != null ? normalizeId(user.id) : 'me'
-      const nickname = user?.nickname ?? 'You'
-      const optimisticMessage: ChatMessage = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        senderId: me,
-        senderName: nickname,
-        avatarUrl: user?.pfp_path,
-        content: trimmed,
-        createdAt: new Date().toISOString(),
-      }
-      ensureConversation({ id: conversationId, nickname })
-      appendMessage(conversationId, optimisticMessage)
-      emitChatMessage({ friend_user_id: toApiId(conversationId), content: trimmed })
-    },
-    [appendMessage, ensureConversation, user?.id, user?.nickname, user?.pfp_path],
-  )
-
   const setIncomingMessage = useCallback((conversationId: string, msg: ChatMessage) => {
     appendMessage(conversationId, msg)
   }, [appendMessage])
@@ -163,8 +155,100 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     [state.typingById],
   )
 
+  const sendMessage = useCallback(
+    async (conversationId: string, payload: { text?: string; attachment?: File | null }) => {
+      const text = payload.text?.trim() ?? ''
+      const file = payload.attachment ?? null
+      if (!text && !file) return
+
+      const me = user?.id != null ? normalizeId(user.id) : 'me'
+      const nickname = user?.nickname ?? 'You'
+      const now = new Date().toISOString()
+      let tempImageUrl: string | undefined
+      if (file) {
+        tempImageUrl = URL.createObjectURL(file)
+      }
+      const optimisticMessage: ChatMessage = {
+        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        senderId: me,
+        senderName: nickname,
+        avatarUrl: user?.pfp_path,
+        content: text,
+        imageUrl: tempImageUrl,
+        createdAt: now,
+      }
+      const currentTarget = getTarget(conversationId)
+      ensureConversation(
+        currentTarget ?? {
+          id: conversationId,
+          nickname,
+        },
+      )
+      appendMessage(conversationId, optimisticMessage)
+
+      const payloadBase = { friend_user_id: toApiId(conversationId) }
+
+      try {
+        if (file) {
+          const uploadDescriptor: UploadImageResponse = await uploadImage({
+            friend_user_id: payloadBase.friend_user_id,
+            filename: file.name,
+            content_type: file.type || 'application/octet-stream',
+          })
+
+          const uploadResponse = await fetch(uploadDescriptor.upload_url, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+            body: file,
+          })
+
+          if (!uploadResponse.ok) {
+            throw new Error(`Failed to upload attachment (${uploadResponse.status})`)
+          }
+
+          emitChatMessage({
+            ...payloadBase,
+            content: text || undefined,
+            image_path: uploadDescriptor.image_path,
+          })
+        } else {
+          emitChatMessage({
+            ...payloadBase,
+            content: text || undefined,
+          })
+        }
+      } catch (error) {
+        console.error('Failed to send message', error)
+        setState((prev) => {
+          const list = prev.messagesById[conversationId] ?? []
+          return {
+            ...prev,
+            messagesById: {
+              ...prev.messagesById,
+              [conversationId]: list.filter((msg) => msg.id !== optimisticMessage.id),
+            },
+          }
+        })
+      } finally {
+        if (tempImageUrl) {
+          const urlToRevoke = tempImageUrl
+          setTimeout(() => URL.revokeObjectURL(urlToRevoke), 10_000)
+        }
+      }
+    },
+    [appendMessage, ensureConversation, getTarget, user?.id, user?.nickname, user?.pfp_path],
+  )
+
   const sendTyping = useCallback(
     (conversationId: string) => {
+      const now = Date.now()
+      const last = typingThrottleRef.current.get(conversationId)
+      if (last && now - last < 1000) {
+        return
+      }
+      typingThrottleRef.current.set(conversationId, now)
       emitTyping({ friend_user_id: toApiId(conversationId) })
     },
     [],
@@ -201,6 +285,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     (payload: UserTypingEvent) => {
       const conversationId = normalizeId(payload.user_id)
       const nickname = payload.nickname
+      ensureConversation({ id: conversationId, nickname })
       setState((prev) => {
         const existing = prev.typingById[conversationId] ?? []
         if (existing.includes(nickname)) return prev
@@ -232,7 +317,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       }, 3_000)
       typingTimeoutRef.current.set(conversationId, timeout)
     },
-    [],
+    [ensureConversation],
   )
 
   const loadInitialConversations = useCallback(async () => {

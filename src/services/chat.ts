@@ -1,5 +1,4 @@
 import { request } from '../lib/http'
-import { withAssetsPrefix } from './auth'
 import { io, type Socket } from 'socket.io-client'
 
 const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
@@ -131,7 +130,7 @@ export async function getMessages(
   params.set('limit', String(limit))
   const query = params.toString()
   const path = query ? `/chat/history/${friend_user_id}?${query}` : `/chat/history/${friend_user_id}`
-  return await request<ConversationHistoryPayload>(path, { method: 'GET'})
+  return await request<ConversationHistoryPayload>(path, { method: 'GET', auth: true })
 }
 
 export async function getConversations(limit?: number): Promise<{ conversations: Conversation[] }> {
@@ -139,9 +138,9 @@ export async function getConversations(limit?: number): Promise<{ conversations:
   if (limit) params.set('limit', String(limit))
   const query = params.toString()
   const path = query ? `/chat/conversations?${query}` : `/chat/conversations`
-  return await request<{ conversations: Conversation[] }>(path, { method: 'GET'})
+  return await request<{ conversations: Conversation[] }>(path, { method: 'GET', auth: true })
 }
 
 export async function uploadImage(payload: UploadImagePayload): Promise<UploadImageResponse> {
-  return await request<UploadImageResponse>(`/chat/get-upload-url`, { method: 'POST', body: payload})
+  return await request<UploadImageResponse>(`/chat/get-upload-url`, { method: 'POST', body: payload, auth: true })
 }

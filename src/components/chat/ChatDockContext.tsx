@@ -24,7 +24,7 @@ type ChatDockContextValue = {
   openChat: (target: ChatTarget) => void
   closeChat: (targetId: string) => void
   minimizeChat: (targetId: string, minimized?: boolean) => void
-  sendMessage: (targetId: string, text: string) => void
+  sendMessage: (targetId: string, payload: { text?: string; attachment?: File | null }) => Promise<void>
 }
 
 const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefined)
@@ -69,7 +69,10 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [])
 
-  const sendMessage = useCallback((targetId: string, text: string) => chat.sendMessage(targetId, text), [chat])
+  const sendMessage = useCallback(
+    (targetId: string, payload: { text?: string; attachment?: File | null }) => chat.sendMessage(targetId, payload),
+    [chat],
+  )
 
   const value = useMemo<ChatDockContextValue>(() => {
     const sessions = Object.values(state.sessions)
