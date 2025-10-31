@@ -13,9 +13,10 @@ interface InLobbyUserTileProps {
   isYou: boolean;
   onPassHost?: () => void;
   onKickClick?: () => void;
+  onKickOut?: () => void;
 }
 
-const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, isYou, onPassHost, onKickClick }) => {
+const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, place, isReady, isHost, displayPassHost, displayKickOut, isYou, onPassHost, onKickClick, onKickOut }) => {
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
 
@@ -76,7 +77,7 @@ const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, pla
         )}
         {displayKickOut && (
           <button 
-            onClick={onKickClick}
+            onClick={onKickOut}
             className="focus:outline-none hover:scale-105 transition-transform cursor-pointer"
           >
             <FaUserTimes className="text-highlight" size={20} />

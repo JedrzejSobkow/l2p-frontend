@@ -126,6 +126,10 @@ const LobbyScreen: React.FC = () => {
         );
     };
 
+    const handleKickOut = (usernameToRemove: string) => {
+        setUsers(prevUsers => prevUsers.filter(user => user.username !== usernameToRemove));
+    };
+
     const [passHostUsername, setPassHostUsername] = useState<string>("");
     const [isPassHostModalOpen, setIsPassHostModalOpen] = useState(false);
 
@@ -187,6 +191,7 @@ const LobbyScreen: React.FC = () => {
                                 displayPassHost={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
                                 displayKickOut={myUsername !== user.username && users.some(u => u.username === myUsername && u.isHost)}
                                 onPassHost={() => handlePassHostClick(user.username)}
+                                onKickOut={() => handleKickOut(user.username)}
                             />
                         ))}
                         {/* Add empty seats */}
