@@ -8,24 +8,6 @@ import ChatDock from './chat/ChatDock';
 const Layout = () => {
     const [isFriendsOpen,setFriendsOpen] = useState(false)
 
-    const friendsMock = [
-        {
-            nickname: 'PlayerOne',
-            status: 'Online'
-        },
-        {
-            nickname: 'PlayerTwo',
-            status: 'Online'
-        },
-        {
-            nickname: 'PlayerThree',
-            status: 'Offline'
-        },
-        {
-            nickname: 'PlayerFour',
-            status: 'Offline'
-        }
-    ]
 
     return (
 
@@ -36,7 +18,6 @@ const Layout = () => {
                     <FriendsSlide 
                         open={isFriendsOpen} 
                         onClose={()=>setFriendsOpen(false)}
-                        friends={friendsMock}
                     >
                     </FriendsSlide>
                 

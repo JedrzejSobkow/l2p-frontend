@@ -135,7 +135,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-1 h-full min-h-0 w-full flex-col overflow-hidden rounded-2xl rounded-b-none border border-separator bg-background-secondary max-h-[77vh]',
+        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl rounded-b-none border border-separator bg-background-secondary max-h-[77vh]',
         className
       )}
     >
@@ -205,20 +205,20 @@ const ChatWindow: FC<ChatWindowProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className="border-t-1 border-separator">
-        <div className="relative items-center flex px-2 gap-2">
+        <div className="relative items-center flex gap-2">
           {allowAttachments && (
             <>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="grid h-11 w-11 absolute flex-shrink-0 z-30 place-items-center rounded-2xl border border-transparent text-button transition hover:border-orange-400/40"
+                className="grid h-11 w-11 absolute flex-shrink-0 z-30 place-items-center rounded-2xl text-button"
                 aria-label="Add attachment"
                 disabled={isComposerDisabled}
               >
                 <FiPaperclip className="h-6 w-6" />
               </button>
               <input
-                ref={fileInputRef}
+                ref={fileInputRef}  
                 type="file"
                 className="hidden"
                 onChange={handleAttachment}
@@ -227,19 +227,19 @@ const ChatWindow: FC<ChatWindowProps> = ({
             </>
           )}
 
-          <div className="relative flex-1">
+          <div className="flex flex-1 flex-row place-items-center">
             <textarea
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               rows={1}
-              className="w-full resize-none rounded-2xl border border-transparent bg-separator text-sm text-black/90 outline-none transition focus:border-orange-400/60 px-10 py-4 pr-16"
+              className={"w-full rounded-2xl resize-none border border-transparent bg-white/10 text-sm text-white outline-none transition focus:border-orange-400/60" + (allowAttachments && " px-10 py-4 pr-16" || " px-4 py-4")}
               disabled={isComposerDisabled}
             />
             <button
               type="submit"
-              className="absolute bottom-2 right-2 grid h-10 w-10 place-items-center rounded-full bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-[0_8px_18px_rgba(255,149,0,0.45)] transition hover:scale-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:opacity-60 disabled:hover:scale-100"
+              className=" grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white  transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:opacity-60 disabled:hover:scale-100"
               disabled={isComposerDisabled}
               aria-label="Send message"
             >

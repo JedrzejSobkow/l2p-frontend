@@ -1,72 +1,23 @@
 import { useMemo, useState, type FC, useEffect } from 'react'
 import ChatWindow, { type ChatMessage } from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
-import type { FriendProps } from '../components/friends/FriendCard'
 import { useAuth } from '../components/AuthContext'
 import { useChat } from '../components/chat/ChatProvider'
 import BackButton from '../components/BackButton'
+import type { Friendship } from '../services/friends'
 
 const currentUserIdFallback = 'current-user'
 
-const friendsMock: FriendProps[] = [
-  {
-    id: '1',
-    nickname: 'Alicia Frost',
-    status: 'Online',
-    description: 'Support main who loves strategy games and late-night ranked sessions.',
-    avatarUrl: '/assets/images/pfp.png',
-    rank: 'Diamond II',
-    favoriteGame: 'Legends of Aether'
-  },
-  {
-    id: '2',
-    nickname: 'Brandon Rivers',
-    status: 'Playing',
-    description: 'Tactical shot-caller and team captain of our weekend squad.',
-    avatarUrl: '/assets/images/pfp.png',
-    rank: 'Platinum I',
-    favoriteGame: 'Valor Siege'
-  },
-  {
-    id: '3',
-    nickname: 'Carmen Lee',
-    status: 'Offline',
-    description: 'Analyst, content creator, and certified achievement hunter.',
-    avatarUrl: '/assets/images/pfp.png',
-    rank: 'Gold III',
-    favoriteGame: 'Starfarer Tactics'
-  },
-  {
-    id: '4',
-    nickname: 'Diego Martinez',
-    status: 'Offline',
-    description: 'Exploration-focused player with a knack for discovering secrets.',
-    avatarUrl: '/assets/images/pfp.png',
-    rank: 'Silver I',
-    favoriteGame: 'Eclipse Frontier'
-  },
-  {
-    id: '5',
-    nickname: 'Evelyn Park',
-    status: 'In Lobby',
-    description: 'Our strategist. Always sets up the next lobby and keeps us coordinated.',
-    avatarUrl: '/assets/images/pfp.png',
-    rank: 'Immortal',
-    favoriteGame: 'Valor Siege',
-    lobbyId: 'LV-48219'
-  }
-]
-
 const FriendsScreen: FC = () => {
-  const [selectedFriend, setSelectedFriend] = useState<FriendProps | null>(friendsMock[0] ?? null)
+  const [selectedFriend, setSelectedFriend] = useState<Friendship | null>(null)
 
   const { user } = useAuth()
   const chat = useChat()
-  const selectedFriendKey = selectedFriend ? String(selectedFriend.id ?? selectedFriend.nickname) : undefined
+  const selectedFriendKey = selectedFriend ? String(selectedFriend.friend_user_id) : undefined
 
   useEffect(() => {
     if (selectedFriendKey && selectedFriend) {
-      chat.ensureConversation({ id: selectedFriendKey, nickname: selectedFriend.nickname, avatarUrl: selectedFriend.avatarUrl })
+      chat.ensureConversation({ id: selectedFriendKey, nickname: selectedFriend.friend_nickname, avatarUrl: selectedFriend.friend_pfp_path })
     }
   }, [selectedFriendKey])
 
@@ -80,10 +31,10 @@ const FriendsScreen: FC = () => {
     chat.sendMessage(selectedFriendKey, text)
   }
 
-  const handleSelectFriend = (friend: FriendProps) => setSelectedFriend(friend)
+  const handleSelectFriend = (friend: Friendship) => setSelectedFriend(friend)
   const handleRemoveFriend = () => {
     if (!selectedFriendKey || !selectedFriend) return
-    console.log('Removing friend', { friendId: selectedFriendKey, friendName: selectedFriend.nickname })
+    console.log('Removing friend', { friendId: selectedFriendKey, friendName: selectedFriend.friend_nickname })
   }
   const handleJoinLobby = () => { console.log('Join lobby') }
   const handleReportFriend = () => { console.log('Report friend') }
@@ -92,7 +43,7 @@ const FriendsScreen: FC = () => {
     <div className="flex h-full min-h-[calc(100vh-6rem)] flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)]">
       <div className="order-1 w-full">
         <FriendsPanel
-          friends={friendsMock}
+          friends={friends}
           onFriendSelect={handleSelectFriend}
           title="Your Friends"
           className="h-full"

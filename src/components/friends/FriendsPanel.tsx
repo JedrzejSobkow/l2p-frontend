@@ -1,17 +1,18 @@
 import { useMemo, useState, type FC, type ChangeEvent } from 'react'
 import { FiChevronDown, FiSearch, FiUserPlus } from 'react-icons/fi'
-import FriendCard, { type FriendProps } from './FriendCard'
+// import FriendCard, { type FriendProps } from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
+import type { Friendship, SearchFriendsPayload } from '../../services/friends'
 
 type FriendsPanelProps = {
-  friends?: FriendProps[]
+  friends?: Friendship[]
   onFriendSelect?: (friend: FriendProps) => void
   title?: string
   className?: string
   selectedFriendId?: string | number
   // Optional handlers for future backend integration
-  onSearchUsers?: (query: string) => Promise<FriendProps[]> | FriendProps[]
-  onAddFriend?: (user: FriendProps) => Promise<void> | void
+  onSearchUsers?: (query: string) => Promise<SearchFriendsPayload>
+  onAddFriend?: (user_id: string | number) => Promise<void> | void
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
@@ -54,9 +55,9 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
 
   const { onlineFriends, offlineFriends } = useMemo(() => {
     const q = searchTerm.trim().toLowerCase()
-    const base = mode === 'friends' && q ? friends.filter(f => f.nickname.toLowerCase().includes(q)) : friends
-    const online: FriendProps[] = []
-    const offline: FriendProps[] = []
+    const base = mode === 'friends' && q ? friends.filter(f => f.friend_nickname.toLowerCase().includes(q)) : friends
+    const online: Friendship[] = []
+    const offline: Friendship[] = []
 
     base.forEach((friend) => {
       const normalizedStatus = (friend.status || 'Offline').trim()
@@ -73,9 +74,9 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const selectedKey = selectedFriendId !== undefined && selectedFriendId !== null ? String(selectedFriendId) : undefined
   const { openChat } = useChatDock()
 
-  const renderFriend = (friend: FriendProps) => {
-    const fallbackKey = `${friend.nickname}-${friend.status}`
-    const key = friend.id !== undefined && friend.id !== null ? String(friend.id) : fallbackKey
+  const renderFriend = (friend: Friendship) => {
+    const fallbackKey = `${friend.friend_nickname}-${friend.status}`
+    const key = friend.friend_user_id !== undefined && friend.friend_user_id !== null ? String(friend.friend_user_id) : fallbackKey
     const isSelected = selectedKey ? key === selectedKey : false
     return (
       <FriendCard
@@ -84,11 +85,11 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         isSelected={isSelected}
         onClick={() => {
           onFriendSelect?.(friend)
-          friend.onClick?.()
+          // friend.onClick?.()
         }}
         onMessage={() => {
-          if (!friend.nickname) return
-          openChat({ id: key, nickname: friend.nickname, avatarUrl: friend.avatarUrl,status: friend.status })
+          if (!friend.friend_nickname) return
+          openChat({ id: key, nickname: friend.friend_nickname, avatarUrl: friend.friend_pfp_path})
         }}
       />
     )

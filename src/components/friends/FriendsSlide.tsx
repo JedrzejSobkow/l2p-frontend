@@ -1,28 +1,38 @@
-import { type FC, type MouseEvent } from 'react'
+import { useEffect, type FC, type MouseEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { FiX } from 'react-icons/fi'
 import FriendsPanel from './FriendsPanel'
-import type { FriendProps } from './FriendCard'
 import { useAuth } from '../AuthContext'
 import { FaUserFriends } from 'react-icons/fa'
 import { CgProfile } from 'react-icons/cg'
 import { AiFillHome } from 'react-icons/ai'
+import { searchFriends, sendFriendRequest,getFriendsList, type SearchFriendsPayload, type Friendship } from '../../services/friends'
 
 type FriendsSlideProps = {
   open: boolean
   onClose: () => void
-  friends?: FriendProps[]
-  onFriendSelect?: (friend: FriendProps) => void
+  onFriendSelect?: (friend: Friendship) => void
   title?: string
   selectedFriendId?: string | number
 }
 
-const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, friends, onFriendSelect, title, selectedFriendId }) => {
+const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, title, selectedFriendId }) => {
   const { user } = useAuth()
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation()
   }
 
+  let friends: Friendship[] = []
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        friends = await getFriendsList('accepted')
+      } catch (error) {
+        console.error('Error fetching friends:', error)
+      }
+  }
+    fetchFriends()
+  }, [])
   return (
     <>
       <div
