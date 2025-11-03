@@ -69,3 +69,10 @@ export async function transferHost(lobbyCode: string, newHostId: number): Promis
     auth: true
   })
 }
+
+export async function toggleReadyStatus(lobbyCode: string): Promise<string> {
+  return await request<string>(`/lobby/${lobbyCode}/ready`, {
+    method: 'POST',
+    auth: true
+  })
+}
