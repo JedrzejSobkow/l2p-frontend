@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../components/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { getCurrentLobby, leaveLobby, type CurrentLobbyResponse } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -15,45 +18,51 @@ import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
 
 const LobbyScreen: React.FC = () => {
-    // Mocked myUsername
-    const myUsername = "cool_user";
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const myUsername = user?.nickname || "Unknown";
 
-    const lobbyName = "Tiririri-kantiri";
-    const game = {
-        name: "Tic-Tac-Toe",
-        rules: "Lorem ipsum dolor sit, amet consectetur adipisicing elit. Expedita, voluptatum eum impedit optio eos, ratione minima consequatur totam similique laborum, suscipit odio animi error rerum exercitationem facilis incidunt cumque obcaecati",
-        img_path: "/src/assets/images/tic-tac-toe.png"
-    };
-
-    const [users, setUsers] = useState([
-        { avatar: "/src/assets/images/avatar/15.png", username: "cool_user", place: 1, isReady: false, isHost: true },
-        { avatar: "/src/assets/images/avatar/11.png", username: "JohanesDoanes", place: 2, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/10.png", username: "JaneSmith", place: 3, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice1", place: 4, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice2", place: 5, isReady: true, isHost: false },
-        { avatar: "/src/assets/images/avatar/9.png", username: "Alice3", place: 6, isReady: true, isHost: false },
-    ]);
-
-    // Mocked friends
-    const friends = ["JohnDoe", "Friend2", "Friend3", "Friend4", "Friend5"];
+    const [lobbyData, setLobbyData] = useState<CurrentLobbyResponse | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
+    const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const lobby = await getCurrentLobby();
+                if (!cancelled) {
+                    setLobbyData(lobby);
+                    setSelectedPlayerCount(lobby.max_players);
+                    setLoading(false);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setError(err instanceof Error ? err.message : 'Failed to load lobby');
+                    setLoading(false);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const handleSendMessage = (message: string) => {
         setMessages((prev) => [...prev, { username: "You", text: message }]);
     };
 
-    // Check if current user is host
-    const isUserHost = users.some(u => u.username === myUsername && u.isHost);
+    const isUserHost = lobbyData?.members.some(u => u.nickname === myUsername && u.is_host) || false;
 
-    // State for the Ready button
     const [isReady, setIsReady] = useState(false);
 
     const toggleReady = () => {
         setIsReady((prev) => !prev);
     };
 
-    // Mocked Lobby Settings
     const lobbySettings = [
         {
             label: "Visibility",
@@ -63,7 +72,6 @@ const LobbyScreen: React.FC = () => {
         },
     ];
 
-    // Mocked Game Settings
     const gameSettings = [
         {
             label: "Players",
@@ -80,10 +88,9 @@ const LobbyScreen: React.FC = () => {
     ];
 
     const [isEditingLobbyName, setIsEditingLobbyName] = useState(false);
-    const [editedLobbyName, setEditedLobbyName] = useState(lobbyName);
+    const [editedLobbyName, setEditedLobbyName] = useState(lobbyData?.name || "");
     const [isShowingGameInfo, setIsShowingGameInfo] = useState(false);
     const [isShowingCatalogue, setIsShowingCatalogue] = useState(false);
-    const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
 
     const mockGames = [
         { gameName: 'Tic Tac Toe', src: '/src/assets/images/tic-tac-toe.png', supportedPlayers: [2, 3, 4] },
@@ -94,40 +101,49 @@ const LobbyScreen: React.FC = () => {
         { gameName: 'Minesweeper', src: '/src/assets/images/clobber.png', supportedPlayers: [1, 2, 3, 4] },
     ];
 
-    const currentPlayerCount = users.length;
+    const currentPlayerCount = lobbyData?.current_players ?? 0;
 
     const isGameAvailable = (supportedPlayers: number[]) => {
         return supportedPlayers.includes(currentPlayerCount);
     };
 
-    // Calculate disabled player count values (less than current player count)
     const disabledPlayerCounts = gameSettings[0].availableValues.filter(
         value => parseInt(value) < currentPlayerCount
     );
 
-    const allUsersReady = users.every(user => 
-        user.username === myUsername ? isReady : user.isReady
-    );
+    const allUsersReady = lobbyData?.members.every(user => 
+        user.nickname === myUsername ? isReady : user.is_ready
+    ) || false;
 
     const canStartGame = isUserHost && allUsersReady && currentPlayerCount === selectedPlayerCount;
 
     const handleSaveLobbyName = (newName: string) => {
-        // TODO: Implement lobby name update logic
         setEditedLobbyName(newName);
         setIsEditingLobbyName(false);
     };
 
     const handlePassHost = (newHostUsername: string) => {
-        setUsers(prevUsers =>
-            prevUsers.map(user => ({
-                ...user,
-                isHost: user.username === newHostUsername
-            }))
-        );
+        setLobbyData(prevLobbyData => {
+            if (!prevLobbyData) return null;
+            return {
+                ...prevLobbyData,
+                members: prevLobbyData.members.map(user => ({
+                    ...user,
+                    is_host: user.nickname === newHostUsername
+                }))
+            };
+        });
     };
 
     const handleKickOut = (usernameToRemove: string) => {
-        setUsers(prevUsers => prevUsers.filter(user => user.username !== usernameToRemove));
+        setLobbyData(prevLobbyData => {
+            if (!prevLobbyData) return null;
+            return {
+                ...prevLobbyData,
+                members: prevLobbyData.members.filter(user => user.nickname !== usernameToRemove),
+                current_players: prevLobbyData.current_players - 1
+            };
+        });
     };
 
     const [passHostUsername, setPassHostUsername] = useState<string>("");
@@ -144,11 +160,53 @@ const LobbyScreen: React.FC = () => {
         setIsLeaveModalOpen(true);
     };
 
-    const handleConfirmLeave = () => {
-        // TODO: Implement actual leave logic (navigate away, API call, etc.)
-        console.log('User left the lobby');
-        setIsLeaveModalOpen(false);
+    const handleConfirmLeave = async () => {
+        try {
+            if (lobbyData?.lobby_code) {
+                await leaveLobby(lobbyData.lobby_code);
+                setIsLeaveModalOpen(false);
+                navigate('/');
+            }
+        } catch (err) {
+            console.error('Failed to leave lobby:', err);
+            setError(err instanceof Error ? err.message : 'Failed to leave lobby');
+        }
     };
+
+    const users = lobbyData?.members.map((member) => ({
+        avatar: `/src/assets/images/avatar/${member.user_id % 15 + 1}.png`,
+        username: member.nickname,
+        place: 0,
+        isReady: member.is_ready ?? false,
+        isHost: member.is_host,
+    })) ?? [];
+
+    users.forEach((user, index) => {
+        user.place = index + 1;
+    });
+
+    const defaultGameInfo = {
+        name: "Game",
+        img_path: "",
+        rules: ""
+    };
+    const gameInfo = lobbyData?.game || defaultGameInfo;
+
+    if (loading) {
+        return (
+            <main className="flex items-center justify-center min-h-screen bg-background-primary">
+                <div className="text-headline text-xl">Loading lobby...</div>
+            </main>
+        );
+    }
+
+    if (error) {
+        return (
+            <main className="flex items-center justify-center min-h-screen bg-background-primary">
+                <div className="text-red-500 text-xl">{error}</div>
+            </main>
+        );
+    }
 
     return (
         <main className="flex flex-col bg-background-primary min-h-screen">
@@ -229,11 +287,11 @@ const LobbyScreen: React.FC = () => {
                     <div className="w-full flex items-center justify-between gap-2 p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                             <img
-                                src={game.img_path}
-                                alt={`${game.name} image`}
+                                src={gameInfo.img_path || ""}
+                                alt={`${gameInfo.name} image`}
                                 className="h-5 sm:h-7 w-auto flex-shrink-0"
                             />
-                            <span className="text-sm sm:text-lg font-bold text-white truncate">{game.name}</span>
+                            <span className="text-sm sm:text-lg font-bold text-white truncate">{gameInfo.name}</span>
                         </div>
 
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
@@ -321,8 +379,8 @@ const LobbyScreen: React.FC = () => {
 
             <GameInfoModal
                 isOpen={isShowingGameInfo}
-                gameName={game.name}
-                gameRules={game.rules}
+                gameName={gameInfo.name}
+                gameRules={gameInfo.rules}
                 onClose={() => setIsShowingGameInfo(false)}
             />
 
