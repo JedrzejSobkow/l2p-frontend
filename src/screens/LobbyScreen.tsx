@@ -64,46 +64,74 @@ const LobbyScreen: React.FC = () => {
             return;
         }
 
+        // Always disconnect and reconnect to ensure fresh connection
+        disconnectLobbySocket();
         const socket = connectLobbySocket();
+
+        let isMounted = true;
 
         const handleConnect = () => {
             console.log('Connected to lobby namespace');
+            if (isMounted) {
+                setError(null);
+            }
         };
 
-        const handleDisconnect = () => {
-            console.log('Disconnected from lobby namespace');
+        const handleDisconnect = (reason: string) => {
+            console.log('Disconnected from lobby namespace:', reason);
         };
 
         const handleError = (error: any) => {
             console.error('Lobby socket error:', error);
+            if (isMounted) {
+                setError(`Connection error: ${error?.message || 'Unknown error'}`);
+            }
+        };
+
+        const handleConnectError = (error: any) => {
+            console.error('Lobby socket connection error:', error);
+            if (isMounted) {
+                if (error?.message?.includes('Authentication') || error?.message === 'Auth error') {
+                    setError('Authentication failed. Reconnecting...');
+                    // Force a hard refresh of the connection
+                    setTimeout(() => {
+                        if (socket && !socket.connected) {
+                            socket.connect();
+                        }
+                    }, 2000);
+                }
+            }
         };
 
         const handleMemberReadyChanged = (data: MemberReadyChangedEvent) => {
             console.log('Member ready changed:', data);
-            setLobbyData(prevLobbyData => {
-                if (!prevLobbyData) return null;
-                return {
-                    ...prevLobbyData,
-                    members: prevLobbyData.members.map(member =>
-                        member.user_id === data.user_id
-                            ? { ...member, is_ready: data.is_ready }
-                            : member
-                    )
-                };
-            });
+            if (isMounted) {
+                setLobbyData(prevLobbyData => {
+                    if (!prevLobbyData) return null;
+                    return {
+                        ...prevLobbyData,
+                        members: prevLobbyData.members.map(member =>
+                            member.user_id === data.user_id
+                                ? { ...member, is_ready: data.is_ready }
+                                : member
+                        )
+                    };
+                });
+            }
         };
 
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
-        socket.on('connect_error', handleError);
+        socket.on('connect_error', handleConnectError);
         onMemberReadyChanged(handleMemberReadyChanged);
 
         return () => {
+            isMounted = false;
             socket.off('connect', handleConnect);
             socket.off('disconnect', handleDisconnect);
             socket.off('error', handleError);
-            socket.off('connect_error', handleError);
+            socket.off('connect_error', handleConnectError);
             offMemberReadyChanged(handleMemberReadyChanged);
         };
     }, [user]);

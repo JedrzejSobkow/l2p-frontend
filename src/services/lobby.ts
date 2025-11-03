@@ -48,18 +48,33 @@ export type MemberReadyChangedEvent = {
 let lobbySocket: Socket | null = null
 
 export const connectLobbySocket = () => {
+  // Force disconnect and cleanup if socket exists
   if (lobbySocket) {
-    if (!lobbySocket.connected) {
-      lobbySocket.connect()
+    if (lobbySocket.connected) {
+      return lobbySocket
     }
+    // Socket exists but not connected, try to reconnect
+    lobbySocket.connect()
     return lobbySocket
   }
 
+  // Create new socket
   lobbySocket = io(SOCKET_URL, {
     path: SOCKET_PATH,
     transports: ['websocket'],
     withCredentials: true,
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    reconnectionAttempts: 5,
+    forceNew: false,
   })
+
+  // Handle authentication errors
+  lobbySocket.on('connect_error', (error: any) => {
+    console.error('Socket connection error:', error)
+  })
+
   return lobbySocket
 }
 
