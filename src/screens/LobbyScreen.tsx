@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, type CurrentLobbyResponse } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, transferHost, type CurrentLobbyResponse } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -122,17 +122,17 @@ const LobbyScreen: React.FC = () => {
         setIsEditingLobbyName(false);
     };
 
-    const handlePassHost = (newHostUsername: string) => {
-        setLobbyData(prevLobbyData => {
-            if (!prevLobbyData) return null;
-            return {
-                ...prevLobbyData,
-                members: prevLobbyData.members.map(user => ({
-                    ...user,
-                    is_host: user.nickname === newHostUsername
-                }))
-            };
-        });
+    const handlePassHost = async (newHostUsername: string) => {
+        try {
+            const newHostUser = lobbyData?.members.find(u => u.nickname === newHostUsername);
+            if (newHostUser && lobbyData?.lobby_code) {
+                const updatedLobby = await transferHost(lobbyData.lobby_code, newHostUser.user_id);
+                setLobbyData(updatedLobby);
+            }
+        } catch (err) {
+            console.error('Failed to transfer host:', err);
+            setError(err instanceof Error ? err.message : 'Failed to transfer host');
+        }
     };
 
     const handleKickOut = (usernameToRemove: string) => {

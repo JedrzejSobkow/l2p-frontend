@@ -61,3 +61,11 @@ export async function joinLobby(lobbyCode: string): Promise<CurrentLobbyResponse
     auth: true
   })
 }
+
+export async function transferHost(lobbyCode: string, newHostId: number): Promise<CurrentLobbyResponse> {
+  return await request<CurrentLobbyResponse>(`/lobby/${lobbyCode}/transfer-host`, {
+    method: 'POST',
+    body: { new_host_id: newHostId },
+    auth: true
+  })
+}
