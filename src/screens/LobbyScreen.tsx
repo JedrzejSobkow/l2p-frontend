@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, transferHost, toggleReadyStatus, type CurrentLobbyResponse } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, transferHost, connectLobbySocket, disconnectLobbySocket, emitToggleReady, onMemberReadyChanged, offMemberReadyChanged, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -28,9 +28,9 @@ const LobbyScreen: React.FC = () => {
 
     const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
     const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
-
     const [isReady, setIsReady] = useState(false);
 
+    // Initialize lobby data from REST API
     useEffect(() => {
         let cancelled = false;
         (async () => {
@@ -39,7 +39,6 @@ const LobbyScreen: React.FC = () => {
                 if (!cancelled) {
                     setLobbyData(lobby);
                     setSelectedPlayerCount(lobby.max_players);
-                    // Initialize isReady from the current user's status in the lobby
                     const currentUser = lobby.members.find(m => m.nickname === myUsername);
                     if (currentUser) {
                         setIsReady(currentUser.is_ready);
@@ -58,6 +57,57 @@ const LobbyScreen: React.FC = () => {
         };
     }, [myUsername]);
 
+    // Connect to Socket.IO and set up event listeners
+    useEffect(() => {
+        if (!user) {
+            disconnectLobbySocket();
+            return;
+        }
+
+        const socket = connectLobbySocket();
+
+        const handleConnect = () => {
+            console.log('Connected to lobby namespace');
+        };
+
+        const handleDisconnect = () => {
+            console.log('Disconnected from lobby namespace');
+        };
+
+        const handleError = (error: any) => {
+            console.error('Lobby socket error:', error);
+        };
+
+        const handleMemberReadyChanged = (data: MemberReadyChangedEvent) => {
+            console.log('Member ready changed:', data);
+            setLobbyData(prevLobbyData => {
+                if (!prevLobbyData) return null;
+                return {
+                    ...prevLobbyData,
+                    members: prevLobbyData.members.map(member =>
+                        member.user_id === data.user_id
+                            ? { ...member, is_ready: data.is_ready }
+                            : member
+                    )
+                };
+            });
+        };
+
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+        socket.on('error', handleError);
+        socket.on('connect_error', handleError);
+        onMemberReadyChanged(handleMemberReadyChanged);
+
+        return () => {
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+            socket.off('error', handleError);
+            socket.off('connect_error', handleError);
+            offMemberReadyChanged(handleMemberReadyChanged);
+        };
+    }, [user]);
+
     const handleSendMessage = (message: string) => {
         setMessages((prev) => [...prev, { username: "You", text: message }]);
     };
@@ -67,9 +117,8 @@ const LobbyScreen: React.FC = () => {
     const toggleReady = async () => {
         try {
             if (lobbyData?.lobby_code) {
-                await toggleReadyStatus(lobbyData.lobby_code);
+                emitToggleReady(lobbyData.lobby_code);
                 setIsReady((prev) => !prev);
-                // Update the lobby data to reflect the new ready status
                 setLobbyData(prevLobbyData => {
                     if (!prevLobbyData) return null;
                     return {
@@ -85,7 +134,6 @@ const LobbyScreen: React.FC = () => {
         } catch (err) {
             console.error('Failed to toggle ready status:', err);
             setError(err instanceof Error ? err.message : 'Failed to toggle ready status');
-            // Revert the state on error
             setIsReady((prev) => !prev);
         }
     };
