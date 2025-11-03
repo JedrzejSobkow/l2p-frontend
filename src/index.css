@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './styles/auth.css';
+@import './styles/friends.css';
 
 @theme {
   --color-background: #0f0e17;
@@ -21,6 +22,7 @@
   --color-first-place: #ffd700;
   --color-second-place: #c0c0c0;
   --color-third-place: #cd7f32;
+  --color-separator: #303030;
 }
 
 @layer base{

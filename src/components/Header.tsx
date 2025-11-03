@@ -2,9 +2,12 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
-const Header: React.FC = () => {
+const Header = ({ onToggleFriends }:{
+    onToggleFriends?:() => void
+    }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
+    const isFriendsScreen = location.pathname.startsWith('/friends');
 
     const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 
@@ -72,7 +75,7 @@ const Header: React.FC = () => {
                     <>
                         <Link to="/profile">
                             <img
-                                src="/src/assets/images/pfp.png"
+                                src={user?.pfp_path || "/src/assets/avatars/default.png"}
                                 alt="User Icon"
                                 className="w-10 h-10 rounded-full cursor-pointer"
                             />
@@ -113,13 +116,17 @@ const Header: React.FC = () => {
                 )}
             </div>
             {/* Menu Button */}
-            <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
+            {isAuthenticated && (
+                <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
+                    onClick={onToggleFriends}
                     src="/src/assets/icons/menu.png"
                     alt="Menu Icon"
                     className="w-9 h-9"
                 />
             </div>
+            )}
+            
         </header>
     );
 };

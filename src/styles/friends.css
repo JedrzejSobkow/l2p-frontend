@@ -1,0 +1,13 @@
+@layer components {
+    .slider-link {
+        @apply flex items-center px-6 py-4 pt-2 text-button flex-col min-w-[50px];
+    }
+
+    .slider-link span {
+        @apply text-headline;
+    }
+
+    .chat-dock-control {
+        @apply p-1 text-button border-1 rounded-2xl border-transparent hover:border-button/50;
+    }
+}
