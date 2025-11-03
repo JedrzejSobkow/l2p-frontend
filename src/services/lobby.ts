@@ -54,3 +54,10 @@ export async function leaveLobby(lobbyCode: string): Promise<void> {
     auth: true
   })
 }
+
+export async function joinLobby(lobbyCode: string): Promise<CurrentLobbyResponse> {
+  return await request<CurrentLobbyResponse>(`/lobby/${lobbyCode}/join`, {
+    method: 'POST',
+    auth: true
+  })
+}
