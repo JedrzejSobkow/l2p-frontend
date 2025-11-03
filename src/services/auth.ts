@@ -93,12 +93,23 @@ export async function verifyUser(payload: ActivateUserPayload): Promise<string |
 
 // /users/ endpoints
 
+export function withAssetsPrefix(p?: string): string | undefined {
+  if (!p) return undefined
+  if (/^https?:\/\//i.test(p)) return p
+  if (p.startsWith('/src/assets')) return p
+  if (p.startsWith('src/assets')) return '/' + p
+  const trimmed = p.replace(/^\/+/, '')
+  return `/src/assets/${trimmed}`
+}
+
 export async function getMe(): Promise<User> {
-  return await request<User>('/users/me', { method: 'GET' })
+  const user = await request<User>('/users/me', { method: 'GET' })
+  return { ...user, pfp_path: withAssetsPrefix(user.pfp_path) }
 }
 
 export async function patchMe(payload: Partial<User>): Promise<User> {
-  return await request<User>('/users/me', { method: 'PATCH', body: payload })
+  const user = await request<User>('/users/me', { method: 'PATCH', body: payload })
+  return { ...user, pfp_path: withAssetsPrefix(user.pfp_path) }
 }
 
 export async function deleteMe(): Promise<void> {
