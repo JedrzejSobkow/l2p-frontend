@@ -9,6 +9,7 @@ import {
   type KeyboardEvent
 } from 'react'
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
+import { useAuth } from '../AuthContext'
 
 export type ChatMessage = {
   id: string
@@ -41,6 +42,9 @@ const formatTime = (timestamp: ChatMessage['createdAt']) => {
   try {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
     return new Intl.DateTimeFormat('en', {
+      day: 'numeric',
+      month: 'short',
+      year: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     }).format(date)
@@ -62,6 +66,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   onSend,
   onTyping,
 }) => {
+  const {user} = useAuth()
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -155,7 +160,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
       )}
 
       <div ref={scrollRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6">
-        {messages.map((message) => {
+        {messages.map((message ) => {
           const isOwn = message.senderId === currentUserId
           if (message.isSystem) {
             return (
@@ -200,7 +205,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               </div>
               {isOwn && (
                 <img
-                  src={message.avatarUrl || 'src/assets/images/pfp.png'}
+                  src={user?.pfp_path || 'src/assets/images/pfp.png'}
                   alt="You"
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />
