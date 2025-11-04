@@ -53,7 +53,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'lobby/:lobbyName',
-                element: <RequireGuest> <LobbyScreen /> </RequireGuest>
+                element:  <LobbyScreen />
             },
             {
                 path: 'friends',

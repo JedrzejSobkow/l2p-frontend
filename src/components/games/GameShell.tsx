@@ -37,14 +37,22 @@ const GameShell = ({
   const ViewComponent = module.GameView
 
   return (
-    <ViewComponent
-      state={state}
-      players={players}
-      localPlayerId={localPlayerId}
-      lastMove={lastMove}
-      isMyTurn={isMyTurn}
-      onProposeMove={handleProposeMove}
-    />
+    <div className="relative flex min-h-[calc(100vh-6rem)] w-full items-center justify-center overflow-hidden px-6 py-10 text-white">
+      <div className="pointer-events-none absolute inset-0 opacity-70">
+      </div>
+      <div className="relative z-10 flex w-full max-w-6xl flex-col gap-8">
+        <div className="rounded-[32px] border border-white/10 bg-white/5 px-6 py-8 backdrop-blur-md transition">
+          <ViewComponent
+            state={state}
+            players={players}
+            localPlayerId={localPlayerId}
+            lastMove={lastMove}
+            isMyTurn={isMyTurn}
+            onProposeMove={handleProposeMove}
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 

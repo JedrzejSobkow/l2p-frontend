@@ -141,12 +141,12 @@ const TicTacToeView: GameClientModule["GameView"] = ({
 
   const handleCellClick = useCallback(
     (index: number) => {
-      if (!isMyTurn) return
+      // if (!isMyTurn) return
       if (resolved.board[index] !== null) return
       if (resolved.winnerId !== undefined || resolved.draw) return
       onProposeMove({ position: index })
     },
-    [isMyTurn, onProposeMove, resolved.board, resolved.draw, resolved.winnerId],
+    [onProposeMove, resolved.board, resolved.draw, resolved.winnerId],
   )
 
   const localMark = resolved.marksByPlayer[localPlayerId]
@@ -248,7 +248,7 @@ const TicTacToeView: GameClientModule["GameView"] = ({
         <div className="pointer-events-none absolute inset-3 grid grid-cols-3">
           {resolved.board.map((cell, index) => {
             const disabled =
-              !isMyTurn || cell !== null || resolved.winnerId !== undefined || resolved.draw
+              cell !== null || resolved.winnerId !== undefined || resolved.draw
             return (
               <button
                 key={index}
@@ -293,7 +293,7 @@ const validateLocalMove: NonNullable<GameClientModule["validateLocalMove"]> = (s
   const resolved = resolveState(state, [])
   if (resolved.winnerId !== undefined || resolved.draw) return false
   if (resolved.board[extractMoveIndex(move)] !== null) return false
-  if (resolved.nextPlayerId && resolved.nextPlayerId !== playerId) return false
+  // if (resolved.nextPlayerId && resolved.nextPlayerId !== playerId) return false
   return true
 }
 
