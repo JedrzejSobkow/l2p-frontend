@@ -51,7 +51,7 @@ export const connectLobbySocket = () => {
   // Force disconnect and cleanup if socket exists
   if (lobbySocket) {
     if (lobbySocket.connected) {
-      return lobbySocket
+      return  
     }
     // Socket exists but not connected, try to reconnect
     lobbySocket.connect()
@@ -127,12 +127,34 @@ export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number) => {
   }
 }
 
-export const emitLeaveLobby = (lobbyCode: string) => {
-  if (lobbySocket) {
-    console.log('Leaving lobby:', lobbyCode)
-    lobbySocket.emit('leave_lobby', { lobby_code: lobbyCode })
+export const emitLeaveLobby = (lobbyCode: string, onSuccess: () => void, onError: (error: string) => void) => {
+  if (lobbySocket && lobbySocket.connected) {
+    console.log('Emitting leave_lobby event for lobby:', lobbyCode);
+    lobbySocket.emit('leave_lobby', { lobby_code: lobbyCode });
+
+    // Listen for success
+    const handleLobbyLeft = () => {
+      console.log('Successfully left lobby:', lobbyCode);
+      onSuccess();
+      lobbySocket?.off('lobby_left', handleLobbyLeft);
+      lobbySocket?.off('lobby_error', handleLobbyError);
+    };
+
+    // Listen for errors
+    const handleLobbyError = (data: any) => {
+      console.error('Failed to leave lobby:', data);
+      onError(data.message || 'An unknown error occurred.');
+      lobbySocket?.off('lobby_left', handleLobbyLeft);
+      lobbySocket?.off('lobby_error', handleLobbyError);
+    };
+
+    lobbySocket.on('lobby_left', handleLobbyLeft);
+    lobbySocket.on('lobby_error', handleLobbyError);
+  } else {
+    console.error('Socket is not connected. Cannot emit leave_lobby event.');
+    onError('Socket is not connected.');
   }
-}
+};
 
 export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
   if (lobbySocket) {

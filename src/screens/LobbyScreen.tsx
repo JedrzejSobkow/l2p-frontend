@@ -398,16 +398,25 @@ const LobbyScreen: React.FC = () => {
         setIsLeaveModalOpen(true);
     };
 
-    const handleConfirmLeave = async () => {
-        try {
-            if (lobbyData?.lobby_code) {
-                emitLeaveLobby(lobbyData.lobby_code);
-                setIsLeaveModalOpen(false);
-            }
-        } catch (err) {
-            console.error('Failed to leave lobby:', err);
-            setError(err instanceof Error ? err.message : 'Failed to leave lobby');
+    const handleConfirmLeave = () => {
+        if (!lobbyData?.lobby_code) {
+            console.error('Lobby code is missing.');
+            setError('Lobby code is missing.');
+            return;
         }
+      
+        emitLeaveLobby(
+            lobbyData.lobby_code,
+            () => {
+                console.log('Navigating to home after leaving lobby.');
+                disconnectLobbySocket();
+                navigate('/');
+            },
+            (error) => {
+                console.error('Error while leaving lobby:', error);
+                setError(error);
+            }
+        );
     };
 
     const users = lobbyData?.members.map((member) => ({
