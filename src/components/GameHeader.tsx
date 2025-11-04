@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { createLobby, joinLobby } from '../services/lobby';
+import { createLobby, joinLobby, connectLobbySocket } from '../services/lobby';
 import Popup from './Popup';
 import type { PopupProps } from './Popup';
 
@@ -77,14 +77,42 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         const joinCode = joinCodeParts.join('');
         setIsJoiningLobby(true);
         try {
-            await joinLobby(joinCode);
-            setShowJoinModal(false);
-            navigate(`/lobby/${joinCode}`);
+            // Connect to the lobby socket
+            const socket = connectLobbySocket();
+
+            if (!socket) {
+                throw new Error('Socket connection failed.');
+            }
+
+            // Emit the join_lobby event
+            socket.emit('join_lobby', { lobby_code: joinCode });
+
+            // Listen for the lobby_joined event to confirm success
+            const handleLobbyJoined = (data: any) => {
+                console.log('Successfully joined lobby:', data);
+                setShowJoinModal(false);
+                navigate(`/lobby/${joinCode}`);
+                socket.off('lobby_joined', handleLobbyJoined); // Clean up listener
+            };
+
+            // Listen for errors
+            const handleLobbyError = (error: any) => {
+                console.error('Failed to join lobby:', error);
+                setPopup({
+                    type: 'error',
+                    message: error.message || 'Failed to join lobby. Please try again.',
+                    onClose: () => setPopup(null),
+                });
+                socket.off('lobby_error', handleLobbyError); // Clean up listener
+            };
+
+            socket.on('lobby_joined', handleLobbyJoined);
+            socket.on('lobby_error', handleLobbyError);
         } catch (error) {
-            setPopup({ 
-                type: 'error', 
-                message: 'This code did not work',
-                onClose: () => setPopup(null)
+            setPopup({
+                type: 'error',
+                message: error instanceof Error ? error.message : 'This code did not work',
+                onClose: () => setPopup(null),
             });
         } finally {
             setIsJoiningLobby(false);

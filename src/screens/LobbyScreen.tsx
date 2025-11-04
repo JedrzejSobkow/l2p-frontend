@@ -207,6 +207,20 @@ const LobbyScreen: React.FC = () => {
             }
         };
 
+        const handleMemberJoined = (data: any) => {
+            console.log('New member joined:', data);
+            if (isMounted) {
+                setLobbyData((prevLobbyData) => {
+                    if (!prevLobbyData) return null;
+                    return {
+                        ...prevLobbyData,
+                        members: [...prevLobbyData.members, data.member],
+                        current_players: data.current_players,
+                    };
+                });
+            }
+        };
+
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
@@ -218,6 +232,7 @@ const LobbyScreen: React.FC = () => {
         onSettingsUpdated(handleSettingsUpdated);
         onMemberLeft(handleMemberLeft);
         onLobbyLeft(handleLobbyLeft);
+        socket.on('member_joined', handleMemberJoined);
 
         return () => {
             isMounted = false;
@@ -232,6 +247,7 @@ const LobbyScreen: React.FC = () => {
             offSettingsUpdated(handleSettingsUpdated);
             offMemberLeft(handleMemberLeft);
             offLobbyLeft(handleLobbyLeft);
+            socket.off('member_joined', handleMemberJoined);
         };
     }, [user, navigate]);
 
