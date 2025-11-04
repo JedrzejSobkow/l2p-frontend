@@ -127,6 +127,13 @@ export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number) => {
   }
 }
 
+export const emitLeaveLobby = (lobbyCode: string) => {
+  if (lobbySocket) {
+    console.log('Leaving lobby:', lobbyCode)
+    lobbySocket.emit('leave_lobby', { lobby_code: lobbyCode })
+  }
+}
+
 export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
   if (lobbySocket) {
     lobbySocket.on('member_ready_changed', callback)
@@ -203,6 +210,38 @@ export const offSettingsUpdated = (callback?: (data: any) => void) => {
       lobbySocket.off('settings_updated', callback)
     } else {
       lobbySocket.off('settings_updated')
+    }
+  }
+}
+
+export const onMemberLeft = (callback: (data: any) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('member_left', callback)
+  }
+}
+
+export const offMemberLeft = (callback?: (data: any) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('member_left', callback)
+    } else {
+      lobbySocket.off('member_left')
+    }
+  }
+}
+
+export const onLobbyLeft = (callback: (data: any) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('lobby_left', callback)
+  }
+}
+
+export const offLobbyLeft = (callback?: (data: any) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('lobby_left', callback)
+    } else {
+      lobbySocket.off('lobby_left')
     }
   }
 }

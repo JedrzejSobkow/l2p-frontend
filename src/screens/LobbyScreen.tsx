@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -185,6 +185,28 @@ const LobbyScreen: React.FC = () => {
             }
         };
 
+        const handleMemberLeft = (data: any) => {
+            console.log('Member left:', data);
+            if (isMounted) {
+                setLobbyData(prevLobbyData => {
+                    if (!prevLobbyData) return null;
+                    return {
+                        ...prevLobbyData,
+                        members: prevLobbyData.members.filter(member => member.user_id !== data.user_id),
+                        current_players: prevLobbyData.current_players - 1
+                    };
+                });
+            }
+        };
+
+        const handleLobbyLeft = (data: any) => {
+            console.log('Successfully left lobby');
+            if (isMounted) {
+                disconnectLobbySocket();
+                navigate('/');
+            }
+        };
+
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
@@ -194,6 +216,8 @@ const LobbyScreen: React.FC = () => {
         onMemberKicked(handleMemberKicked);
         onKickedFromLobby(handleKickedFromLobby);
         onSettingsUpdated(handleSettingsUpdated);
+        onMemberLeft(handleMemberLeft);
+        onLobbyLeft(handleLobbyLeft);
 
         return () => {
             isMounted = false;
@@ -206,6 +230,8 @@ const LobbyScreen: React.FC = () => {
             offMemberKicked(handleMemberKicked);
             offKickedFromLobby(handleKickedFromLobby);
             offSettingsUpdated(handleSettingsUpdated);
+            offMemberLeft(handleMemberLeft);
+            offLobbyLeft(handleLobbyLeft);
         };
     }, [user, navigate]);
 
@@ -375,9 +401,8 @@ const LobbyScreen: React.FC = () => {
     const handleConfirmLeave = async () => {
         try {
             if (lobbyData?.lobby_code) {
-                await leaveLobby(lobbyData.lobby_code);
+                emitLeaveLobby(lobbyData.lobby_code);
                 setIsLeaveModalOpen(false);
-                navigate('/');
             }
         } catch (err) {
             console.error('Failed to leave lobby:', err);
