@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
 import { useAuth } from '../AuthContext'
+import Lightbox from '../Lightbox'
 
 export type ChatMessage = {
   id: string
@@ -72,6 +73,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [sending, setSending] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   useEffect(() => {
     const container = scrollRef.current
@@ -109,7 +111,16 @@ const ChatWindow: FC<ChatWindowProps> = ({
       setDraft('')
       setAttachment(null)
       fileInputRef.current?.form?.reset()
-    } finally {
+    } 
+    catch (error: any) {
+      // if(error.message === 'Invalid image type'){
+      //   setPopup({type: 'error', message: 'Provide a valid image type'})
+      // }
+      // else {
+      //   setPopup({type: 'error', message: 'Failed to send message'})
+      // }
+    }
+    finally {
       setSending(false)
     }
   }
@@ -196,6 +207,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
                   {message.imageUrl && (
                     <img
                       src={message.imageUrl}
+                      onClick={() => setSelectedImage(message.imageUrl || null)}
                       alt="Attachment"
                       className="mt-2 max-h-56 w-full rounded-2xl object-cover"
                     />
@@ -283,6 +295,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
           </div>
         )}
       </form>
+      <Lightbox
+        isOpen={selectedImage !== null}
+        onClose={() => setSelectedImage(null)}
+        imageUrl={selectedImage || ''}
+      >
+      </Lightbox>
     </div>
   )
 }
