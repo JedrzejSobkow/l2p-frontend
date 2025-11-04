@@ -87,6 +87,18 @@ export const disconnectLobbySocket = () => {
   }
 }
 
+export const reconnectLobbySocket = () => {
+  if (lobbySocket) {
+    console.log('Reconnecting lobby socket...')
+    lobbySocket.disconnect()
+    setTimeout(() => {
+      if (lobbySocket) {
+        lobbySocket.connect()
+      }
+    }, 500)
+  }
+}
+
 export const emitToggleReady = (lobbyCode: string) => {
   if (lobbySocket) {
     console.log('IM IN HERE')

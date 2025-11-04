@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, transferHost, connectLobbySocket, disconnectLobbySocket, emitToggleReady, onMemberReadyChanged, offMemberReadyChanged, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, transferHost, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, onMemberReadyChanged, offMemberReadyChanged, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -135,6 +135,31 @@ const LobbyScreen: React.FC = () => {
             offMemberReadyChanged(handleMemberReadyChanged);
         };
     }, [user]);
+
+    // Handle visibility/focus changes
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                // Tab became visible, reconnect
+                console.log('Tab regained focus, reconnecting socket...');
+                reconnectLobbySocket();
+            }
+        };
+
+        const handleFocus = () => {
+            // Window regained focus
+            console.log('Window regained focus, reconnecting socket...');
+            reconnectLobbySocket();
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, []);
 
     const handleSendMessage = (message: string) => {
         setMessages((prev) => [...prev, { username: "You", text: message }]);
