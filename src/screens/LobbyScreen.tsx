@@ -398,9 +398,9 @@ const LobbyScreen: React.FC = () => {
     });
 
     const defaultGameInfo = {
-        name: "Game",
-        img_path: "",
-        rules: ""
+        name: "Tic-Tac-Toe",
+        img_path: "/src/assets/images/tic-tac-toe.png",
+        rules: "Lorem, ipsum dolor sit amet consectetur adipisicing elit. Dolorem dicta repellat nostrum et, ea, neque deleniti amet optio praesentium aspernatur blanditiis perspiciatis obcaecati vitae natus perferendis soluta impedit nemo officia? Dolores nulla hic reprehenderit, dolorum, accusamus cumque provident doloribus odio nemo dicta necessitatibus magnam rem praesentium commodi veritatis dolor suscipit." 
     };
     const gameInfo = lobbyData?.game || defaultGameInfo;
 
@@ -438,9 +438,11 @@ const LobbyScreen: React.FC = () => {
                 {/* First Column: Players and chat */}
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
                     <div className="w-full flex items-center justify-between p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
-                        <span className="text-base sm:text-lg font-bold text-white truncate">{editedLobbyName}</span>
+                        <span className="text-base sm:text-lg font-bold text-white truncate">
+                            Lobby: {lobbyData?.lobby_code ? `${lobbyData.lobby_code.slice(0, 3)}-${lobbyData.lobby_code.slice(3)}` : 'Loading...'}
+                        </span>
                         <button 
-                            disabled={!isUserHost}
+                            disabled={true}
                             onClick={() => setIsEditingLobbyName(true)}
                             className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer ml-2 flex-shrink-0"
                         >
@@ -499,7 +501,7 @@ const LobbyScreen: React.FC = () => {
                     <div className="w-full flex items-center justify-between gap-2 p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                             <img
-                                src={gameInfo.img_path || ""}
+                                src={gameInfo.img_path || "/src/assets/images/tic-tac-toe.png"}
                                 alt={`${gameInfo.name} image`}
                                 className="h-5 sm:h-7 w-auto flex-shrink-0"
                             />
