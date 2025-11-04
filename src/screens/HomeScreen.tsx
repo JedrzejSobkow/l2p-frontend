@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaAngleRight, FaAngleLeft } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
 import LeaderboardCard from '../components/LeaderboardCard';
 import GameRecommendationWithImages from '../components/GameRecommendationWithImages';
 import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
+import Popup from '../components/Popup';
 
 const HomeScreen: React.FC = () => {
   const leaderboardData = [
@@ -125,6 +127,19 @@ const HomeScreen: React.FC = () => {
   ];
 
   const [currentPage, setCurrentPage] = useState(1);
+  const location = useLocation();
+  const [popup, setPopup] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    if (location.state?.message) {
+      setPopup({
+        type: location.state.type || 'info',
+        message: location.state.message,
+      });
+      // Clear the state so popup doesn't show on page refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleNextPage = () => {
     if (currentPage < paginatedLobbies.length) {
@@ -218,6 +233,13 @@ const HomeScreen: React.FC = () => {
           </button>
         </div>
       </div>
+      {popup && (
+        <Popup
+          type={popup.type}
+          message={popup.message}
+          onClose={() => setPopup(null)}
+        />
+      )}
     </main>
   );
 };

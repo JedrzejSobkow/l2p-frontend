@@ -167,7 +167,7 @@ const LobbyScreen: React.FC = () => {
             console.log('Kicked from lobby:', data);
             if (isMounted) {
                 disconnectLobbySocket();
-                navigate('/');
+                navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } });
             }
         };
 
