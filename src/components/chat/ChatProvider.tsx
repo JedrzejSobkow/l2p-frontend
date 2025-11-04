@@ -65,7 +65,7 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
 })
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth()
+  const { user,isAuthenticated } = useAuth()
   const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {} })
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
@@ -346,12 +346,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (!user) return
+    if (!isAuthenticated) return
     void loadInitialConversations()
-  }, [loadInitialConversations, user])
+  }, [loadInitialConversations, isAuthenticated])
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       disconnectChatSocket()
       return
     }
