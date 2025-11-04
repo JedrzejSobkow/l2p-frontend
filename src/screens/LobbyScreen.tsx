@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -140,12 +140,45 @@ const LobbyScreen: React.FC = () => {
             }
         };
 
+        const handleMemberKicked = (data: any) => {
+            console.log('Member kicked:', data);
+            if (isMounted) {
+                // Check if current user was kicked
+                if (data.user_id === user?.id) {
+                    disconnectLobbySocket();
+                    setError(null);
+                    navigate('/');
+                    console.log('KICKED OUT');
+                    return;
+                }
+                
+                setLobbyData(prevLobbyData => {
+                    if (!prevLobbyData) return null;
+                    return {
+                        ...prevLobbyData,
+                        members: prevLobbyData.members.filter(member => member.user_id !== data.user_id),
+                        current_players: prevLobbyData.current_players - 1
+                    };
+                });
+            }
+        };
+
+        const handleKickedFromLobby = (data: any) => {
+            console.log('Kicked from lobby:', data);
+            if (isMounted) {
+                disconnectLobbySocket();
+                navigate('/');
+            }
+        };
+
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
         socket.on('connect_error', handleConnectError);
         onMemberReadyChanged(handleMemberReadyChanged);
         onHostTransferred(handleHostTransferred);
+        onMemberKicked(handleMemberKicked);
+        onKickedFromLobby(handleKickedFromLobby);
 
         return () => {
             isMounted = false;
@@ -155,8 +188,10 @@ const LobbyScreen: React.FC = () => {
             socket.off('connect_error', handleConnectError);
             offMemberReadyChanged(handleMemberReadyChanged);
             offHostTransferred(handleHostTransferred);
+            offMemberKicked(handleMemberKicked);
+            offKickedFromLobby(handleKickedFromLobby);
         };
-    }, [user]);
+    }, [user, navigate]);
 
     // Handle visibility/focus changes
     useEffect(() => {
@@ -285,14 +320,15 @@ const LobbyScreen: React.FC = () => {
     };
 
     const handleKickOut = (usernameToRemove: string) => {
-        setLobbyData(prevLobbyData => {
-            if (!prevLobbyData) return null;
-            return {
-                ...prevLobbyData,
-                members: prevLobbyData.members.filter(user => user.nickname !== usernameToRemove),
-                current_players: prevLobbyData.current_players - 1
-            };
-        });
+        try {
+            const userToKick = lobbyData?.members.find(u => u.nickname === usernameToRemove);
+            if (userToKick && lobbyData?.lobby_code) {
+                emitKickMember(lobbyData.lobby_code, userToKick.user_id);
+            }
+        } catch (err) {
+            console.error('Failed to kick member:', err);
+            setError(err instanceof Error ? err.message : 'Failed to kick member');
+        }
     };
 
     const [passHostUsername, setPassHostUsername] = useState<string>("");

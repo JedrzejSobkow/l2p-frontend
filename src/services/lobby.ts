@@ -113,6 +113,13 @@ export const emitTransferHost = (lobbyCode: string, newHostId: number) => {
   }
 }
 
+export const emitKickMember = (lobbyCode: string, userId: number) => {
+  if (lobbySocket) {
+    console.log('Kicking member:', userId)
+    lobbySocket.emit('kick_member', { lobby_code: lobbyCode, user_id: userId })
+  }
+}
+
 export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
   if (lobbySocket) {
     lobbySocket.on('member_ready_changed', callback)
@@ -141,6 +148,38 @@ export const offHostTransferred = (callback?: (data: any) => void) => {
       lobbySocket.off('host_transferred', callback)
     } else {
       lobbySocket.off('host_transferred')
+    }
+  }
+}
+
+export const onMemberKicked = (callback: (data: any) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('member_kicked', callback)
+  }
+}
+
+export const offMemberKicked = (callback?: (data: any) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('member_kicked', callback)
+    } else {
+      lobbySocket.off('member_kicked')
+    }
+  }
+}
+
+export const onKickedFromLobby = (callback: (data: any) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('kicked_from_lobby', callback)
+  }
+}
+
+export const offKickedFromLobby = (callback?: (data: any) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('kicked_from_lobby', callback)
+    } else {
+      lobbySocket.off('kicked_from_lobby')
     }
   }
 }
