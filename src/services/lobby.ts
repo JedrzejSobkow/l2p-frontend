@@ -120,6 +120,13 @@ export const emitKickMember = (lobbyCode: string, userId: number) => {
   }
 }
 
+export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number) => {
+  if (lobbySocket) {
+    console.log('Updating lobby settings:', maxPlayers)
+    lobbySocket.emit('update_settings', { lobby_code: lobbyCode, max_players: maxPlayers })
+  }
+}
+
 export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
   if (lobbySocket) {
     lobbySocket.on('member_ready_changed', callback)
@@ -180,6 +187,22 @@ export const offKickedFromLobby = (callback?: (data: any) => void) => {
       lobbySocket.off('kicked_from_lobby', callback)
     } else {
       lobbySocket.off('kicked_from_lobby')
+    }
+  }
+}
+
+export const onSettingsUpdated = (callback: (data: any) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('settings_updated', callback)
+  }
+}
+
+export const offSettingsUpdated = (callback?: (data: any) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('settings_updated', callback)
+    } else {
+      lobbySocket.off('settings_updated')
     }
   }
 }

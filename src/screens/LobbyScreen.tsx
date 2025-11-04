@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -171,6 +171,20 @@ const LobbyScreen: React.FC = () => {
             }
         };
 
+        const handleSettingsUpdated = (data: any) => {
+            console.log('Settings updated:', data);
+            if (isMounted) {
+                setLobbyData(prevLobbyData => {
+                    if (!prevLobbyData) return null;
+                    return {
+                        ...prevLobbyData,
+                        max_players: data.max_players
+                    };
+                });
+                setSelectedPlayerCount(data.max_players);
+            }
+        };
+
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
@@ -179,6 +193,7 @@ const LobbyScreen: React.FC = () => {
         onHostTransferred(handleHostTransferred);
         onMemberKicked(handleMemberKicked);
         onKickedFromLobby(handleKickedFromLobby);
+        onSettingsUpdated(handleSettingsUpdated);
 
         return () => {
             isMounted = false;
@@ -190,6 +205,7 @@ const LobbyScreen: React.FC = () => {
             offHostTransferred(handleHostTransferred);
             offMemberKicked(handleMemberKicked);
             offKickedFromLobby(handleKickedFromLobby);
+            offSettingsUpdated(handleSettingsUpdated);
         };
     }, [user, navigate]);
 
@@ -248,6 +264,17 @@ const LobbyScreen: React.FC = () => {
         }
     };
 
+    const handleUpdatePlayerCount = (newPlayerCount: number) => {
+        if (!lobbyData?.lobby_code) return;
+        try {
+            emitUpdateSettings(lobbyData.lobby_code, newPlayerCount);
+            setSelectedPlayerCount(newPlayerCount);
+        } catch (err) {
+            console.error('Failed to update player count:', err);
+            setError(err instanceof Error ? err.message : 'Failed to update player count');
+        }
+    };
+
     const lobbySettings = [
         {
             label: "Visibility",
@@ -261,7 +288,7 @@ const LobbyScreen: React.FC = () => {
         {
             label: "Players",
             icon: <LuUsers size={20} />,
-            availableValues: ["2", "4", "6", "8"],
+            availableValues: ["2", "4", "6"],
             defaultValue: "6",
         },
         {
@@ -521,14 +548,14 @@ const LobbyScreen: React.FC = () => {
                             <div className="flex flex-col gap-y-2">
                                 {gameSettings.map((setting, index) => (
                                     <Setting
-                                        key={index}
+                                        key={`${index}-${index === 0 ? selectedPlayerCount : 'static'}`}
                                         label={setting.label}
                                         icon={setting.icon}
                                         availableValues={setting.availableValues}
-                                        defaultValue={setting.defaultValue}
+                                        defaultValue={index === 0 ? String(selectedPlayerCount) : setting.defaultValue}
                                         disabled={!isUserHost}
                                         disabledValues={index === 0 ? disabledPlayerCounts : []}
-                                        onChange={index === 0 ? (value) => setSelectedPlayerCount(parseInt(value)) : undefined}
+                                        onChange={index === 0 ? (value) => handleUpdatePlayerCount(parseInt(value)) : undefined}
                                     />
                                 ))}
                             </div>
