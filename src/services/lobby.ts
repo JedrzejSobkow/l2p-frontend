@@ -106,6 +106,13 @@ export const emitToggleReady = (lobbyCode: string) => {
   }
 }
 
+export const emitTransferHost = (lobbyCode: string, newHostId: number) => {
+  if (lobbySocket) {
+    console.log('Transferring host to user:', newHostId)
+    lobbySocket.emit('transfer_host', { lobby_code: lobbyCode, new_host_id: newHostId })
+  }
+}
+
 export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
   if (lobbySocket) {
     lobbySocket.on('member_ready_changed', callback)
@@ -118,6 +125,22 @@ export const offMemberReadyChanged = (callback?: (data: MemberReadyChangedEvent)
       lobbySocket.off('member_ready_changed', callback)
     } else {
       lobbySocket.off('member_ready_changed')
+    }
+  }
+}
+
+export const onHostTransferred = (callback: (data: any) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('host_transferred', callback)
+  }
+}
+
+export const offHostTransferred = (callback?: (data: any) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('host_transferred', callback)
+    } else {
+      lobbySocket.off('host_transferred')
     }
   }
 }

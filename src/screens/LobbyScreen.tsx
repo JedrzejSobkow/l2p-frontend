@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, transferHost, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, onMemberReadyChanged, offMemberReadyChanged, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -120,11 +120,32 @@ const LobbyScreen: React.FC = () => {
             }
         };
 
+        const handleHostTransferred = (data: any) => {
+            console.log('Host transferred:', data);
+            if (isMounted) {
+                setLobbyData(prevLobbyData => {
+                    if (!prevLobbyData) return null;
+                    return {
+                        ...prevLobbyData,
+                        host_id: data.new_host_id,
+                        members: prevLobbyData.members.map(member =>
+                            member.user_id === data.new_host_id
+                                ? { ...member, is_host: true }
+                                : member.user_id === data.old_host_id
+                                ? { ...member, is_host: false }
+                                : member
+                        )
+                    };
+                });
+            }
+        };
+
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
         socket.on('connect_error', handleConnectError);
         onMemberReadyChanged(handleMemberReadyChanged);
+        onHostTransferred(handleHostTransferred);
 
         return () => {
             isMounted = false;
@@ -133,6 +154,7 @@ const LobbyScreen: React.FC = () => {
             socket.off('error', handleError);
             socket.off('connect_error', handleConnectError);
             offMemberReadyChanged(handleMemberReadyChanged);
+            offHostTransferred(handleHostTransferred);
         };
     }, [user]);
 
@@ -254,8 +276,7 @@ const LobbyScreen: React.FC = () => {
         try {
             const newHostUser = lobbyData?.members.find(u => u.nickname === newHostUsername);
             if (newHostUser && lobbyData?.lobby_code) {
-                const updatedLobby = await transferHost(lobbyData.lobby_code, newHostUser.user_id);
-                setLobbyData(updatedLobby);
+                emitTransferHost(lobbyData.lobby_code, newHostUser.user_id);
             }
         } catch (err) {
             console.error('Failed to transfer host:', err);
