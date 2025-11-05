@@ -128,7 +128,7 @@ const HomeScreen: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const location = useLocation();
-  const [popup, setPopup] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [popup, setPopup] = useState<{ type: 'confirmation' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     if (location.state?.message) {
