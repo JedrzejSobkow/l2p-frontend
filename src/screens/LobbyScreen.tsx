@@ -353,12 +353,6 @@ const LobbyScreen: React.FC = () => {
             availableValues: ["2", "4", "6"],
             defaultValue: "6",
         },
-        {
-            label: "Game time [min]",
-            icon: <LuTimer size={20} />,
-            availableValues: ["2", "4", "6", "8"],
-            defaultValue: "6",
-        },
     ];
 
     const [isEditingLobbyName, setIsEditingLobbyName] = useState(false);
