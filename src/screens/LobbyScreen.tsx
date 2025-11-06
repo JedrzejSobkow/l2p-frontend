@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, emitUpdateVisibility, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, emitUpdateVisibility, emitJoinLobby, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -20,49 +20,155 @@ import { FiLock } from 'react-icons/fi';
 const LobbyScreen: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { lobbyCode: urlLobbyCode } = useParams<{ lobbyCode?: string }>();
     const myUsername = user?.nickname || "Unknown";
 
     const [lobbyData, setLobbyData] = useState<CurrentLobbyResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isJoiningFromUrl, setIsJoiningFromUrl] = useState(false);
 
     const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
     const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
     const [isReady, setIsReady] = useState(false);
     const [isPublic, setIsPublic] = useState(lobbyData?.is_public || false);
 
-    // Initialize lobby data from REST API
+    // Initialize lobby data from REST API or join from URL
     useEffect(() => {
         let cancelled = false;
         (async () => {
             try {
+                // First, try to get current lobby
                 const lobby = await getCurrentLobby();
                 if (!cancelled) {
-                    setLobbyData(lobby);
-                    setSelectedPlayerCount(lobby.max_players);
-                    setIsPublic(lobby.is_public);
-                    const currentUser = lobby.members.find(m => m.nickname === myUsername);
-                    if (currentUser) {
-                        setIsReady(currentUser.is_ready);
+                    // User is already in a lobby
+                    if (urlLobbyCode && lobby.lobby_code.toUpperCase() === urlLobbyCode.toUpperCase()) {
+                        // Already in the target lobby, just show it
+                        setLobbyData(lobby);
+                        setSelectedPlayerCount(lobby.max_players);
+                        setIsPublic(lobby.is_public);
+                        const currentUser = lobby.members.find(m => m.nickname === myUsername);
+                        if (currentUser) {
+                            setIsReady(currentUser.is_ready);
+                        }
+                        setLoading(false);
+                        // Redirect to clean lobby URL
+                        navigate('/lobby', { replace: true });
+                    } else if (urlLobbyCode) {
+                        // User is in a different lobby, show error
+                        setLoading(false);
+                        navigate('/', { 
+                            replace: true,
+                            state: { 
+                                message: 'You are already in another lobby. Please leave it first.', 
+                                type: 'error' 
+                            } 
+                        });
+                    } else {
+                        // No URL lobby code, just show current lobby
+                        setLobbyData(lobby);
+                        setSelectedPlayerCount(lobby.max_players);
+                        setIsPublic(lobby.is_public);
+                        const currentUser = lobby.members.find(m => m.nickname === myUsername);
+                        if (currentUser) {
+                            setIsReady(currentUser.is_ready);
+                        }
+                        setLoading(false);
                     }
-                    setLoading(false);
                 }
             } catch (err) {
                 if (!cancelled) {
-                    setError(err instanceof Error ? err.message : 'Failed to load lobby');
-                    setLoading(false);
+                    // User is not in any lobby
+                    if (urlLobbyCode) {
+                        // Try to join the lobby from URL
+                        setIsJoiningFromUrl(true);
+                        const socket = connectLobbySocket();
+                        
+                        // Wait for socket to connect
+                        const waitForConnection = new Promise<void>((resolve) => {
+                            if (socket.connected) {
+                                resolve();
+                            } else {
+                                socket.once('connect', () => resolve());
+                            }
+                        });
+
+                        try {
+                            await waitForConnection;
+                            
+                            emitJoinLobby(
+                                urlLobbyCode.toUpperCase(),
+                                (joinedLobby) => {
+                                    if (!cancelled) {
+                                        setLobbyData(joinedLobby);
+                                        setSelectedPlayerCount(joinedLobby.max_players);
+                                        setIsPublic(joinedLobby.is_public);
+                                        const currentUser = joinedLobby.members.find(m => m.nickname === myUsername);
+                                        if (currentUser) {
+                                            setIsReady(currentUser.is_ready);
+                                        }
+                                        setLoading(false);
+                                        setIsJoiningFromUrl(false);
+                                        // Redirect to clean lobby URL
+                                        navigate('/lobby', { replace: true });
+                                    }
+                                },
+                                (errorMsg) => {
+                                    if (!cancelled) {
+                                        setLoading(false);
+                                        setIsJoiningFromUrl(false);
+                                        disconnectLobbySocket();
+                                        navigate('/', { 
+                                            replace: true,
+                                            state: { 
+                                                message: `Failed to join lobby: ${errorMsg}`, 
+                                                type: 'error' 
+                                            } 
+                                        });
+                                    }
+                                }
+                            );
+                        } catch (joinErr) {
+                            if (!cancelled) {
+                                setLoading(false);
+                                setIsJoiningFromUrl(false);
+                                disconnectLobbySocket();
+                                navigate('/', { 
+                                    replace: true,
+                                    state: { 
+                                        message: 'Failed to connect to lobby server.', 
+                                        type: 'error' 
+                                    } 
+                                });
+                            }
+                        }
+                    } else {
+                        // No URL lobby code and not in any lobby
+                        setLoading(false);
+                        navigate('/', { 
+                            replace: true,
+                            state: { 
+                                message: 'You are not in any lobby.', 
+                                type: 'error' 
+                            } 
+                        });
+                    }
                 }
             }
         })();
         return () => {
             cancelled = true;
         };
-    }, [myUsername]);
+    }, [myUsername, urlLobbyCode, navigate]);
 
     // Connect to Socket.IO and set up event listeners
     useEffect(() => {
-        if (!user) {
-            disconnectLobbySocket();
+        if (!user || isJoiningFromUrl) {
+            return;
+        }
+
+        // Only set up socket listeners if we're not joining from URL
+        if (!lobbyData) {
             return;
         }
 
@@ -257,7 +363,7 @@ const LobbyScreen: React.FC = () => {
             offLobbyLeft(handleLobbyLeft);
             socket.off('member_joined', handleMemberJoined);
         };
-    }, [user, navigate]);
+    }, [user, navigate, isJoiningFromUrl, lobbyData]);
 
     // Handle visibility/focus changes
     useEffect(() => {

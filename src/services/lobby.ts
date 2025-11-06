@@ -137,6 +137,35 @@ export const emitUpdateVisibility = (lobbyCode: string, isPublic: boolean) => {
   }
 };
 
+export const emitJoinLobby = (lobbyCode: string, onSuccess: (lobby: CurrentLobbyResponse) => void, onError: (error: string) => void) => {
+  if (lobbySocket && lobbySocket.connected) {
+    console.log('Emitting join_lobby event for lobby:', lobbyCode);
+    lobbySocket.emit('join_lobby', { lobby_code: lobbyCode });
+
+    // Listen for success
+    const handleLobbyJoined = (data: any) => {
+      console.log('Successfully joined lobby:', data);
+      onSuccess(data.lobby);
+      lobbySocket?.off('lobby_joined', handleLobbyJoined);
+      lobbySocket?.off('lobby_error', handleLobbyError);
+    };
+
+    // Listen for errors
+    const handleLobbyError = (data: any) => {
+      console.error('Failed to join lobby:', data);
+      onError(data.message || 'An unknown error occurred.');
+      lobbySocket?.off('lobby_joined', handleLobbyJoined);
+      lobbySocket?.off('lobby_error', handleLobbyError);
+    };
+
+    lobbySocket.on('lobby_joined', handleLobbyJoined);
+    lobbySocket.on('lobby_error', handleLobbyError);
+  } else {
+    console.error('Socket is not connected. Cannot emit join_lobby event.');
+    onError('Socket is not connected.');
+  }
+};
+
 export const emitLeaveLobby = (lobbyCode: string, onSuccess: () => void, onError: (error: string) => void) => {
   if (lobbySocket && lobbySocket.connected) {
     console.log('Emitting leave_lobby event for lobby:', lobbyCode);

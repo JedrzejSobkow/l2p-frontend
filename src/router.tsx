@@ -52,7 +52,7 @@ export const router = createBrowserRouter([
                 element: <GameScreen /> 
             },
             {
-                path: 'lobby/:lobbyName',
+                path: 'lobby/:lobbyCode?',
                 element: <RequireAuth> <LobbyScreen /> </RequireAuth>
             },
             {
