@@ -485,11 +485,16 @@ const LobbyScreen: React.FC = () => {
         value => parseInt(value) < currentPlayerCount
     );
 
-    const allUsersReady = lobbyData?.members.every(user => 
-        user.nickname === myUsername ? isReady : user.is_ready
-    ) || false;
+    const allUsersReady = lobbyData?.members.every(user => user.is_ready) || false;
 
     const canStartGame = isUserHost && allUsersReady && currentPlayerCount === selectedPlayerCount;
+
+    const handleStartGame = () => {
+        if (canStartGame) {
+            // Navigate to in-game screen
+            navigate('/lobby/ingame');
+        }
+    };
 
     const handleSaveLobbyName = (newName: string) => {
         setEditedLobbyName(newName);
@@ -654,7 +659,11 @@ const LobbyScreen: React.FC = () => {
                         </button>
 
                         {/* Start Button */}
-                        <button disabled={!canStartGame} className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                        <button 
+                            disabled={!canStartGame} 
+                            onClick={handleStartGame}
+                            className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+                        >
                             Start
                         </button>
                     </div>
@@ -747,7 +756,11 @@ const LobbyScreen: React.FC = () => {
                         </button>
 
                         {/* Start Button */}
-                        <button disabled={!canStartGame} className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500">
+                        <button 
+                            disabled={!canStartGame} 
+                            onClick={handleStartGame}
+                            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+                        >
                             Start
                         </button>
                     </div>
