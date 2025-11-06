@@ -390,6 +390,52 @@ const LobbyScreen: React.FC = () => {
         };
     }, []);
 
+    // Handle leaving lobby when component unmounts (navigation away)
+    useEffect(() => {
+        return () => {
+            // Cleanup when component unmounts (user navigates away)
+            if (lobbyData?.lobby_code) {
+                console.log('Component unmounting, leaving lobby...');
+                emitLeaveLobby(
+                    lobbyData.lobby_code,
+                    () => {
+                        console.log('Left lobby on unmount');
+                        disconnectLobbySocket();
+                    },
+                    (error) => {
+                        console.error('Error leaving lobby on unmount:', error);
+                        disconnectLobbySocket();
+                    }
+                );
+            }
+        };
+    }, [lobbyData?.lobby_code]);
+
+    // Handle leaving lobby when tab/browser is closed
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (lobbyData?.lobby_code) {
+                // Emit leave lobby event synchronously
+                emitLeaveLobby(
+                    lobbyData.lobby_code,
+                    () => {
+                        console.log('Left lobby on tab close');
+                    },
+                    (error) => {
+                        console.error('Error leaving lobby on tab close:', error);
+                    }
+                );
+                disconnectLobbySocket();
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [lobbyData?.lobby_code]);
+
     const handleSendMessage = (message: string) => {
         setMessages((prev) => [...prev, { username: "You", text: message }]);
     };
