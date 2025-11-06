@@ -10,7 +10,6 @@ interface LobbyChatProps {
 
 const LobbyChat: React.FC<LobbyChatProps> = ({ messages, onSendMessage, onTyping, typingUsers = [] }) => {
   const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSendMessage = () => {
@@ -44,12 +43,6 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ messages, onSendMessage, onTyping
   };
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
@@ -75,7 +68,6 @@ const LobbyChat: React.FC<LobbyChatProps> = ({ messages, onSendMessage, onTyping
             }
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
