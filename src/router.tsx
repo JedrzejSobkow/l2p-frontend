@@ -52,8 +52,12 @@ export const router = createBrowserRouter([
                 element: <GameScreen /> 
             },
             {
-                path: 'lobby/:lobbyName',
-                element:  <LobbyScreen />
+                path: 'lobby/:lobbyCode?',
+                element: <RequireAuth> <LobbyScreen /> </RequireAuth>
+            },
+            {
+                path: 'lobby/ingame',
+                element: <RequireAuth> <GameScreen /> </RequireAuth>
             },
             {
                 path: 'friends',

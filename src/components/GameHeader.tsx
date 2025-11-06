@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { createLobby, joinLobby, connectLobbySocket } from '../services/lobby';
+import Popup from './Popup';
+import type { PopupProps } from './Popup';
 
 interface GameHeaderProps {
     title: string;
@@ -15,6 +18,9 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
     const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
     const [newLobbyName, setNewLobbyName] = useState('');
+    const [isCreatingLobby, setIsCreatingLobby] = useState(false);
+    const [isJoiningLobby, setIsJoiningLobby] = useState(false);
+    const [popup, setPopup] = useState<PopupProps | null>(null);
     const navigate = useNavigate();
 
     const handleJoinClick = () => {
@@ -30,15 +36,26 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         setJoinCodeParts(['', '', '', '', '', '']);
     };
 
-    const handleCreateLobby = () => {
-        console.log('Creating new lobby with name:', newLobbyName);
-        setShowNewLobbyModal(false);
-        setNewLobbyName('');
-        navigate(`/lobby/${newLobbyName}`);
+    const handleCreateLobby = async () => {
+        setIsCreatingLobby(true);
+        try {
+            const response = await createLobby({ max_players: 6 });
+            setShowNewLobbyModal(false);
+            setNewLobbyName('');
+            navigate(`/lobby/${response.lobby_code}`);
+        } catch (error) {
+            setPopup({ 
+                type: 'error', 
+                message: error instanceof Error ? error.message : 'Failed to create lobby. Please try again.',
+                onClose: () => setPopup(null)
+            });
+        } finally {
+            setIsCreatingLobby(false);
+        }
     };
 
     const handleLobbyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 25); // Allow alphanumeric, hyphens, underscores, and limit to 25 chars
+        const value = e.target.value.replace(/[^a-zA-Z0-9-_]/g, '').slice(0, 25);
         setNewLobbyName(value);
     };
 
@@ -56,11 +73,50 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         }
     };
 
-    const handleConfirmJoin = () => {
+    const handleConfirmJoin = async () => {
         const joinCode = joinCodeParts.join('');
-        console.log('Joining lobby with code:', joinCode);
-        setShowJoinModal(false);
-        navigate(`/lobby/${joinCode}`); 
+        setIsJoiningLobby(true);
+        try {
+            // Connect to the lobby socket
+            const socket = connectLobbySocket();
+
+            if (!socket) {
+                throw new Error('Socket connection failed.');
+            }
+
+            // Emit the join_lobby event
+            socket.emit('join_lobby', { lobby_code: joinCode });
+
+            // Listen for the lobby_joined event to confirm success
+            const handleLobbyJoined = (data: any) => {
+                console.log('Successfully joined lobby:', data);
+                setShowJoinModal(false);
+                navigate(`/lobby/${joinCode}`);
+                socket.off('lobby_joined', handleLobbyJoined); // Clean up listener
+            };
+
+            // Listen for errors
+            const handleLobbyError = (error: any) => {
+                console.error('Failed to join lobby:', error);
+                setPopup({
+                    type: 'error',
+                    message: error.message || 'Failed to join lobby. Please try again.',
+                    onClose: () => setPopup(null),
+                });
+                socket.off('lobby_error', handleLobbyError); // Clean up listener
+            };
+
+            socket.on('lobby_joined', handleLobbyJoined);
+            socket.on('lobby_error', handleLobbyError);
+        } catch (error) {
+            setPopup({
+                type: 'error',
+                message: error instanceof Error ? error.message : 'This code did not work',
+                onClose: () => setPopup(null),
+            });
+        } finally {
+            setIsJoiningLobby(false);
+        }
     };
 
     const isJoinCodeComplete = joinCodeParts.every((part) => part !== '');
@@ -122,6 +178,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                                         onFocus={(e) => e.target.select()} 
                                         className="w-10 h-10 text-center border border-gray-300 rounded text-highlight bg-transparent font-bold"
                                         maxLength={1}
+                                        disabled={isJoiningLobby}
                                     />
                                     {index === 2 && <span className="text-highlight font-bold">-</span>}
                                 </React.Fragment>
@@ -132,17 +189,18 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                             <button
                                 onClick={handleConfirmJoin}
                                 className={`px-4 py-2 rounded transform transition-transform duration-200 ${
-                                    isJoinCodeComplete
+                                    isJoinCodeComplete && !isJoiningLobby
                                         ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
-                                disabled={!isJoinCodeComplete}
+                                disabled={!isJoinCodeComplete || isJoiningLobby}
                             >
-                                Confirm
+                                {isJoiningLobby ? 'Joining...' : 'Confirm'}
                             </button>
                             <button
                                 onClick={handleCloseModal}
-                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105"
+                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50"
+                                disabled={isJoiningLobby}
                             >
                                 Cancel
                             </button>
@@ -175,28 +233,39 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                             className="w-full px-4 py-2 border border-gray-300 rounded mb-4 text-highlight"
                             placeholder="Lobby Name"
                             spellCheck="false"
+                            disabled={isCreatingLobby}
                         />
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleCreateLobby}
+                                disabled={isCreatingLobby}
                                 className={`px-4 py-2 rounded transform transition-transform duration-200 ${
-                                    newLobbyName.trim()
+                                    !isCreatingLobby
                                         ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
-                                disabled={!newLobbyName.trim()}
                             >
-                                Create
+                                {isCreatingLobby ? 'Creating...' : 'Create'}
                             </button>
                             <button
                                 onClick={() => setShowNewLobbyModal(false)}
-                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105"
+                                disabled={isCreatingLobby}
+                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50"
                             >
                                 Cancel
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Popup */}
+            {popup && (
+                <Popup
+                    type={popup.type}
+                    message={popup.message}
+                    onClose={popup.onClose}
+                />
             )}
         </div>
     );
