@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, emitUpdateVisibility, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -29,6 +29,7 @@ const LobbyScreen: React.FC = () => {
     const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
     const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
     const [isReady, setIsReady] = useState(false);
+    const [isPublic, setIsPublic] = useState(lobbyData?.is_public || false);
 
     // Initialize lobby data from REST API
     useEffect(() => {
@@ -39,6 +40,7 @@ const LobbyScreen: React.FC = () => {
                 if (!cancelled) {
                     setLobbyData(lobby);
                     setSelectedPlayerCount(lobby.max_players);
+                    setIsPublic(lobby.is_public);
                     const currentUser = lobby.members.find(m => m.nickname === myUsername);
                     if (currentUser) {
                         setIsReady(currentUser.is_ready);
@@ -175,13 +177,19 @@ const LobbyScreen: React.FC = () => {
             console.log('Settings updated:', data);
             if (isMounted) {
                 setLobbyData(prevLobbyData => {
-                    if (!prevLobbyData) return null;
+                    if (!prevLobbyData) return prevLobbyData;
                     return {
                         ...prevLobbyData,
-                        max_players: data.max_players
+                        max_players: data.max_players ?? prevLobbyData.max_players,
+                        is_public: data.is_public ?? prevLobbyData.is_public,
                     };
                 });
-                setSelectedPlayerCount(data.max_players);
+                if (data.is_public !== undefined && data.is_public !== null) {
+                    setIsPublic(data.is_public);
+                }
+                if (data.max_players !== undefined && data.max_players !== null) {
+                    setSelectedPlayerCount(data.max_players);
+                }
             }
         };
 
@@ -314,6 +322,18 @@ const LobbyScreen: React.FC = () => {
         } catch (err) {
             console.error('Failed to update player count:', err);
             setError(err instanceof Error ? err.message : 'Failed to update player count');
+        }
+    };
+
+    const handleUpdateVisibility = (newVisibility: string) => {
+        if (!lobbyData?.lobby_code) return;
+        try {
+            const isPublic = newVisibility === "Public";
+            emitUpdateVisibility(lobbyData.lobby_code, isPublic);
+            setIsPublic(isPublic);
+        } catch (err) {
+            console.error('Failed to update visibility:', err);
+            setError(err instanceof Error ? err.message : 'Failed to update visibility');
         }
     };
 
@@ -583,12 +603,13 @@ const LobbyScreen: React.FC = () => {
                             <div className="flex flex-col gap-y-2">
                                 {lobbySettings.map((setting, index) => (
                                     <Setting
-                                        key={index}
+                                        key={`${index}-${isPublic ? 'public' : 'private'}`}
                                         label={setting.label}
                                         icon={setting.icon}
-                                        availableValues={setting.availableValues}
-                                        defaultValue={setting.defaultValue}
+                                        availableValues={setting.label === "Visibility" ? ["Private", "Public"] : setting.availableValues}
+                                        defaultValue={setting.label === "Visibility" ? (isPublic ? "Public" : "Private") : setting.defaultValue}
                                         disabled={!isUserHost}
+                                        onChange={setting.label === "Visibility" ? handleUpdateVisibility : undefined}
                                     />
                                 ))}
                             </div>

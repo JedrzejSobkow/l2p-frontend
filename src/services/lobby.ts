@@ -37,6 +37,7 @@ export type CurrentLobbyResponse = {
   members: LobbyMember[]
   game: GameInfo
   created_at: string
+  is_public: boolean // Add this property
 }
 
 export type MemberReadyChangedEvent = {
@@ -117,12 +118,24 @@ export const emitKickMember = (lobbyCode: string, userId: number) => {
   }
 }
 
-export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number) => {
+export const emitUpdateSettings = (lobbyCode: string, maxPlayers?: number) => {
   if (lobbySocket) {
-    console.log('Updating lobby settings:', maxPlayers)
-    lobbySocket.emit('update_settings', { lobby_code: lobbyCode, max_players: maxPlayers })
+    const payload: Record<string, any> = { lobby_code: lobbyCode };
+    if (maxPlayers !== undefined) {
+      payload.max_players = maxPlayers;
+    }
+    console.log('Updating lobby settings:', payload);
+    lobbySocket.emit('update_settings', payload);
   }
-}
+};
+
+export const emitUpdateVisibility = (lobbyCode: string, isPublic: boolean) => {
+  if (lobbySocket) {
+    const payload = { lobby_code: lobbyCode, is_public: isPublic };
+    console.log('Updating lobby visibility:', payload);
+    lobbySocket.emit('update_settings', payload);
+  }
+};
 
 export const emitLeaveLobby = (lobbyCode: string, onSuccess: () => void, onError: (error: string) => void) => {
   if (lobbySocket && lobbySocket.connected) {
@@ -217,21 +230,21 @@ export const offKickedFromLobby = (callback?: (data: any) => void) => {
   }
 }
 
-export const onSettingsUpdated = (callback: (data: any) => void) => {
+export const onSettingsUpdated = (callback: (data: { max_players?: number; is_public?: boolean }) => void) => {
   if (lobbySocket) {
-    lobbySocket.on('settings_updated', callback)
+    lobbySocket.on('settings_updated', callback);
   }
-}
+};
 
-export const offSettingsUpdated = (callback?: (data: any) => void) => {
+export const offSettingsUpdated = (callback?: (data: { max_players?: number; is_public?: boolean }) => void) => {
   if (lobbySocket) {
     if (callback) {
-      lobbySocket.off('settings_updated', callback)
+      lobbySocket.off('settings_updated', callback);
     } else {
-      lobbySocket.off('settings_updated')
+      lobbySocket.off('settings_updated');
     }
   }
-}
+};
 
 export const onMemberLeft = (callback: (data: any) => void) => {
   if (lobbySocket) {
