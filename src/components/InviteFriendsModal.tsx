@@ -5,7 +5,7 @@ import { useFriends } from './friends/FriendsContext';
 type InviteFriendsModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onInvite: (friendUserId: number, friendNickname: string) => void;
+  onInvite: (friendUserId: number | string, friendNickname: string) => void;
   lobbyCode: string;
 };
 
@@ -17,7 +17,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
 }) => {
   const { friends, isLoading } = useFriends();
   const [searchTerm, setSearchTerm] = useState('');
-  const [invitedFriends, setInvitedFriends] = useState<Set<number>>(new Set());
+  const [invitedFriends, setInvitedFriends] = useState<Set<string | number>>(new Set());
 
   const filteredFriends = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
@@ -27,7 +27,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
     );
   }, [friends, searchTerm]);
 
-  const handleInvite = (friendUserId: number, friendNickname: string) => {
+  const handleInvite = (friendUserId: string | number, friendNickname: string) => {
     onInvite(friendUserId, friendNickname);
     setInvitedFriends((prev) => new Set(prev).add(friendUserId));
   };

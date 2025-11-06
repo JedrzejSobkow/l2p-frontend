@@ -17,6 +17,7 @@ import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { FaRegFolderOpen } from 'react-icons/fa6';
 import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
+import { useChat } from '../components/chat/ChatProvider';
 
 // Extend Window interface to include custom properties
 declare global {
@@ -33,6 +34,7 @@ const LobbyScreen: React.FC = () => {
     const navigate = useNavigate();
     const { lobbyCode: urlLobbyCode } = useParams<{ lobbyCode?: string }>();
     const myUsername = user?.nickname || "Unknown";
+    const chat = useChat();
 
     const [lobbyData, setLobbyData] = useState<CurrentLobbyResponse | null>(null);
     const [loading, setLoading] = useState(true);
@@ -658,11 +660,23 @@ const LobbyScreen: React.FC = () => {
         setIsLeaveModalOpen(true);
     };
 
-    const handleInviteFriend = (friendUserId: number, friendNickname: string) => {
-        // TODO: Implement actual invite logic via socket or API
-        console.log(`Inviting friend ${friendNickname} (${friendUserId}) to lobby ${lobbyData?.lobby_code}`);
-        // You can emit a socket event here or call an API endpoint
-        // For now, just log it
+    const handleInviteFriend = async (friendUserId: number | string, friendNickname: string) => {
+        if (!lobbyData?.lobby_code) {
+            console.error('No lobby code available');
+            return;
+        }
+
+        try {
+            const lobbyUrl = `${window.location.origin}/lobby/${lobbyData.lobby_code}`;
+            const inviteMessage = `Hey! Join my game lobby with this code: ${lobbyData.lobby_code} or by this link: ${lobbyUrl}`;
+            
+            // Send the invite message via chat
+            await chat.sendMessage(String(friendUserId), { text: inviteMessage });
+            
+            console.log(`Invitation sent to ${friendNickname} (${friendUserId}) for lobby ${lobbyData.lobby_code}`);
+        } catch (error) {
+            console.error('Failed to send lobby invitation:', error);
+        }
     };
 
     const handleConfirmLeave = () => {
