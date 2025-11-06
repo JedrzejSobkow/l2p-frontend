@@ -46,6 +46,19 @@ export type MemberReadyChangedEvent = {
   is_ready: boolean
 }
 
+export type LobbyMessageEvent = {
+  user_id: number
+  nickname: string
+  pfp_path?: string
+  content: string
+  timestamp: string
+}
+
+export type LobbyUserTypingEvent = {
+  user_id: number
+  nickname: string
+}
+
 let lobbySocket: Socket | null = null
 
 export const connectLobbySocket = (): Socket => {
@@ -195,6 +208,24 @@ export const emitLeaveLobby = (lobbyCode: string, onSuccess: () => void, onError
   }
 };
 
+export const emitSendLobbyMessage = (lobbyCode: string, content: string) => {
+  if (lobbySocket) {
+    lobbySocket.emit('send_lobby_message', { lobby_code: lobbyCode, content })
+  }
+}
+
+export const emitLobbyTyping = (lobbyCode: string) => {
+  if (lobbySocket) {
+    lobbySocket.emit('lobby_typing', { lobby_code: lobbyCode })
+  }
+}
+
+export const emitGetLobbyMessages = (lobbyCode: string, limit: number = 50) => {
+  if (lobbySocket) {
+    lobbySocket.emit('get_lobby_messages', { lobby_code: lobbyCode, limit })
+  }
+}
+
 export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
   if (lobbySocket) {
     lobbySocket.on('member_ready_changed', callback)
@@ -274,6 +305,54 @@ export const offSettingsUpdated = (callback?: (data: { max_players?: number; is_
     }
   }
 };
+
+export const onLobbyMessage = (callback: (data: LobbyMessageEvent) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('lobby_message', callback)
+  }
+}
+
+export const offLobbyMessage = (callback?: (data: LobbyMessageEvent) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('lobby_message', callback)
+    } else {
+      lobbySocket.off('lobby_message')
+    }
+  }
+}
+
+export const onLobbyUserTyping = (callback: (data: LobbyUserTypingEvent) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('lobby_user_typing', callback)
+  }
+}
+
+export const offLobbyUserTyping = (callback?: (data: LobbyUserTypingEvent) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('lobby_user_typing', callback)
+    } else {
+      lobbySocket.off('lobby_user_typing')
+    }
+  }
+}
+
+export const onLobbyMessagesHistory = (callback: (data: { messages: LobbyMessageEvent[], lobby_code: string, total: number }) => void) => {
+  if (lobbySocket) {
+    lobbySocket.on('lobby_messages_history', callback)
+  }
+}
+
+export const offLobbyMessagesHistory = (callback?: (data: { messages: LobbyMessageEvent[], lobby_code: string, total: number }) => void) => {
+  if (lobbySocket) {
+    if (callback) {
+      lobbySocket.off('lobby_messages_history', callback)
+    } else {
+      lobbySocket.off('lobby_messages_history')
+    }
+  }
+}
 
 export const onMemberLeft = (callback: (data: any) => void) => {
   if (lobbySocket) {

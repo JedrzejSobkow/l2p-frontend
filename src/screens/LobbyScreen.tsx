@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, emitUpdateVisibility, emitJoinLobby, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, type CurrentLobbyResponse, type MemberReadyChangedEvent } from '../services/lobby';
+import { 
+    getCurrentLobby, leaveLobby, connectLobbySocket, disconnectLobbySocket, reconnectLobbySocket, emitToggleReady, emitTransferHost, emitKickMember, emitUpdateSettings, emitLeaveLobby, emitUpdateVisibility, emitJoinLobby, onMemberReadyChanged, offMemberReadyChanged, onHostTransferred, offHostTransferred, onMemberKicked, offMemberKicked, onKickedFromLobby, offKickedFromLobby, onSettingsUpdated, offSettingsUpdated, onMemberLeft, offMemberLeft, onLobbyLeft, offLobbyLeft, getLobbySocket, 
+    emitSendLobbyMessage, emitLobbyTyping, emitGetLobbyMessages, onLobbyMessage, offLobbyMessage, onLobbyUserTyping, offLobbyUserTyping, onLobbyMessagesHistory, offLobbyMessagesHistory,
+    type CurrentLobbyResponse, type MemberReadyChangedEvent, type LobbyMessageEvent, type LobbyUserTypingEvent 
+} from '../services/lobby';
 import InLobbyUserTile from '../components/InLobbyUserTile';
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile';
 import Setting from '../components/Setting';
@@ -42,6 +46,9 @@ const LobbyScreen: React.FC = () => {
     const [isJoiningFromUrl, setIsJoiningFromUrl] = useState(false);
 
     const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
+    const [typingUsers, setTypingUsers] = useState<string[]>([]);
+    const typingTimeoutRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
     const [selectedPlayerCount, setSelectedPlayerCount] = useState(6);
     const [isReady, setIsReady] = useState(false);
     const [isPublic, setIsPublic] = useState(lobbyData?.is_public || false);
@@ -348,6 +355,52 @@ const LobbyScreen: React.FC = () => {
             }
         };
 
+        const handleLobbyMessage = (data: LobbyMessageEvent) => {
+            console.log('Received lobby message:', data);
+            if (isMounted) {
+                setMessages((prev) => [...prev, {
+                    username: data.nickname,
+                    text: data.content
+                }]);
+            }
+        };
+
+        const handleLobbyUserTyping = (data: LobbyUserTypingEvent) => {
+            console.log('User typing:', data);
+            if (isMounted && data.user_id !== user?.id) {
+                setTypingUsers((prev) => {
+                    if (!prev.includes(data.nickname)) {
+                        return [...prev, data.nickname];
+                    }
+                    return prev;
+                });
+
+                // Clear existing timeout for this user
+                const existingTimeout = typingTimeoutRef.current.get(data.user_id);
+                if (existingTimeout) {
+                    clearTimeout(existingTimeout);
+                }
+
+                // Set new timeout to remove typing indicator
+                const timeout = setTimeout(() => {
+                    setTypingUsers((prev) => prev.filter(name => name !== data.nickname));
+                    typingTimeoutRef.current.delete(data.user_id);
+                }, 3000);
+
+                typingTimeoutRef.current.set(data.user_id, timeout);
+            }
+        };
+
+        const handleLobbyMessagesHistory = (data: { messages: LobbyMessageEvent[], lobby_code: string, total: number }) => {
+            console.log('Received lobby messages history:', data);
+            if (isMounted && data.lobby_code === lobbyData.lobby_code) {
+                setMessages(data.messages.map(msg => ({
+                    username: msg.nickname,
+                    text: msg.content
+                })));
+            }
+        };
+
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
@@ -360,6 +413,20 @@ const LobbyScreen: React.FC = () => {
         onMemberLeft(handleMemberLeft);
         onLobbyLeft(handleLobbyLeft);
         socket.on('member_joined', handleMemberJoined);
+        onLobbyMessage(handleLobbyMessage);
+        onLobbyUserTyping(handleLobbyUserTyping);
+        onLobbyMessagesHistory(handleLobbyMessagesHistory);
+
+        // Request message history once connected
+        if (socket.connected && lobbyData?.lobby_code) {
+            emitGetLobbyMessages(lobbyData.lobby_code);
+        } else {
+            socket.once('connect', () => {
+                if (lobbyData?.lobby_code) {
+                    emitGetLobbyMessages(lobbyData.lobby_code);
+                }
+            });
+        }
 
         return () => {
             isMounted = false;
@@ -375,6 +442,13 @@ const LobbyScreen: React.FC = () => {
             offMemberLeft(handleMemberLeft);
             offLobbyLeft(handleLobbyLeft);
             socket.off('member_joined', handleMemberJoined);
+            offLobbyMessage(handleLobbyMessage);
+            offLobbyUserTyping(handleLobbyUserTyping);
+            offLobbyMessagesHistory(handleLobbyMessagesHistory);
+            
+            // Clear all typing timeouts
+            typingTimeoutRef.current.forEach(timeout => clearTimeout(timeout));
+            typingTimeoutRef.current.clear();
         };
     }, [user, navigate, isJoiningFromUrl, lobbyData]);
 
@@ -391,7 +465,7 @@ const LobbyScreen: React.FC = () => {
         const handleFocus = () => {
             // Window regained focus
             console.log('Window regained focus, reconnecting socket...');
-            reconnectLobbySocket();
+                reconnectLobbySocket();
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -511,7 +585,15 @@ const LobbyScreen: React.FC = () => {
     }, [lobbyData?.lobby_code]);
 
     const handleSendMessage = (message: string) => {
-        setMessages((prev) => [...prev, { username: "You", text: message }]);
+        if (lobbyData?.lobby_code && message.trim()) {
+            emitSendLobbyMessage(lobbyData.lobby_code, message.trim());
+        }
+    };
+
+    const handleTyping = () => {
+        if (lobbyData?.lobby_code) {
+            emitLobbyTyping(lobbyData.lobby_code);
+        }
     };
 
     const isUserHost = lobbyData?.members.some(u => u.nickname === myUsername && u.is_host) || false;
@@ -814,7 +896,12 @@ const LobbyScreen: React.FC = () => {
                     {/* Chat Section */}
                     <div className="w-full bg-background-secondary rounded-lg shadow-md p-3 sm:p-4">
                         <h3 className="text-base sm:text-lg font-bold text-white mb-2">Chat</h3>
-                        <LobbyChat messages={messages} onSendMessage={handleSendMessage} />
+                        <LobbyChat 
+                            messages={messages} 
+                            onSendMessage={handleSendMessage}
+                            onTyping={handleTyping}
+                            typingUsers={typingUsers}
+                        />
                     </div>
                 </div>
 
