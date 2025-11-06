@@ -11,6 +11,7 @@ import GameInfoModal from '../components/GameInfoModal';
 import CatalogueModal from '../components/CatalogueModal';
 import PassHostModal from '../components/PassHostModal';
 import LeaveModal from '../components/LeaveModal';
+import InviteFriendsModal from '../components/InviteFriendsModal';
 import { FaRegEdit, FaSignOutAlt } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { FaRegFolderOpen } from 'react-icons/fa6';
@@ -651,9 +652,17 @@ const LobbyScreen: React.FC = () => {
     };
 
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+    const [isInviteFriendsModalOpen, setIsInviteFriendsModalOpen] = useState(false);
 
     const handleLeaveClick = () => {
         setIsLeaveModalOpen(true);
+    };
+
+    const handleInviteFriend = (friendUserId: number, friendNickname: string) => {
+        // TODO: Implement actual invite logic via socket or API
+        console.log(`Inviting friend ${friendNickname} (${friendUserId}) to lobby ${lobbyData?.lobby_code}`);
+        // You can emit a socket event here or call an API endpoint
+        // For now, just log it
     };
 
     const handleConfirmLeave = () => {
@@ -760,7 +769,10 @@ const LobbyScreen: React.FC = () => {
                         ))}
                         {/* Add empty seats */}
                         {Array.from({ length: selectedPlayerCount - currentPlayerCount }).map((_, index) => (
-                            <InviteToLobbyUserTile key={`empty-${index}`} onInviteClick={() => console.log('Invite clicked')} />
+                            <InviteToLobbyUserTile 
+                                key={`empty-${index}`} 
+                                onInviteClick={() => setIsInviteFriendsModalOpen(true)} 
+                            />
                         ))}
                     </div>
 
@@ -920,6 +932,13 @@ const LobbyScreen: React.FC = () => {
                 isOpen={isLeaveModalOpen}
                 onConfirm={handleConfirmLeave}
                 onCancel={() => setIsLeaveModalOpen(false)}
+            />
+
+            <InviteFriendsModal
+                isOpen={isInviteFriendsModalOpen}
+                onClose={() => setIsInviteFriendsModalOpen(false)}
+                onInvite={handleInviteFriend}
+                lobbyCode={lobbyData?.lobby_code || ''}
             />
         </main>
     );
