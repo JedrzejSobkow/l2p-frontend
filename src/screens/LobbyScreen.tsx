@@ -17,6 +17,16 @@ import { FaRegFolderOpen } from 'react-icons/fa6';
 import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
 
+// Extend Window interface to include custom properties
+declare global {
+    interface Window {
+        __reloadKeys?: {
+            ctrlR?: boolean;
+            f5?: boolean;
+        };
+    }
+}
+
 const LobbyScreen: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -392,10 +402,17 @@ const LobbyScreen: React.FC = () => {
 
     // Handle leaving lobby when component unmounts (navigation away)
     useEffect(() => {
+        // Mark that we're in lobby
+        sessionStorage.setItem('isInLobby', 'true');
+        sessionStorage.setItem('lobbyCode', lobbyData?.lobby_code || '');
+        
         return () => {
-            // Cleanup when component unmounts (user navigates away)
-            if (lobbyData?.lobby_code) {
-                console.log('Component unmounting, leaving lobby...');
+            // Check if it's a page reload
+            const isReloading = sessionStorage.getItem('isReloading') === 'true';
+            
+            if (!isReloading && lobbyData?.lobby_code) {
+                // Not a reload, so user is navigating away - leave lobby
+                console.log('Component unmounting (navigation), leaving lobby...');
                 emitLeaveLobby(
                     lobbyData.lobby_code,
                     () => {
@@ -407,15 +424,38 @@ const LobbyScreen: React.FC = () => {
                         disconnectLobbySocket();
                     }
                 );
+                sessionStorage.removeItem('isInLobby');
+                sessionStorage.removeItem('lobbyCode');
+            } else if (isReloading) {
+                console.log('Page reload detected, staying in lobby');
             }
+            
+            // Clear the reload flag after unmount
+            sessionStorage.removeItem('isReloading');
         };
     }, [lobbyData?.lobby_code]);
 
-    // Handle leaving lobby when tab/browser is closed
+    // Handle leaving lobby when tab/browser is closed (but not on reload)
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            // Try multiple methods to detect reload
+            const perfEntries = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+            const isReload = perfEntries.length > 0 && perfEntries[0].type === 'reload';
+            
+            // Also check if user pressed Ctrl+R or F5
+            const keys = window.__reloadKeys || {};
+            const isKeyboardReload = keys.ctrlR || keys.f5;
+            
+            if (isReload || isKeyboardReload) {
+                // Mark as reloading so unmount handler knows
+                console.log('Reload detected in beforeunload');
+                sessionStorage.setItem('isReloading', 'true');
+                return; // Don't leave lobby on reload
+            }
+            
+            // User is closing tab/browser, leave lobby
             if (lobbyData?.lobby_code) {
-                // Emit leave lobby event synchronously
+                console.log('Tab/browser closing, leaving lobby...');
                 emitLeaveLobby(
                     lobbyData.lobby_code,
                     () => {
@@ -426,13 +466,44 @@ const LobbyScreen: React.FC = () => {
                     }
                 );
                 disconnectLobbySocket();
+                sessionStorage.removeItem('isInLobby');
+                sessionStorage.removeItem('lobbyCode');
+            }
+        };
+
+        // Track reload keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!window.__reloadKeys) {
+                window.__reloadKeys = {};
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                window.__reloadKeys.ctrlR = true;
+                sessionStorage.setItem('isReloading', 'true');
+            }
+            if (e.key === 'F5') {
+                window.__reloadKeys.f5 = true;
+                sessionStorage.setItem('isReloading', 'true');
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (window.__reloadKeys) {
+                if (e.key === 'r' || e.key === 'F5') {
+                    setTimeout(() => {
+                        window.__reloadKeys = {};
+                    }, 100);
+                }
             }
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
 
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
         };
     }, [lobbyData?.lobby_code]);
 
