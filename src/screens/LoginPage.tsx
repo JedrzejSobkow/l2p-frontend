@@ -3,20 +3,19 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
-import type { PopupProps } from '../components/Popup'
-import Popup from '../components/Popup'
+import { usePopup } from '../components/popup/PopupContext'
 
 const LoginPage = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [popup, setPopup] = useState<PopupProps | null>(null);
 
   useEffect(() => {
     const popupData = localStorage.getItem('popupData');
     if (popupData) {
-      setPopup(JSON.parse(popupData));
+      showPopup(JSON.parse(popupData));
       localStorage.removeItem('popupData'); // Clear popup data after displaying
     }
   }, []);
@@ -42,7 +41,7 @@ const LoginPage = () => {
       else {
         message = 'Siggning in failed'
       }
-      setPopup({ type: 'error', message, onClose: () => { setPopup(null) } })
+      showPopup({ type: 'error', message })
     } finally {
       setSubmitting(false)
     }
@@ -117,14 +116,6 @@ const LoginPage = () => {
           </Link>
         </p>
       </div>
-      {/* Error Popup */}
-      {popup && (
-        <Popup
-          type={popup.type}
-          message={popup.message}
-          onClose={() => setPopup(null)}
-        />
-      )}
     </div>
   )
 }

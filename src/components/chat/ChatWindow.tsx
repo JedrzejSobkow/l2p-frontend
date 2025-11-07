@@ -11,6 +11,7 @@ import {
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
 import { useAuth } from '../AuthContext'
 import Lightbox from '../Lightbox'
+import { usePopup } from '../popup/PopupContext'
 
 export type ChatMessage = {
   id: string
@@ -68,6 +69,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   onTyping,
 }) => {
   const {user} = useAuth()
+  const { showPopup} = usePopup()
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -113,12 +115,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
       fileInputRef.current?.form?.reset()
     } 
     catch (error: any) {
-      // if(error.message === 'Invalid image type'){
-      //   setPopup({type: 'error', message: 'Provide a valid image type'})
-      // }
-      // else {
-      //   setPopup({type: 'error', message: 'Failed to send message'})
-      // }
+      if(error.message === 'Invalid image type'){
+        showPopup({type: 'error', message: 'Provide a valid image type'})
+      }
+      else {
+        showPopup({type: 'error', message: 'Failed to send message'})
+      }
     }
     finally {
       setSending(false)
