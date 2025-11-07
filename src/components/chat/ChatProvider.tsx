@@ -381,6 +381,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [handleConversationUpdated, handleIncomingMessage, handleTypingEvent, user])
 
+  useEffect(() => {
+    if (isAuthenticated) return
+    setState({ messagesById: {}, targets: {}, typingById: {} })
+    loadingConversationsRef.current.clear()
+    loadedConversationsRef.current.clear()
+    typingThrottleRef.current.clear()
+    typingTimeoutRef.current.forEach((timeout) => clearTimeout(timeout))
+    typingTimeoutRef.current.clear()
+  }, [isAuthenticated])
+
   const value = useMemo<ChatContextValue>(
     () => ({
       getMessages,

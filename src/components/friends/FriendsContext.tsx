@@ -58,9 +58,13 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated) {
+      setFriendships([])
+      setIsLoading(false)
+      return
+    }
     void refreshFriends()
-  }, [refreshFriends])
+  }, [isAuthenticated, refreshFriends])
 
   const upsertFriendship = useCallback((entry: Friendship) => {
     setFriendships((prev) => {
