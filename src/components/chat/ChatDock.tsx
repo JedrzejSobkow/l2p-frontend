@@ -6,9 +6,13 @@ import { useChat } from './ChatProvider'
 
 const ChatDock = () => {
   const { sessions, minimizeChat, closeChat } = useChatDock()
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const chat = useChat()
   const currentUserId = user?.id != null ? String(user.id) : 'me'
+
+  if (!isAuthenticated) {
+    return null
+  }
 
   const openSessions = sessions.filter((s) => !s.minimized)
   const minimized = sessions.filter((s) => s.minimized)

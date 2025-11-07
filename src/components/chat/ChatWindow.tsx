@@ -9,6 +9,9 @@ import {
   type KeyboardEvent
 } from 'react'
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
+import { useAuth } from '../AuthContext'
+import Lightbox from '../Lightbox'
+import { usePopup } from '../PopupContext'
 
 export type ChatMessage = {
   id: string
@@ -41,6 +44,9 @@ const formatTime = (timestamp: ChatMessage['createdAt']) => {
   try {
     const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
     return new Intl.DateTimeFormat('en', {
+      day: 'numeric',
+      month: 'short',
+      year: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     }).format(date)
@@ -62,11 +68,14 @@ const ChatWindow: FC<ChatWindowProps> = ({
   onSend,
   onTyping,
 }) => {
+  const {user} = useAuth()
+  const { showPopup} = usePopup()
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [sending, setSending] = useState(false)
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   useEffect(() => {
     const container = scrollRef.current
@@ -104,7 +113,16 @@ const ChatWindow: FC<ChatWindowProps> = ({
       setDraft('')
       setAttachment(null)
       fileInputRef.current?.form?.reset()
-    } finally {
+    } 
+    catch (error: any) {
+      if(error.message === 'Invalid image type'){
+        showPopup({type: 'error', message: 'Provide a valid image type'})
+      }
+      else {
+        showPopup({type: 'error', message: 'Failed to send message'})
+      }
+    }
+    finally {
       setSending(false)
     }
   }
@@ -155,7 +173,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
       )}
 
       <div ref={scrollRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6">
-        {messages.map((message) => {
+        {messages.map((message ) => {
           const isOwn = message.senderId === currentUserId
           if (message.isSystem) {
             return (
@@ -191,6 +209,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
                   {message.imageUrl && (
                     <img
                       src={message.imageUrl}
+                      onClick={() => setSelectedImage(message.imageUrl || null)}
                       alt="Attachment"
                       className="mt-2 max-h-56 w-full rounded-2xl object-cover"
                     />
@@ -200,7 +219,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               </div>
               {isOwn && (
                 <img
-                  src={message.avatarUrl || 'src/assets/images/pfp.png'}
+                  src={user?.pfp_path || 'src/assets/images/pfp.png'}
                   alt="You"
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />
@@ -278,6 +297,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
           </div>
         )}
       </form>
+      <Lightbox
+        isOpen={selectedImage !== null}
+        onClose={() => setSelectedImage(null)}
+        imageUrl={selectedImage || ''}
+      >
+      </Lightbox>
     </div>
   )
 }

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Popup from '../components/Popup'
 import { useAuth } from '../components/AuthContext'
 import type { User } from '../services/auth';
+import { usePopup } from '../components/PopupContext';
 
 const ProfileScreen: React.FC = () => {
     const { user, updateProfile, deleteAccount } = useAuth()
+    const { showPopup } = usePopup()
     const [userData,setUserData] = useState<Partial<User>|null>(null)
 
     const [newPassword, setNewPassword] = useState('');
@@ -16,7 +17,6 @@ const ProfileScreen: React.FC = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false); 
     const [deleteConfirmation, setDeleteConfirmation] = useState('');  
     const [usernameError, setUsernameError] = useState(false); 
-    const [popup, setPopup] = useState<{ type: 'error' | 'informative' | 'confirmation'; message: string } | null>(null); 
     const [descriptionOutline, setDescriptionOutline] = useState<string>('rgba(47, 46, 54, 0.5)'); 
     const descTimerRef = useRef<number | null>(null)
     const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false); 
@@ -94,9 +94,9 @@ const ProfileScreen: React.FC = () => {
                 if (!user || !changed(user.description, value)) return
                 try {
                     await updateProfile({ description: value } as any)
-                    setPopup({ type: 'confirmation', message: 'Description updated.' })
+                    showPopup({ type: 'confirmation', message: 'Description updated.' })
                 } catch (err) {
-                    setPopup({ type: 'error', message: (err as any)?.message || 'Failed to save description.' })
+                    showPopup({ type: 'error', message: 'Failed to save description.' } )
                 }
             }, 2000) 
         }
@@ -107,9 +107,9 @@ const ProfileScreen: React.FC = () => {
         try {
             if (!user || !changed(user.description, userData?.description)) return
             await updateProfile({ description: userData?.description ?? '' } as any)
-            setPopup({ type: 'confirmation', message: 'Description updated.' })
+            showPopup({ type: 'confirmation', message: 'Description updated.' })
         } catch (err: any) {
-            setPopup({ type: 'error', message: err?.message || 'Failed to save description.' })
+            showPopup({ type: 'error', message: err?.message || 'Failed to save description.' } )
         }
     };
 
@@ -126,9 +126,9 @@ const ProfileScreen: React.FC = () => {
                 }
                 return next
             })
-            setPopup({ type: 'confirmation', message: 'Profile picture updated.' })
+            showPopup({ type: 'confirmation', message: 'Profile picture updated.' })
         } catch (e: any) {
-            setPopup({ type: 'error', message: e?.message || 'Failed to update profile picture.' })
+            showPopup({ type: 'error', message: e?.message || 'Failed to update profile picture.' } )
         }
     };
 
@@ -191,16 +191,16 @@ const ProfileScreen: React.FC = () => {
             await updateProfile({ nickname: (userData?.nickname ?? '').trim() } as any)
             setIsEditingUsername(false)
             setUsernameError(false)
-            setPopup({ type: 'confirmation', message: 'Username updated.' })
+            showPopup({ type: 'confirmation', message: 'Username updated successfully!' });
         } catch (e: any) {
             setUsernameError(true);
             const statusCode = e?.response?.status || e?.status || e?.code; // Check multiple possible locations for the status code
             if (statusCode === 422) {
-                setPopup({ type: 'error', message: 'String should have at least 3 characters.' });
+                showPopup({ type: 'error', message: 'Invalid username. Please use only letters, numbers, and underscores.' });
             } else if (statusCode === 400) {
-                setPopup({ type: 'error', message: 'Username is already taken.' });
+                showPopup({ type: 'error', message: 'Username cannot be empty and must be less than 20 characters.' });
             } else {
-                setPopup({ type: 'error', message: e?.message || 'Failed to update username.' });
+                showPopup({ type: 'error', message: e?.message || 'Failed to update username. Please try again.' });
             }
         }
     };
@@ -212,26 +212,26 @@ const ProfileScreen: React.FC = () => {
         }
         try {
             await deleteAccount()
-            setPopup({ type: 'confirmation', message: 'Account deleted successfully!' })
+            showPopup({ type: 'confirmation', message: 'Account deleted successfully.' })
             setShowDeleteModal(false)
             setDeleteConfirmation('')
         } catch (e: any) {
-            setPopup({ type: 'error', message: e?.message || 'Failed to delete account. Please try again.' })
+            showPopup({ type: 'error', message: e?.message || 'Failed to delete account. Please try again.' })
         }
     };
 
     const handlePasswordReset = async () => {
         if (!(newPassword && confirmNewPassword && isPasswordValid && newPassword === confirmNewPassword)) {
-            setPopup({ type: 'error', message: 'Passwords do not match or are invalid.' })
+            showPopup({ type: 'error', message: 'Please ensure the passwords match and meet the required criteria.' })
             return
         }
         try {
             await updateProfile({ password: newPassword } as any)
-            setPopup({ type: 'confirmation', message: 'Password updated successfully!' })
+            showPopup({ type: 'confirmation', message: 'Password updated successfully!' })
             setNewPassword('')
             setConfirmNewPassword('')
         } catch (e: any) {
-            setPopup({ type: 'error', message: e?.message || 'Failed to update password. Please try again.' })
+            showPopup({ type: 'error', message: e?.message || 'Failed to update password. Please try again.' })
         }
     };
 
@@ -514,15 +514,6 @@ const ProfileScreen: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* Error Popup */}
-            {popup && (
-                <Popup
-                    type={popup.type}
-                    message={popup.message}
-                    onClose={() => setPopup(null)}
-                />
             )}
         </main>
     );

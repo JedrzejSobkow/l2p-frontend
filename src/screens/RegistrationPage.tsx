@@ -3,16 +3,15 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
-import type { PopupProps } from '../components/Popup'
-import Popup from '../components/Popup'
 import { ApiError } from '../lib/http'
+import { usePopup } from '../components/PopupContext'
 
 const RegistrationPage = () => {
   const navigate = useNavigate()
-  const { register, login } = useAuth()
+  const { register } = useAuth()
+  const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [popup,setPopup] = useState<PopupProps|null>(null)
   const [passwordsMatch, setPasswordsMatch] = useState(true)
 
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -51,10 +50,7 @@ const RegistrationPage = () => {
         return
       }
       await register({ nickname , email, password })
-      localStorage.setItem(
-        'popupData',
-        JSON.stringify({ type: 'informative', message: 'Account created. Please verify your email to log in.' })
-      );
+      showPopup({ type: 'confirmation', message: 'Registration successful! Please check your email to verify your account.' })
       navigate('/login', { replace: true })
      
     } catch (err: any) {
@@ -189,14 +185,6 @@ const RegistrationPage = () => {
           </Link>
         </p>
       </div>
-      {/* Error Popup */}
-            {popup && (
-                <Popup
-                    type={popup.type}
-                    message={popup.message}
-                    onClose={() => setPopup(null)}
-                />
-            )}
     </div>
   )
 }

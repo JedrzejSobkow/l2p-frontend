@@ -17,6 +17,7 @@ import {
   type Friendship,
   type SearchFriendsPayload,
 } from '../../services/friends'
+import { useAuth } from '../AuthContext'
 
 type FriendsContextValue = {
   isLoading: boolean
@@ -37,6 +38,7 @@ const FriendsContext = createContext<FriendsContextValue | undefined>(undefined)
 const normalizeId = (value: number | string) => String(value)
 
 export const FriendsProvider = ({ children }: { children: ReactNode }) => {
+  const {isAuthenticated} = useAuth()
   const [friendships, setFriendships] = useState<Friendship[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
@@ -56,8 +58,13 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setFriendships([])
+      setIsLoading(false)
+      return
+    }
     void refreshFriends()
-  }, [refreshFriends])
+  }, [isAuthenticated, refreshFriends])
 
   const upsertFriendship = useCallback((entry: Friendship) => {
     setFriendships((prev) => {

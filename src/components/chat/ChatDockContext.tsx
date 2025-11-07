@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { ChatMessage } from './ChatWindow'
 import { useChat } from './ChatProvider'
+import { useAuth } from '../AuthContext'
 
 export type ChatTarget = {
   id: string
@@ -31,9 +32,17 @@ const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefine
 
 export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const chat = useChat()
+  const { isAuthenticated } = useAuth()
   const [state, setState] = useState<ChatDockState>({ sessions: {} })
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setState({ sessions: {} })
+    }
+  }, [isAuthenticated])
+
   const openChat = useCallback((target: ChatTarget) => {
+    if (!isAuthenticated) return
     const id = String(target.id)
     setState((prev) => {
       const existing = prev.sessions[id]
@@ -51,7 +60,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(() => {
       chat.ensureConversation({ id, nickname: target.nickname, avatarUrl: target.avatarUrl })
     }, 0)
-  }, [chat])
+  }, [chat, isAuthenticated])
 
   const closeChat = useCallback((targetId: string) => {
     setState((prev) => {
@@ -70,8 +79,11 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const sendMessage = useCallback(
-    (targetId: string, payload: { text?: string; attachment?: File | null }) => chat.sendMessage(targetId, payload),
-    [chat],
+    async (targetId: string, payload: { text?: string; attachment?: File | null }) => {
+      if (!isAuthenticated) return
+      await chat.sendMessage(targetId, payload)
+    },
+    [chat, isAuthenticated],
   )
 
   const value = useMemo<ChatDockContextValue>(() => {
