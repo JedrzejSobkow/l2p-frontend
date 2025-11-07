@@ -18,7 +18,6 @@ import LeaveModal from '../components/LeaveModal';
 import InviteFriendsModal from '../components/InviteFriendsModal';
 import { FaRegEdit, FaSignOutAlt } from 'react-icons/fa';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
-import { FaRegFolderOpen } from 'react-icons/fa6';
 import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
 import { useChat } from '../components/chat/ChatProvider';
@@ -960,21 +959,29 @@ const LobbyScreen: React.FC = () => {
                                 className="h-5 sm:h-7 w-auto flex-shrink-0"
                             />
                             <span className="text-sm sm:text-lg font-bold text-white truncate">{gameInfo.name}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             <button 
                                 onClick={() => setIsShowingGameInfo(true)}
                                 className="focus:outline-none hover:scale-105 transition-transform cursor-pointer p-1"
                             >
                                 <AiOutlineInfoCircle className="text-highlight" size={24} />
                             </button>
+                        </div>
+
+                        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                             <button 
                                 disabled={!isUserHost}
                                 onClick={() => setIsShowingCatalogue(true)}
-                                className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer p-1"
+                                className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer p-2 flex items-center gap-2 rounded-lg hover:bg-background-primary/20"
                             >
-                                <FaRegFolderOpen className="text-highlight" size={24} />
+                                <span className="text-highlight font-bold text-m hidden sm:inline">CHANGE GAME</span>
+                                <img 
+                                    src="/src/assets/icons/dice.png" 
+                                    alt="Change game" 
+                                    className="w-6 h-6 filter brightness-0 saturate-100"
+                                    style={{
+                                        filter: 'invert(64%) sepia(98%) saturate(565%) hue-rotate(325deg) brightness(101%) contrast(101%)'
+                                    }}
+                                />
                             </button>
                         </div>
                     </div>
