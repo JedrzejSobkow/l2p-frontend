@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../components/AuthContext'
 import type { User } from '../services/auth';
-import { usePopup } from '../components/popup/PopupContext';
+import { usePopup } from '../components/PopupContext';
 
 const ProfileScreen: React.FC = () => {
     const { user, updateProfile, deleteAccount } = useAuth()

@@ -8,7 +8,7 @@ import { AuthProvider } from "./components/AuthContext";
 import { ChatDockProvider } from "./components/chat/ChatDockContext";
 import { ChatProvider } from "./components/chat/ChatProvider";
 import { FriendsProvider } from "./components/friends/FriendsContext";
-import { PopupProvider } from "./components/popup/PopupContext";
+import { PopupProvider } from "./components/PopupContext";
 
 const root = document.getElementById("root");
 if (!root) {

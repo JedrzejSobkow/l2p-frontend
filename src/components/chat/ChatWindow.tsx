@@ -11,7 +11,7 @@ import {
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
 import { useAuth } from '../AuthContext'
 import Lightbox from '../Lightbox'
-import { usePopup } from '../popup/PopupContext'
+import { usePopup } from '../PopupContext'
 
 export type ChatMessage = {
   id: string

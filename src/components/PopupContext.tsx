@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import Popup, { type PopupProps } from '../Popup'
+import Popup, { type PopupProps } from './Popup'
 
 type PopupRequest = {
   id: string

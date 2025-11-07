@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
-import { usePopup } from '../components/popup/PopupContext'
+import { usePopup } from '../components/PopupContext'
 
 const LoginPage = () => {
   const navigate = useNavigate()

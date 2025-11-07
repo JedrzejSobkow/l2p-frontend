@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifyUser } from '../services/auth';
-import { usePopup } from '../components/popup/PopupContext';
+import { usePopup } from '../components/PopupContext';
 
 const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
