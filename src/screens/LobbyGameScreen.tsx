@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import GameShell from '../components/games/GameShell';
 import TicTacToeModule from '../components/games/ticTacToe/module';
 import { useAuth } from '../components/AuthContext';
-import { getCurrentLobby, type LobbyMember, type CurrentLobbyResponse } from '../services/lobby';
+import { type LobbyMember, type CurrentLobbyResponse } from '../services/lobby';
 import {
   connectGameSocket,
   disconnectGameSocket,
@@ -22,13 +22,12 @@ import {
   getGameSocket,
   type EngineConfig,
 } from '../services/game';
-import { useNavigate } from 'react-router-dom';
 
-const LobbyGameScreen: React.FC = () => {
+type Props = { lobby: CurrentLobbyResponse };
+
+const LobbyGameScreen: React.FC<Props> = ({ lobby }) => {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [lobbyMembers, setLobbyMembers] = useState<LobbyMember[]>([]);
-  const [lobby, setLobby] = useState<CurrentLobbyResponse | null>(null);
+  const [lobbyMembers, setLobbyMembers] = useState<LobbyMember[]>(lobby.members);
   const [engineConfig, setEngineConfig] = useState<EngineConfig | undefined>(undefined);
   const [gameState, setGameState] = useState<any | null>(null);
   const [gameName, setGameName] = useState<string>('tictactoe');
@@ -36,30 +35,16 @@ const LobbyGameScreen: React.FC = () => {
   const triedAutoCreateRef = useRef(false);
   const ensureJoinedRef = useRef(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lobbyRef = useRef<CurrentLobbyResponse | null>(null);
+  const lobbyRef = useRef<CurrentLobbyResponse | null>(lobby);
   const userIdRef = useRef<string | number | undefined>(user?.id);
 
   useEffect(() => {
-    let mounted = true;
-    // Load lobby members for player data
-    (async () => {
-      try {
-        const l = await getCurrentLobby();
-        console.log(l)
-        if (!mounted) return;
-        console.log('set')
-        setLobbyMembers(l.members);
-        setLobby(l);
-      } catch (e) {
-        console.error('Failed to load lobby for game view', e);
-        // If not in a lobby, redirect back
-        try { navigate('/lobby'); } catch {
-          // ignore in tests
-        }
-      }
-    })();
+    setLobbyMembers(lobby.members);
+    lobbyRef.current = lobby;
+  }, [lobby]);
 
-    // Connect and subscribe to game events
+  useEffect(() => {
+    let mounted = true;
     connectGameSocket();
 
     const handleGameStarted = (ev: any) => {
@@ -77,7 +62,6 @@ const LobbyGameScreen: React.FC = () => {
       } else {
         setLastMove(undefined);
       }
-      // Once we know a game exists, ensure we join the server room by reconnecting once
       if (!ensureJoinedRef.current) {
         const sock = getGameSocket();
         if (sock && sock.connected) {
@@ -86,7 +70,6 @@ const LobbyGameScreen: React.FC = () => {
           setTimeout(() => sock.connect(), 200);
         }
       }
-      // Stop polling if any
       if (pollTimerRef.current) {
         clearInterval(pollTimerRef.current);
         pollTimerRef.current = null;
@@ -119,8 +102,8 @@ const LobbyGameScreen: React.FC = () => {
           triedAutoCreateRef.current = true;
           const rawName = curLobby.game?.name || 'tictactoe';
           const slug = String(rawName).toLowerCase().replace(/[^a-z0-9]+/g, '');
+          emitCreateGame(slug);
         } else {
-          // poll for state until host starts; also try to auto-create once lobby becomes available
           if (!pollTimerRef.current) {
             pollTimerRef.current = setInterval(() => {
               if (!triedAutoCreateRef.current) {
@@ -130,6 +113,7 @@ const LobbyGameScreen: React.FC = () => {
                   triedAutoCreateRef.current = true;
                   const raw = l.game?.name || 'tictactoe';
                   const s = String(raw).toLowerCase().replace(/[^a-z0-9]+/g, '');
+                  emitCreateGame(s);
                   return;
                 }
               }
@@ -158,8 +142,6 @@ const LobbyGameScreen: React.FC = () => {
     };
   }, []);
 
-  // Keep latest lobby/user in refs for event handlers
-  useEffect(() => { lobbyRef.current = lobby; }, [lobby]);
   useEffect(() => { userIdRef.current = user?.id; }, [user]);
 
   const players = useMemo(() => {
@@ -168,11 +150,7 @@ const LobbyGameScreen: React.FC = () => {
     if (playerSymbols) {
       const withSymbols = lobbyMembers
         .filter(m => String(m.user_id) in playerSymbols)
-        .map(m => ({
-          userId: String(m.user_id),
-          nickname: m.nickname,
-          symbol: playerSymbols[String(m.user_id)]
-        }));
+        .map(m => ({ userId: String(m.user_id), nickname: m.nickname, symbol: playerSymbols[String(m.user_id)] }));
       withSymbols.sort((a, b) => (a.symbol === 'X' ? -1 : 1) - (b.symbol === 'X' ? -1 : 1));
       return withSymbols.map(({ userId, nickname }) => ({ userId, nickname }));
     }
@@ -199,7 +177,7 @@ const LobbyGameScreen: React.FC = () => {
   const module = TicTacToeModule;
 
   return (
-    <main className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">
+    <div className="w-full">
       <GameShell
         module={module}
         state={gameState ?? { board: Array(9).fill(null), current_turn_player_id: user?.id ? String(user.id) : undefined }}
@@ -209,8 +187,10 @@ const LobbyGameScreen: React.FC = () => {
         isMyTurn={isMyTurn}
         onProposeMove={handleProposeMove}
       />
-    </main>
+    </div>
   );
 };
 
 export default LobbyGameScreen;
+
+

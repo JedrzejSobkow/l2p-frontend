@@ -22,7 +22,8 @@ import { FaRegFolderOpen } from 'react-icons/fa6';
 import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
 import { useChat } from '../components/chat/ChatProvider';
-import { connectGameSocket, emitCreateGame, onGameStarted as onGameStartedEvt, offGameStarted as offGameStartedEvt, onGameError as onGameErrorEvt, offGameError as offGameErrorEvt, onGameState as onGameStateEvt, offGameState as offGameStateEvt, emitGetGameState } from '../services/game';
+import { connectGameSocket, emitCreateGame, onGameStarted as onGameStartedEvt, offGameStarted as offGameStartedEvt, onGameError as onGameErrorEvt, offGameError as offGameErrorEvt, onGameState as onGameStateEvt, offGameState as offGameStateEvt, emitGetGameState, onGameEnded as onGameEndedEvt, offGameEnded as offGameEndedEvt } from '../services/game';
+import LobbyGameScreen from './LobbyGameScreen';
 
 // Extend Window interface to include custom properties
 declare global {
@@ -35,27 +36,33 @@ declare global {
 }
 
 
-type AutoGameStartListenerProps = { lobbyCode: string; onStarted: () => void }
-const AutoGameStartListener: React.FC<AutoGameStartListenerProps> = ({ lobbyCode, onStarted }) => {
+type AutoGameStartListenerProps = { lobbyCode: string; onStarted: () => void; onEnded: () => void }
+const AutoGameStartListener: React.FC<AutoGameStartListenerProps> = ({ lobbyCode, onStarted, onEnded }) => {
     React.useEffect(() => {
         connectGameSocket();
         const handleStarted = () => onStarted();
         const handleState = (ev: any) => {
             const result = ev?.game_state?.result;
             if (result === 'in_progress') onStarted();
+            else if (result && result !== 'in_progress') onEnded();
         };
+        const handleEnded = () => onEnded();
         onGameStartedEvt(handleStarted);
         onGameStateEvt(handleState);
+        onGameEndedEvt(handleEnded);
         // ask for state in case game already exists
         try { emitGetGameState(); } catch {}
         return () => {
             offGameStartedEvt(handleStarted);
             offGameStateEvt(handleState);
+            offGameEndedEvt(handleEnded);
         };
-    }, [lobbyCode, onStarted]);
+    }, [lobbyCode, onStarted, onEnded]);
     return null;
 };
 const LobbyScreen: React.FC = () => {
+    const [isInGame, setIsInGame] = useState(false);
+
     const { user } = useAuth();
     const navigate = useNavigate();
     const { lobbyCode: urlLobbyCode } = useParams<{ lobbyCode?: string }>();
@@ -849,7 +856,7 @@ const LobbyScreen: React.FC = () => {
         <main className="flex flex-col bg-background-primary min-h-screen">
             {/* Auto-listen for game start and active game state to navigate to in-game */}
             {lobbyData && (
-                <AutoGameStartListener lobbyCode={lobbyData.lobby_code} onStarted={() => navigate('/lobby/ingame')} />
+                <AutoGameStartListener lobbyCode={lobbyData.lobby_code} onStarted={() => setIsInGame(true)} onEnded={() => setIsInGame(false)} />
             )}
             {/* Top Bar with Leave Button */}
             <div className="flex justify-start px-4 sm:px-6 lg:px-8 pt-4 pb-2">
@@ -863,7 +870,13 @@ const LobbyScreen: React.FC = () => {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 lg:p-8 flex-1 overflow-auto">
+            {/* Main Content */}
+            {isInGame && lobbyData ? (
+                <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-auto">
+                    <LobbyGameScreen lobby={lobbyData} />
+                </div>
+            ) : null}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 p-4 sm:p-6 lg:p-8 flex-1 overflow-auto" style={{ display: isInGame ? "none" : undefined }}>
                 {/* First Column: Players and chat */}
                 <div className="flex flex-col items-center gap-3 sm:gap-4">
                     <div className="w-full flex items-center justify-between p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
@@ -1078,6 +1091,9 @@ const LobbyScreen: React.FC = () => {
 }
 
 export default LobbyScreen;
+
+
+
 
 
 
