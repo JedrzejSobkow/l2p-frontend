@@ -11,6 +11,7 @@ import ResetPasswordPage from "./screens/ResetPasswordPage";
 import FindGamesScreen from "./screens/FindGamesScreen";
 import LobbyScreen from "./screens/LobbyScreen";
 import GameScreen from "./screens/GameScreen";
+import LobbyGameScreen from "./screens/LobbyGameScreen";
 import FriendsScreen from "./screens/FriendsScreen";
 import VerifyEmailPage from './screens/VerifyEmailPage';
 
@@ -57,7 +58,7 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'lobby/ingame',
-                element: <RequireAuth> <GameScreen /> </RequireAuth>
+                element: <RequireAuth> <LobbyGameScreen /> </RequireAuth>
             },
             {
                 path: 'friends',

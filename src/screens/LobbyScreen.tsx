@@ -22,6 +22,7 @@ import { FaRegFolderOpen } from 'react-icons/fa6';
 import { LuTimer, LuUsers } from 'react-icons/lu';
 import { FiLock } from 'react-icons/fi';
 import { useChat } from '../components/chat/ChatProvider';
+import { connectGameSocket, emitCreateGame, onGameStarted as onGameStartedEvt, offGameStarted as offGameStartedEvt, onGameError as onGameErrorEvt, offGameError as offGameErrorEvt, onGameState as onGameStateEvt, offGameState as offGameStateEvt, emitGetGameState } from '../services/game';
 
 // Extend Window interface to include custom properties
 declare global {
@@ -33,6 +34,27 @@ declare global {
     }
 }
 
+
+type AutoGameStartListenerProps = { lobbyCode: string; onStarted: () => void }
+const AutoGameStartListener: React.FC<AutoGameStartListenerProps> = ({ lobbyCode, onStarted }) => {
+    React.useEffect(() => {
+        connectGameSocket();
+        const handleStarted = () => onStarted();
+        const handleState = (ev: any) => {
+            const result = ev?.game_state?.result;
+            if (result === 'in_progress') onStarted();
+        };
+        onGameStartedEvt(handleStarted);
+        onGameStateEvt(handleState);
+        // ask for state in case game already exists
+        try { emitGetGameState(); } catch {}
+        return () => {
+            offGameStartedEvt(handleStarted);
+            offGameStateEvt(handleState);
+        };
+    }, [lobbyCode, onStarted]);
+    return null;
+};
 const LobbyScreen: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -400,7 +422,7 @@ const LobbyScreen: React.FC = () => {
                 })));
             }
         };
-
+        
         socket.on('connect', handleConnect);
         socket.on('disconnect', handleDisconnect);
         socket.on('error', handleError);
@@ -692,10 +714,16 @@ const LobbyScreen: React.FC = () => {
     const canStartGame = isUserHost && allUsersReady && currentPlayerCount === selectedPlayerCount;
 
     const handleStartGame = () => {
-        if (canStartGame) {
-            // Navigate to in-game screen
-            navigate('/lobby/ingame');
-        }
+        if (!canStartGame || !lobbyData) return;
+        // Connect and create the game as host — navigation handled by global listeners below
+        connectGameSocket();
+        const gameNameRaw = (lobbyData?.game?.name || 'tictactoe');
+        const slug = String(gameNameRaw).toLowerCase().replace(/[^a-z0-9]+/g, '');
+        onGameErrorEvt((err: any) => {
+            console.error('Failed to start game:', err);
+            setError(err?.error || 'Failed to start game');
+        });
+        emitCreateGame(slug);
     };
 
     const handleSaveLobbyName = (newName: string) => {
@@ -819,6 +847,10 @@ const LobbyScreen: React.FC = () => {
 
     return (
         <main className="flex flex-col bg-background-primary min-h-screen">
+            {/* Auto-listen for game start and active game state to navigate to in-game */}
+            {lobbyData && (
+                <AutoGameStartListener lobbyCode={lobbyData.lobby_code} onStarted={() => navigate('/lobby/ingame')} />
+            )}
             {/* Top Bar with Leave Button */}
             <div className="flex justify-start px-4 sm:px-6 lg:px-8 pt-4 pb-2">
                 <button
@@ -1046,3 +1078,10 @@ const LobbyScreen: React.FC = () => {
 }
 
 export default LobbyScreen;
+
+
+
+
+
+
+

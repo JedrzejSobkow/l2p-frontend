@@ -1,7 +1,8 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useEffect } from "react"
 import { Application, extend } from "@pixi/react"
 import { Container, Graphics, Text, TextStyle, type Graphics as PixiGraphics } from "pixi.js"
 import type { GameClientModule } from "../GameClientModule"
+import { useNavigate } from "react-router-dom"
 
 extend({ Container, Graphics, Text })
 
@@ -20,32 +21,65 @@ type TicTacToeMove =
   | { position: number }
   | { index: number }
 
-const BOARD_SIZE = 9
 const CELL_SIZE = 120
-const BOARD_PIXELS = CELL_SIZE * 3
 const BORDER_RADIUS = 24
 
-const WIN_LINES: number[][] = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-]
+const getWinLines = (dim: number, winLength: number = 3): number[][] => {
+  const lines: number[][] = []
+  if (winLength > dim) return lines
+  // Rows
+  for (let r = 0; r < dim; r += 1) {
+    for (let c = 0; c <= dim - winLength; c += 1) {
+      const base = r * dim + c
+      lines.push(Array.from({ length: winLength }, (_, i) => base + i))
+    }
+  }
+  // Columns
+  for (let c = 0; c < dim; c += 1) {
+    for (let r = 0; r <= dim - winLength; r += 1) {
+      const base = r * dim + c
+      lines.push(Array.from({ length: winLength }, (_, i) => base + i * dim))
+    }
+  }
+  // Diagonals ↘
+  for (let r = 0; r <= dim - winLength; r += 1) {
+    for (let c = 0; c <= dim - winLength; c += 1) {
+      const base = r * dim + c
+      lines.push(Array.from({ length: winLength }, (_, i) => base + i * (dim + 1)))
+    }
+  }
+  // Diagonals ↙
+  for (let r = 0; r <= dim - winLength; r += 1) {
+    for (let c = winLength - 1; c < dim; c += 1) {
+      const base = r * dim + c
+      lines.push(Array.from({ length: winLength }, (_, i) => base + i * (dim - 1)))
+    }
+  }
+  return lines
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null
 
 const parseBoard = (raw: unknown): CellValue[] => {
-  if (Array.isArray(raw) && raw.length === BOARD_SIZE) {
-    return raw.map((cell) => (cell === "X" || cell === "O" ? cell : null))
+  // 1D board already
+  if (Array.isArray(raw)) {
+    // 1D array of X/O/null or 2D? If first is array, flatten
+    if (raw.length > 0 && Array.isArray(raw[0])) {
+      const flattened = (raw as unknown[]).flat() as unknown[]
+      return flattened.map((cell) => (cell === "X" || cell === "O" ? (cell as CellValue) : null))
+    }
+    return (raw as unknown[]).map((cell) => (cell === "X" || cell === "O" ? (cell as CellValue) : null))
   }
-  if (isRecord(raw) && Array.isArray(raw.board) && raw.board.length === BOARD_SIZE) {
-    return raw.board.map((cell) => (cell === "X" || cell === "O" ? cell : null))
+  if (isRecord(raw) && Array.isArray((raw as any).board)) {
+    const b = (raw as any).board
+    if (b.length > 0 && Array.isArray(b[0])) {
+      const flattened = (b as unknown[]).flat() as unknown[]
+      return flattened.map((cell) => (cell === "X" || cell === "O" ? (cell as CellValue) : null))
+    }
+    return b.map((cell: unknown) => (cell === "X" || cell === "O" ? (cell as CellValue) : null))
   }
-  return Array<CellValue>(BOARD_SIZE).fill(null)
+  // default 3x3 empty
+  return Array<CellValue>(9).fill(null)
 }
 
 const parseState = (rawState: unknown): TicTacToeState => {
@@ -59,7 +93,18 @@ const parseState = (rawState: unknown): TicTacToeState => {
   if (isRecord(rawState)) {
     if (typeof rawState.nextPlayerId === "string") nextPlayerId = rawState.nextPlayerId
     if (typeof rawState.currentPlayerId === "string") nextPlayerId = rawState.currentPlayerId
+    if (typeof (rawState as any).current_turn_player_id === "number" || typeof (rawState as any).current_turn_player_id === "string") {
+      nextPlayerId = String((rawState as any).current_turn_player_id)
+    }
     if (typeof rawState.winnerId === "string") winnerId = rawState.winnerId
+    if (
+      (rawState as any).winner_id === null ||
+      typeof (rawState as any).winner_id === 'number' ||
+      typeof (rawState as any).winner_id === 'string'
+    ) {
+      const w = (rawState as any).winner_id
+      winnerId = w === null ? null : String(w)
+    }
     if (rawState.winnerId === null) winnerId = null
     if (
       Array.isArray(rawState.winningCombination) &&
@@ -81,7 +126,9 @@ const deriveMarks = (players: Array<{ userId: string; nickname: string }>): Reco
 }
 
 const calculateWinner = (board: CellValue[], marksByPlayer: Record<string, PlayerMark>) => {
-  for (const line of WIN_LINES) {
+  const dim = Math.max(1, Math.floor(Math.sqrt(board.length)))
+  const lines = getWinLines(dim, 3)
+  for (const line of lines) {
     const [a, b, c] = line
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
       const mark = board[a]
@@ -137,13 +184,18 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   isMyTurn,
   onProposeMove,
 }) => {
+  const navigate = useNavigate()
   const resolved = useMemo(() => resolveState(rawState, players), [rawState, players])
+  const dim = useMemo(() => Math.max(1, Math.floor(Math.sqrt(resolved.board.length))), [resolved.board.length])
+  const BOARD_PIXELS = CELL_SIZE * dim
 
   const handleCellClick = useCallback(
     (index: number) => {
-      // if (!isMyTurn) return
+      console.log('here')
+      if (!isMyTurn) return
+      console.log('here2')
       if (resolved.board[index] !== null) return
-      if (resolved.winnerId !== undefined || resolved.draw) return
+      if (resolved.winnerId !== null || resolved.draw) return
       onProposeMove({ position: index })
     },
     [onProposeMove, resolved.board, resolved.draw, resolved.winnerId],
@@ -170,6 +222,17 @@ const TicTacToeView: GameClientModule["GameView"] = ({
     }
     return undefined
   }, [lastMove, resolved.board])
+
+  // Auto-return to lobby shortly after a win
+  useEffect(() => {
+    if (resolved.winnerId) {
+      const t = setTimeout(() => {
+        try { navigate('/lobby') } catch { /* no-op */ }
+      }, 1500)
+      return () => clearTimeout(t)
+    }
+    return
+  }, [resolved.winnerId, navigate])
 
   const markStyles = useMemo(
     () => ({
@@ -215,8 +278,8 @@ const TicTacToeView: GameClientModule["GameView"] = ({
           <pixiContainer x={0} y={0}>
             <pixiGraphics draw={drawGrid} />
             {resolved.board.map((cell, index) => {
-              const row = Math.floor(index / 3)
-              const col = index % 3
+              const row = Math.floor(index / dim)
+              const col = index % dim
               const isWinningCell = resolved.winningCombination?.includes(index)
               const isLastMove = lastMoveIndex === index && !isWinningCell
               const fillColor = isWinningCell ? 0x37b24d : isLastMove ? 0xffffff : 0x000000
@@ -245,20 +308,20 @@ const TicTacToeView: GameClientModule["GameView"] = ({
             })}
           </pixiContainer>
         </Application>
-        <div className="pointer-events-none absolute inset-3 grid grid-cols-3">
+        <div className="pointer-events-none absolute inset-3" style={{ display: 'grid', gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))` }}>
           {resolved.board.map((cell, index) => {
-            const disabled =
-              cell !== null || resolved.winnerId !== undefined || resolved.draw
-            return (
-              <button
-                key={index}
-                type="button"
-                onClick={() => handleCellClick(index)}
-                disabled={disabled}
-                className="pointer-events-auto h-full w-full bg-transparent"
-              />
-            )
-          })}
+              const disabled =
+                cell !== null || resolved.winnerId != null || resolved.draw
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleCellClick(index)}
+                  disabled={disabled}
+                  className="pointer-events-auto h-full w-full bg-transparent"
+                />
+              )
+            })}
         </div>
       </div>
       <div className="flex flex-col items-center gap-1 text-sm text-white/70">
@@ -291,9 +354,9 @@ const TicTacToeView: GameClientModule["GameView"] = ({
 const validateLocalMove: NonNullable<GameClientModule["validateLocalMove"]> = (state, move, playerId) => {
   if (!isTicTacToeMove(move)) return false
   const resolved = resolveState(state, [])
-  if (resolved.winnerId !== undefined || resolved.draw) return false
+  if (resolved.winnerId != null || resolved.draw) return false
   if (resolved.board[extractMoveIndex(move)] !== null) return false
-  // if (resolved.nextPlayerId && resolved.nextPlayerId !== playerId) return false
+  if (resolved.nextPlayerId && resolved.nextPlayerId !== playerId) return false
   return true
 }
 
