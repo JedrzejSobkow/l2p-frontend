@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useLobby } from '../components/lobby/LobbyContext'
 import { useAuth } from '../components/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 export const CompleteLobbyScreen = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const {
     isLoading,
     currentLobby,
@@ -23,10 +25,12 @@ export const CompleteLobbyScreen = () => {
     getPublicLobbies,
     getLobbyState,
     clearError,
+    startGame,
   } = useLobby()
 
   const [messageInput, setMessageInput] = useState('')
   const [joinCode, setJoinCode] = useState('')
+  const [isStartingGame, setIsStartingGame] = useState(false)
 
   useEffect(() => {
     if (currentLobby) {
@@ -52,8 +56,14 @@ export const CompleteLobbyScreen = () => {
     }
   }
 
+  const handleStartGame = () => {
+    startGame('tictactoe')
+  }
+
   const isHost = currentLobby && user && currentLobby.host_id === user.id
   const userMember = currentLobby && members.find(m => m.user_id === user?.id)
+  const allMembersReady = members.length > 0 && members.every(m => m.is_ready)
+  const canStartGame = isHost && allMembersReady && members.length >= 2
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -147,14 +157,6 @@ export const CompleteLobbyScreen = () => {
                 )}
 
                 <button
-                  onClick={leaveLobby}
-                  disabled={isLoading}
-                  className="w-full px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 rounded"
-                >
-                  Leave Lobby
-                </button>
-
-                <button
                   onClick={toggleReady}
                   className={`w-full px-4 py-2 rounded ${
                     userMember?.is_ready
@@ -163,6 +165,37 @@ export const CompleteLobbyScreen = () => {
                   }`}
                 >
                   {userMember?.is_ready ? 'Ready' : 'Not Ready'}
+                </button>
+
+                {isHost && (
+                  <button
+                    onClick={handleStartGame}
+                    disabled={!canStartGame || isStartingGame}
+                    className={`w-full px-4 py-2 rounded font-bold transition-all ${
+                      canStartGame && !isStartingGame
+                        ? 'bg-purple-600 hover:bg-purple-500 cursor-pointer'
+                        : 'bg-gray-600 cursor-not-allowed opacity-50'
+                    }`}
+                    title={
+                      !isHost
+                        ? 'Only host can start'
+                        : !allMembersReady
+                        ? 'All members must be ready'
+                        : members.length < 2
+                        ? 'Need at least 2 players'
+                        : 'Start game'
+                    }
+                  >
+                    {isStartingGame ? 'Starting...' : 'Start Game'}
+                  </button>
+                )}
+
+                <button
+                  onClick={leaveLobby}
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 bg-red-600 hover:bg-red-500 disabled:bg-gray-600 rounded"
+                >
+                  Leave Lobby
                 </button>
               </div>
             )}

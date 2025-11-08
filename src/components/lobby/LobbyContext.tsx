@@ -59,6 +59,13 @@ import {
   type LobbyError,
 } from '../../services/lobby'
 
+
+import {
+    emitCreateGame,
+    offGameStarted,
+    onGameStarted
+} from '../../services/game'
+
 type LobbyContextValue = {
   isLoading: boolean
   currentLobby: LobbyState | null
@@ -79,6 +86,7 @@ type LobbyContextValue = {
   getPublicLobbies: () => void
   getLobbyState: () => void
   clearError: () => void
+  startGame: (gameName: string) => void
 }
 
 const LobbyContext = createContext<LobbyContextValue | undefined>(undefined)
@@ -205,6 +213,11 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false)
     }
 
+    const handleGameStarted = (data: { lobby_code: string; game_name: string; game_state: any }) => {
+      console.log('Game started:', data)
+      setIsLoading(false)
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -221,6 +234,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onLobbyUserTyping(handleLobbyUserTyping)
     onKickedFromLobby(handleKickedFromLobby)
     onLobbyError(handleLobbyError)
+    onGameStarted(handleGameStarted)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -239,6 +253,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offLobbyUserTyping(handleLobbyUserTyping)
       offKickedFromLobby(handleKickedFromLobby)
       offLobbyError(handleLobbyError)
+      offGameStarted(handleGameStarted)
     }
   }, [])
 
@@ -308,6 +323,13 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     setError(null)
   }, [])
 
+  const startGameHandler = useCallback((gameName: string) => {
+    if (!currentLobby) return
+    setIsLoading(true)
+    setError(null)
+    emitCreateGame(gameName)
+  }, [currentLobby])
+
   const value: LobbyContextValue = useMemo(
     () => ({
       isLoading,
@@ -329,6 +351,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getPublicLobbies: getPublicLobbiesHandler,
       getLobbyState: getLobbyStateHandler,
       clearError: clearErrorHandler,
+      startGame: startGameHandler,
     }),
     [
       isLoading,
@@ -350,6 +373,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getPublicLobbiesHandler,
       getLobbyStateHandler,
       clearErrorHandler,
+      startGameHandler,
     ],
   )
 
