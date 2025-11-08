@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { createLobby, joinLobby, connectLobbySocket } from '../services/lobby';
+import { useLobby } from './lobby/LobbyContext';
 import Popup from './Popup';
 import type { PopupProps } from './Popup';
 
@@ -14,14 +14,14 @@ interface GameHeaderProps {
 }
 
 const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, estimatedPlaytime, path }) => {
+    const navigate = useNavigate();
+    const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby();
+
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
     const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
     const [newLobbyName, setNewLobbyName] = useState('');
-    const [isCreatingLobby, setIsCreatingLobby] = useState(false);
-    const [isJoiningLobby, setIsJoiningLobby] = useState(false);
     const [popup, setPopup] = useState<PopupProps | null>(null);
-    const navigate = useNavigate();
 
     const handleJoinClick = () => {
         setShowJoinModal(true);
@@ -36,22 +36,10 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         setJoinCodeParts(['', '', '', '', '', '']);
     };
 
-    const handleCreateLobby = async () => {
-        setIsCreatingLobby(true);
-        try {
-            const response = await createLobby({ max_players: 6 });
-            setShowNewLobbyModal(false);
-            setNewLobbyName('');
-            navigate(`/lobby/${response.lobby_code}`);
-        } catch (error) {
-            setPopup({ 
-                type: 'error', 
-                message: error instanceof Error ? error.message : 'Failed to create lobby. Please try again.',
-                onClose: () => setPopup(null)
-            });
-        } finally {
-            setIsCreatingLobby(false);
-        }
+    const handleCreateLobby = () => {
+        createLobby(maxPlayers, false);
+        setShowNewLobbyModal(false);
+        setNewLobbyName('');
     };
 
     const handleLobbyNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,64 +53,44 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         updatedParts[index] = sanitizedValue;
         setJoinCodeParts(updatedParts);
 
-        const inputsArray = Array.from(inputs); 
+        const inputsArray = Array.from(inputs);
         if (sanitizedValue && index < inputsArray.length - 1) {
             const nextInput = inputsArray[index + 1];
             nextInput.focus();
-            nextInput.select(); 
+            nextInput.select();
         }
     };
 
-    const handleConfirmJoin = async () => {
+    const handleConfirmJoin = () => {
         const joinCode = joinCodeParts.join('');
-        setIsJoiningLobby(true);
-        try {
-            // Connect to the lobby socket
-            const socket = connectLobbySocket();
-
-            if (!socket) {
-                throw new Error('Socket connection failed.');
-            }
-
-            // Emit the join_lobby event
-            socket.emit('join_lobby', { lobby_code: joinCode });
-
-            // Listen for the lobby_joined event to confirm success
-            const handleLobbyJoined = (data: any) => {
-                console.log('Successfully joined lobby:', data);
-                setShowJoinModal(false);
-                navigate(`/lobby/${joinCode}`);
-                socket.off('lobby_joined', handleLobbyJoined); // Clean up listener
-            };
-
-            // Listen for errors
-            const handleLobbyError = (error: any) => {
-                console.error('Failed to join lobby:', error);
-                setPopup({
-                    type: 'error',
-                    message: error.message || 'Failed to join lobby. Please try again.',
-                    onClose: () => setPopup(null),
-                });
-                socket.off('lobby_error', handleLobbyError); // Clean up listener
-            };
-
-            socket.on('lobby_joined', handleLobbyJoined);
-            socket.on('lobby_error', handleLobbyError);
-        } catch (error) {
-            setPopup({
-                type: 'error',
-                message: error instanceof Error ? error.message : 'This code did not work',
-                onClose: () => setPopup(null),
-            });
-        } finally {
-            setIsJoiningLobby(false);
-        }
+        joinLobby(joinCode);
+        setShowJoinModal(false);
+        setJoinCodeParts(['', '', '', '', '', '']);
     };
 
     const isJoinCodeComplete = joinCodeParts.every((part) => part !== '');
 
+    useEffect(() => {
+        if (error) {
+            setPopup({
+                type: 'error',
+                message: error.message,
+                onClose: () => {
+                    setPopup(null);
+                    clearError();
+                },
+            });
+        }
+    }, [error, clearError]);
+
+    useEffect(() => {
+        if (currentLobby) {
+            navigate(`/lobby-test`);
+        }
+    }, [currentLobby, navigate]);
+
     return (
-        <div className="game-header flex flex-wrap w-full py-4 gap-4 items-center sm:flex-nowrap"> 
+        <div className="game-header flex flex-wrap w-full py-4 gap-4 items-center sm:flex-nowrap">
             <div className="game-header-icon w-full sm:w-auto flex justify-center sm:mr-4">
                 <img src={path} alt={`${title} icon`} style={{ maxWidth: '150px', maxHeight: '150px' }} />
             </div>
@@ -130,21 +98,25 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                 <div className="game-header-details max-w-[250px] mx-auto">
                     <h1 className="game-header-title text-3xl font-bold text-headline">{title}</h1>
                     <p className="game-header-info text-paragraph">
-                        Minimum number of players: {minPlayers}<br />
-                        Maximum number of players: {maxPlayers}<br />
+                        Minimum number of players: {minPlayers}
+                        <br />
+                        Maximum number of players: {maxPlayers}
+                        <br />
                         Estimated playtime: {estimatedPlaytime}
                     </p>
                 </div>
                 <div className="game-header-actions mt-4 sm:mt-0 flex flex-wrap gap-3 justify-center mx-auto">
                     <button
-                        className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15 transform transition-transform duration-200 hover:scale-110 cursor-pointer"
+                        className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15 transform transition-transform duration-200 hover:scale-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleJoinClick}
+                        disabled={isLoading}
                     >
                         <FaLink /> Join
                     </button>
                     <button
-                        className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15 transform transition-transform duration-200 hover:scale-110 cursor-pointer"
+                        className="game-header-btn text-highlight border border-highlight rounded-lg flex items-center justify-center gap-1 w-30 h-15 transform transition-transform duration-200 hover:scale-110 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleNewLobbyClick}
+                        disabled={isLoading}
                     >
                         <FaPlus /> New Lobby
                     </button>
@@ -165,20 +137,24 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h2 className="text-highlight text-xl font-bold mb-4">Enter Join Code</h2>
-                        <p className="text-paragraph mb-4">
-                            Please enter the join code to proceed.
-                        </p>
+                        <p className="text-paragraph mb-4">Please enter the join code to proceed.</p>
                         <div className="flex justify-center items-center gap-2 mb-4">
                             {joinCodeParts.map((part, index) => (
                                 <React.Fragment key={index}>
                                     <input
                                         type="text"
                                         value={part}
-                                        onChange={(e) => handlePartChange(index, e.target.value, e.currentTarget.parentElement!.querySelectorAll('input'))}
-                                        onFocus={(e) => e.target.select()} 
+                                        onChange={(e) =>
+                                            handlePartChange(
+                                                index,
+                                                e.target.value,
+                                                e.currentTarget.parentElement!.querySelectorAll('input')
+                                            )
+                                        }
+                                        onFocus={(e) => e.target.select()}
                                         className="w-10 h-10 text-center border border-gray-300 rounded text-highlight bg-transparent font-bold"
                                         maxLength={1}
-                                        disabled={isJoiningLobby}
+                                        disabled={isLoading}
                                     />
                                     {index === 2 && <span className="text-highlight font-bold">-</span>}
                                 </React.Fragment>
@@ -189,18 +165,18 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                             <button
                                 onClick={handleConfirmJoin}
                                 className={`px-4 py-2 rounded transform transition-transform duration-200 ${
-                                    isJoinCodeComplete && !isJoiningLobby
+                                    isJoinCodeComplete && !isLoading
                                         ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
-                                disabled={!isJoinCodeComplete || isJoiningLobby}
+                                disabled={!isJoinCodeComplete || isLoading}
                             >
-                                {isJoiningLobby ? 'Joining...' : 'Confirm'}
+                                {isLoading ? 'Joining...' : 'Confirm'}
                             </button>
                             <button
                                 onClick={handleCloseModal}
                                 className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50"
-                                disabled={isJoiningLobby}
+                                disabled={isLoading}
                             >
                                 Cancel
                             </button>
@@ -223,33 +199,22 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h2 className="text-highlight text-xl font-bold mb-4">Create New Lobby</h2>
-                        <p className="text-paragraph mb-4">
-                            Enter a name for your new lobby.
-                        </p>
-                        <input
-                            type="text"
-                            value={newLobbyName}
-                            onChange={handleLobbyNameChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded mb-4 text-highlight"
-                            placeholder="Lobby Name"
-                            spellCheck="false"
-                            disabled={isCreatingLobby}
-                        />
+                        <p className="text-paragraph mb-4">Lobby will be created with {maxPlayers} max players.</p>
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleCreateLobby}
-                                disabled={isCreatingLobby}
+                                disabled={isLoading}
                                 className={`px-4 py-2 rounded transform transition-transform duration-200 ${
-                                    !isCreatingLobby
+                                    !isLoading
                                         ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                 }`}
                             >
-                                {isCreatingLobby ? 'Creating...' : 'Create'}
+                                {isLoading ? 'Creating...' : 'Create'}
                             </button>
                             <button
                                 onClick={() => setShowNewLobbyModal(false)}
-                                disabled={isCreatingLobby}
+                                disabled={isLoading}
                                 className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50"
                             >
                                 Cancel
@@ -259,13 +224,8 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                 </div>
             )}
 
-            {/* Popup */}
             {popup && (
-                <Popup
-                    type={popup.type}
-                    message={popup.message}
-                    onClose={popup.onClose}
-                />
+                <Popup type={popup.type} message={popup.message} onClose={popup.onClose} />
             )}
         </div>
     );

@@ -8,6 +8,7 @@ import { AuthProvider } from "./components/AuthContext";
 import { ChatDockProvider } from "./components/chat/ChatDockContext";
 import { ChatProvider } from "./components/chat/ChatProvider";
 import { FriendsProvider } from "./components/friends/FriendsContext";
+import { LobbyProvider } from "./components/lobby/LobbyContext";
 
 const root = document.getElementById("root");
 if (!root) {
@@ -18,11 +19,13 @@ ReactDOM.createRoot(root).render(
   <StrictMode>
     <AuthProvider>
       <FriendsProvider>
-        <ChatProvider>
-          <ChatDockProvider>
-            <RouterProvider router={router} />
-          </ChatDockProvider>
-        </ChatProvider>
+        <LobbyProvider>
+          <ChatProvider>
+            <ChatDockProvider>
+              <RouterProvider router={router} />
+            </ChatDockProvider>
+          </ChatProvider>
+        </LobbyProvider>
       </FriendsProvider>
     </AuthProvider>
   </StrictMode>

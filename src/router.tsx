@@ -9,11 +9,13 @@ import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
 import FindGamesScreen from "./screens/FindGamesScreen";
-import LobbyScreen from "./screens/LobbyScreen";
+// import LobbyScreen from "./screens/LobbyScreen";
 import GameScreen from "./screens/GameScreen";
-import LobbyGameScreen from "./screens/LobbyGameScreen";
+// import LobbyGameScreen from "./screens/LobbyGameScreen";
 import FriendsScreen from "./screens/FriendsScreen";
 import VerifyEmailPage from './screens/VerifyEmailPage';
+import { CompleteLobbyScreen } from "./screens/CompleteLobbyScreen";
+// import { GamePlayScreen } from "./screens/GamePlayScreen";
 
 export const router = createBrowserRouter([
     {
@@ -52,13 +54,17 @@ export const router = createBrowserRouter([
                 path: 'game/:gameName?',
                 element: <GameScreen /> 
             },
+            // {
+            //     path: 'lobby/:lobbyCode?',
+            //     element: <RequireAuth> <LobbyScreen /> </RequireAuth>
+            // },
             {
-                path: 'lobby/:lobbyCode?',
-                element: <RequireAuth> <LobbyScreen /> </RequireAuth>
+                path: 'lobby-test',
+                element: <RequireAuth> <CompleteLobbyScreen /> </RequireAuth>
             },
             // {
-            //     path: 'lobby/ingame',
-            //     element: <RequireAuth> <LobbyGameScreen /> </RequireAuth>
+            //     path: 'gameplay',
+            //     element: <RequireAuth> <GamePlayScreen /> </RequireAuth>
             // },
             {
                 path: 'friends',

@@ -1,4 +1,3 @@
-import { request } from '../lib/http'
 import { io, type Socket } from 'socket.io-client'
 
 const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
@@ -6,70 +5,45 @@ const TRIMMED_BASE = API_BASE_URL.replace(/\/$/, '')
 const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/lobby` : '/lobby'
 const SOCKET_PATH = '/socket.io'
 
-export type CreateLobbyPayload = {
-  max_players?: number
-}
-
-export type CreateLobbyResponse = {
-  lobby_code: string
-  message: string
-}
-
 export type LobbyMember = {
-  user_id: number
+  user_id: number | string
   nickname: string
-  is_host: boolean
+  pfp_path?: string
   is_ready: boolean
-  joined_at: string
 }
 
-export type GameInfo = {
-  name: string
-  img_path: string
-  rules: string
-}
-
-export type CurrentLobbyResponse = {
+export type LobbyState = {
   lobby_code: string
-  host_id: number
+  host_id: number | string
   max_players: number
   current_players: number
+  is_public: boolean
   members: LobbyMember[]
-  game: GameInfo
   created_at: string
-  is_public: boolean // Add this property
 }
 
-export type MemberReadyChangedEvent = {
-  user_id: number
-  nickname: string
-  is_ready: boolean
-}
-
-export type LobbyMessageEvent = {
-  user_id: number
+export type LobbyMessage = {
+  user_id: number | string
   nickname: string
   pfp_path?: string
   content: string
   timestamp: string
 }
 
-export type LobbyUserTypingEvent = {
-  user_id: number
-  nickname: string
+export type LobbyError = {
+  message: string
+  error_code: string
+  details?: any
 }
 
 let lobbySocket: Socket | null = null
 
 export const connectLobbySocket = (): Socket => {
   if (lobbySocket) {
-    if (!lobbySocket.connected) {
-      lobbySocket.connect();
-    }
-    return lobbySocket;
+    if (!lobbySocket.connected) lobbySocket.connect()
+    return lobbySocket
   }
 
-  // Create new socket
   lobbySocket = io(SOCKET_URL, {
     path: SOCKET_PATH,
     transports: ['websocket'],
@@ -79,14 +53,13 @@ export const connectLobbySocket = (): Socket => {
     reconnectionDelayMax: 5000,
     reconnectionAttempts: 5,
     forceNew: false,
-  });
+  })
 
-  // Handle authentication errors
-  lobbySocket.on('connect_error', (error: any) => {
-    console.error('Socket connection error:', error);
-  });
+  lobbySocket.on('connect_error', (err: any) => {
+    console.error('Lobby socket connect_error:', err)
+  })
 
-  return lobbySocket;
+  return lobbySocket
 }
 
 export const getLobbySocket = () => lobbySocket
@@ -98,335 +71,171 @@ export const disconnectLobbySocket = () => {
   }
 }
 
-export const reconnectLobbySocket = () => {
-  if (lobbySocket) {
-    console.log('Reconnecting lobby socket...')
-    lobbySocket.disconnect()
-    setTimeout(() => {
-      if (lobbySocket) {
-        lobbySocket.connect()
-      }
-    }, 500)
-  }
+// Emitters
+export const emitCreateLobby = (maxPlayers: number = 6, isPublic: boolean = false) => {
+  lobbySocket?.emit('create_lobby', { max_players: maxPlayers, is_public: isPublic })
+}
+
+export const emitJoinLobby = (lobbyCode: string) => {
+  lobbySocket?.emit('join_lobby', { lobby_code: lobbyCode })
+}
+
+export const emitLeaveLobby = (lobbyCode: string) => {
+  lobbySocket?.emit('leave_lobby', { lobby_code: lobbyCode })
+}
+
+export const emitUpdateSettings = (maxPlayers: number, isPublic: boolean) => {
+  lobbySocket?.emit('update_settings', { max_players: maxPlayers, is_public: isPublic })
+}
+
+export const emitTransferHost = (newHostId: number | string) => {
+  lobbySocket?.emit('transfer_host', { new_host_id: newHostId })
+}
+
+export const emitGetLobby = () => {
+  lobbySocket?.emit('get_lobby', {})
+}
+
+export const emitGetPublicLobbies = () => {
+  lobbySocket?.emit('get_public_lobbies', {})
+}
+
+export const emitKickMember = (userId: number | string) => {
+  lobbySocket?.emit('kick_member', { user_id: userId })
 }
 
 export const emitToggleReady = (lobbyCode: string) => {
-  if (lobbySocket) {
-    console.log('IM IN HERE')
-    lobbySocket.emit('toggle_ready', { lobby_code: lobbyCode })
-  }
+  lobbySocket?.emit('toggle_ready', { lobby_code: lobbyCode })
 }
-
-export const emitTransferHost = (lobbyCode: string, newHostId: number) => {
-  if (lobbySocket) {
-    console.log('Transferring host to user:', newHostId)
-    lobbySocket.emit('transfer_host', { lobby_code: lobbyCode, new_host_id: newHostId })
-  }
-}
-
-export const emitKickMember = (lobbyCode: string, userId: number) => {
-  if (lobbySocket) {
-    console.log('Kicking member:', userId)
-    lobbySocket.emit('kick_member', { lobby_code: lobbyCode, user_id: userId })
-  }
-}
-
-export const emitUpdateSettings = (lobbyCode: string, maxPlayers?: number) => {
-  if (lobbySocket) {
-    const payload: Record<string, any> = { lobby_code: lobbyCode };
-    if (maxPlayers !== undefined) {
-      payload.max_players = maxPlayers;
-    }
-    console.log('Updating lobby settings:', payload);
-    lobbySocket.emit('update_settings', payload);
-  }
-};
-
-export const emitUpdateVisibility = (lobbyCode: string, isPublic: boolean) => {
-  if (lobbySocket) {
-    const payload = { lobby_code: lobbyCode, is_public: isPublic };
-    console.log('Updating lobby visibility:', payload);
-    lobbySocket.emit('update_settings', payload);
-  }
-};
-
-export const emitJoinLobby = (lobbyCode: string, onSuccess: (lobby: CurrentLobbyResponse) => void, onError: (error: string) => void) => {
-  if (lobbySocket && lobbySocket.connected) {
-    console.log('Emitting join_lobby event for lobby:', lobbyCode);
-    lobbySocket.emit('join_lobby', { lobby_code: lobbyCode });
-
-    // Listen for success
-    const handleLobbyJoined = (data: any) => {
-      console.log('Successfully joined lobby:', data);
-      onSuccess(data.lobby);
-      lobbySocket?.off('lobby_joined', handleLobbyJoined);
-      lobbySocket?.off('lobby_error', handleLobbyError);
-    };
-
-    // Listen for errors
-    const handleLobbyError = (data: any) => {
-      console.error('Failed to join lobby:', data);
-      onError(data.message || 'An unknown error occurred.');
-      lobbySocket?.off('lobby_joined', handleLobbyJoined);
-      lobbySocket?.off('lobby_error', handleLobbyError);
-    };
-
-    lobbySocket.on('lobby_joined', handleLobbyJoined);
-    lobbySocket.on('lobby_error', handleLobbyError);
-  } else {
-    console.error('Socket is not connected. Cannot emit join_lobby event.');
-    onError('Socket is not connected.');
-  }
-};
-
-export const emitLeaveLobby = (lobbyCode: string, onSuccess: () => void, onError: (error: string) => void) => {
-  if (lobbySocket && lobbySocket.connected) {
-    console.log('Emitting leave_lobby event for lobby:', lobbyCode);
-    lobbySocket.emit('leave_lobby', { lobby_code: lobbyCode });
-
-    // Listen for success
-    const handleLobbyLeft = () => {
-      console.log('Successfully left lobby:', lobbyCode);
-      onSuccess();
-      lobbySocket?.off('lobby_left', handleLobbyLeft);
-      lobbySocket?.off('lobby_error', handleLobbyError);
-    };
-
-    // Listen for errors
-    const handleLobbyError = (data: any) => {
-      console.error('Failed to leave lobby:', data);
-      onError(data.message || 'An unknown error occurred.');
-      lobbySocket?.off('lobby_left', handleLobbyLeft);
-      lobbySocket?.off('lobby_error', handleLobbyError);
-    };
-
-    lobbySocket.on('lobby_left', handleLobbyLeft);
-    lobbySocket.on('lobby_error', handleLobbyError);
-  } else {
-    console.error('Socket is not connected. Cannot emit leave_lobby event.');
-    onError('Socket is not connected.');
-  }
-};
 
 export const emitSendLobbyMessage = (lobbyCode: string, content: string) => {
-  if (lobbySocket) {
-    lobbySocket.emit('send_lobby_message', { lobby_code: lobbyCode, content })
-  }
+  lobbySocket?.emit('send_lobby_message', { lobby_code: lobbyCode, content })
 }
 
 export const emitLobbyTyping = (lobbyCode: string) => {
-  if (lobbySocket) {
-    lobbySocket.emit('lobby_typing', { lobby_code: lobbyCode })
-  }
+  lobbySocket?.emit('lobby_typing', { lobby_code: lobbyCode })
 }
 
 export const emitGetLobbyMessages = (lobbyCode: string, limit: number = 50) => {
-  if (lobbySocket) {
-    lobbySocket.emit('get_lobby_messages', { lobby_code: lobbyCode, limit })
-  }
+  lobbySocket?.emit('get_lobby_messages', { lobby_code: lobbyCode, limit })
 }
 
-export const onMemberReadyChanged = (callback: (data: MemberReadyChangedEvent) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('member_ready_changed', callback)
-  }
+// Listeners
+export const onLobbyCreated = (cb: (data: { lobby_code: string }) => void) => 
+  lobbySocket?.on('lobby_created', cb)
+export const offLobbyCreated = (cb?: (data: { lobby_code: string }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_created', cb) : lobbySocket.off('lobby_created')
 }
 
-export const offMemberReadyChanged = (callback?: (data: MemberReadyChangedEvent) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('member_ready_changed', callback)
-    } else {
-      lobbySocket.off('member_ready_changed')
-    }
-  }
+export const onLobbyJoined = (cb: (data: { lobby: LobbyState }) => void) => 
+  lobbySocket?.on('lobby_joined', cb)
+export const offLobbyJoined = (cb?: (data: { lobby: LobbyState }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_joined', cb) : lobbySocket.off('lobby_joined')
 }
 
-export const onHostTransferred = (callback: (data: any) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('host_transferred', callback)
-  }
+export const onLobbyLeft = (cb: (data: any) => void) => 
+  lobbySocket?.on('lobby_left', cb)
+export const offLobbyLeft = (cb?: (data: any) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_left', cb) : lobbySocket.off('lobby_left')
 }
 
-export const offHostTransferred = (callback?: (data: any) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('host_transferred', callback)
-    } else {
-      lobbySocket.off('host_transferred')
-    }
-  }
+export const onLobbyState = (cb: (data: LobbyState) => void) => 
+  lobbySocket?.on('lobby_state', cb)
+export const offLobbyState = (cb?: (data: LobbyState) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_state', cb) : lobbySocket.off('lobby_state')
 }
 
-export const onMemberKicked = (callback: (data: any) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('member_kicked', callback)
-  }
+export const onMemberJoined = (cb: (data: { member: LobbyMember; current_players: number }) => void) => 
+  lobbySocket?.on('member_joined', cb)
+export const offMemberJoined = (cb?: (data: { member: LobbyMember; current_players: number }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('member_joined', cb) : lobbySocket.off('member_joined')
 }
 
-export const offMemberKicked = (callback?: (data: any) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('member_kicked', callback)
-    } else {
-      lobbySocket.off('member_kicked')
-    }
-  }
+export const onMemberLeft = (cb: (data: { user_id: number | string; nickname: string; current_players: number }) => void) => 
+  lobbySocket?.on('member_left', cb)
+export const offMemberLeft = (cb?: (data: { user_id: number | string; nickname: string; current_players: number }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('member_left', cb) : lobbySocket.off('member_left')
 }
 
-export const onKickedFromLobby = (callback: (data: any) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('kicked_from_lobby', callback)
-  }
+export const onHostTransferred = (cb: (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => void) => 
+  lobbySocket?.on('host_transferred', cb)
+export const offHostTransferred = (cb?: (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('host_transferred', cb) : lobbySocket.off('host_transferred')
 }
 
-export const offKickedFromLobby = (callback?: (data: any) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('kicked_from_lobby', callback)
-    } else {
-      lobbySocket.off('kicked_from_lobby')
-    }
-  }
+export const onSettingsUpdated = (cb: (data: { max_players: number; is_public: boolean }) => void) => 
+  lobbySocket?.on('settings_updated', cb)
+export const offSettingsUpdated = (cb?: (data: { max_players: number; is_public: boolean }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('settings_updated', cb) : lobbySocket.off('settings_updated')
 }
 
-export const onSettingsUpdated = (callback: (data: { max_players?: number; is_public?: boolean }) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('settings_updated', callback);
-  }
-};
-
-export const offSettingsUpdated = (callback?: (data: { max_players?: number; is_public?: boolean }) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('settings_updated', callback);
-    } else {
-      lobbySocket.off('settings_updated');
-    }
-  }
-};
-
-export const onLobbyMessage = (callback: (data: LobbyMessageEvent) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('lobby_message', callback)
-  }
+export const onMemberKicked = (cb: (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => void) => 
+  lobbySocket?.on('member_kicked', cb)
+export const offMemberKicked = (cb?: (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('member_kicked', cb) : lobbySocket.off('member_kicked')
 }
 
-export const offLobbyMessage = (callback?: (data: LobbyMessageEvent) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('lobby_message', callback)
-    } else {
-      lobbySocket.off('lobby_message')
-    }
-  }
+export const onMemberReadyChanged = (cb: (data: { user_id: number | string; nickname: string; is_ready: boolean }) => void) => 
+  lobbySocket?.on('member_ready_changed', cb)
+export const offMemberReadyChanged = (cb?: (data: { user_id: number | string; nickname: string; is_ready: boolean }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('member_ready_changed', cb) : lobbySocket.off('member_ready_changed')
 }
 
-export const onLobbyUserTyping = (callback: (data: LobbyUserTypingEvent) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('lobby_user_typing', callback)
-  }
+export const onPublicLobbies = (cb: (data: { lobbies: LobbyState[]; total: number }) => void) => 
+  lobbySocket?.on('public_lobbies', cb)
+export const offPublicLobbies = (cb?: (data: { lobbies: LobbyState[]; total: number }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('public_lobbies', cb) : lobbySocket.off('public_lobbies')
 }
 
-export const offLobbyUserTyping = (callback?: (data: LobbyUserTypingEvent) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('lobby_user_typing', callback)
-    } else {
-      lobbySocket.off('lobby_user_typing')
-    }
-  }
+export const onLobbyMessage = (cb: (data: LobbyMessage) => void) => 
+  lobbySocket?.on('lobby_message', cb)
+export const offLobbyMessage = (cb?: (data: LobbyMessage) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_message', cb) : lobbySocket.off('lobby_message')
 }
 
-export const onLobbyMessagesHistory = (callback: (data: { messages: LobbyMessageEvent[], lobby_code: string, total: number }) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('lobby_messages_history', callback)
-  }
+export const onLobbyMessagesHistory = (cb: (data: { messages: LobbyMessage[]; lobby_code: string; total: number }) => void) => 
+  lobbySocket?.on('lobby_messages_history', cb)
+export const offLobbyMessagesHistory = (cb?: (data: { messages: LobbyMessage[]; lobby_code: string; total: number }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_messages_history', cb) : lobbySocket.off('lobby_messages_history')
 }
 
-export const offLobbyMessagesHistory = (callback?: (data: { messages: LobbyMessageEvent[], lobby_code: string, total: number }) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('lobby_messages_history', callback)
-    } else {
-      lobbySocket.off('lobby_messages_history')
-    }
-  }
+export const onLobbyUserTyping = (cb: (data: { user_id: number | string; nickname: string }) => void) => 
+  lobbySocket?.on('lobby_user_typing', cb)
+export const offLobbyUserTyping = (cb?: (data: { user_id: number | string; nickname: string }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_user_typing', cb) : lobbySocket.off('lobby_user_typing')
 }
 
-export const onMemberLeft = (callback: (data: any) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('member_left', callback)
-  }
+export const onKickedFromLobby = (cb: (data: { lobby_code: string; message: string }) => void) => 
+  lobbySocket?.on('kicked_from_lobby', cb)
+export const offKickedFromLobby = (cb?: (data: { lobby_code: string; message: string }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('kicked_from_lobby', cb) : lobbySocket.off('kicked_from_lobby')
 }
 
-export const offMemberLeft = (callback?: (data: any) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('member_left', callback)
-    } else {
-      lobbySocket.off('member_left')
-    }
-  }
+export const onLobbyError = (cb: (data: LobbyError) => void) => 
+  lobbySocket?.on('lobby_error', cb)
+export const offLobbyError = (cb?: (data: LobbyError) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_error', cb) : lobbySocket.off('lobby_error')
 }
 
-export const onLobbyLeft = (callback: (data: any) => void) => {
-  if (lobbySocket) {
-    lobbySocket.on('lobby_left', callback)
-  }
-}
-
-export const offLobbyLeft = (callback?: (data: any) => void) => {
-  if (lobbySocket) {
-    if (callback) {
-      lobbySocket.off('lobby_left', callback)
-    } else {
-      lobbySocket.off('lobby_left')
-    }
-  }
-}
-
-// REST API calls (kept for backward compatibility)
-export async function createLobby(payload: CreateLobbyPayload): Promise<CreateLobbyResponse> {
-  return await request<CreateLobbyResponse>('/lobby', { 
-    method: 'POST', 
-    body: payload,
-    auth: true 
-  })
-}
-
-export async function getCurrentLobby(): Promise<CurrentLobbyResponse> {
-  return await request<CurrentLobbyResponse>('/lobby/me/current', {
-    method: 'GET',
-    auth: true
-  })
-}
-
-export async function leaveLobby(lobbyCode: string): Promise<void> {
-  return await request<void>(`/lobby/${lobbyCode}/leave`, {
-    method: 'POST',
-    auth: true
-  })
-}
-
-export async function joinLobby(lobbyCode: string): Promise<CurrentLobbyResponse> {
-  return await request<CurrentLobbyResponse>(`/lobby/${lobbyCode}/join`, {
-    method: 'POST',
-    auth: true
-  })
-}
-
-export async function transferHost(lobbyCode: string, newHostId: number): Promise<CurrentLobbyResponse> {
-  return await request<CurrentLobbyResponse>(`/lobby/${lobbyCode}/transfer-host`, {
-    method: 'POST',
-    body: { new_host_id: newHostId },
-    auth: true
-  })
-}
-
-export async function toggleReadyStatus(lobbyCode: string): Promise<string> {
-  return await request<string>(`/lobby/${lobbyCode}/ready`, {
-    method: 'POST',
-    auth: true
-  })
+export const onLobbyClosed = (cb: (data: any) => void) => 
+  lobbySocket?.on('lobby_closed', cb)
+export const offLobbyClosed = (cb?: (data: any) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_closed', cb) : lobbySocket.off('lobby_closed')
 }
