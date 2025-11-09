@@ -47,8 +47,8 @@ type ChatContextValue = {
   getTarget: (conversationId: string) => ConversationTarget | undefined
   getTypingUsers: (conversationId: string) => string[]
   sendTyping: (conversationId: string) => void
-  clearUnread?: (conversationId: string) => void
-  getUnread?: (conversationId: string) => number
+  clearUnread: (conversationId: string) => void
+  getUnread: (conversationId: string) => number
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined)

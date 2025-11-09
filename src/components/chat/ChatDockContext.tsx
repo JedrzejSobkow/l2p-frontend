@@ -44,9 +44,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const openChat = useCallback((target: ChatTarget) => {
     if (!isAuthenticated) return
     const id = String(target.id)
-    console.log('Opening chat with', id)
-    console.log(chat.clearUnread)
-    chat.clearUnread??(id)
+    chat.clearUnread(id)
     setState((prev) => {
       const existing = prev.sessions[id]
       if (existing) {
@@ -74,6 +72,9 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const minimizeChat = useCallback((targetId: string, minimized: boolean = true) => {
+    if (!minimized) {
+      chat.clearUnread(String(targetId))
+    }
     setState((prev) => {
       const s = prev.sessions[String(targetId)]
       if (!s) return prev
