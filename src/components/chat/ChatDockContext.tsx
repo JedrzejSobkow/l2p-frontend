@@ -44,6 +44,9 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const openChat = useCallback((target: ChatTarget) => {
     if (!isAuthenticated) return
     const id = String(target.id)
+    console.log('Opening chat with', id)
+    console.log(chat.clearUnread)
+    chat.clearUnread??(id)
     setState((prev) => {
       const existing = prev.sessions[id]
       if (existing) {

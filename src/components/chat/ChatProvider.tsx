@@ -36,6 +36,7 @@ type ConversationsState = {
   messagesById: Record<string, ChatMessage[]>
   targets: Record<string, ConversationTarget>
   typingById: Record<string, string[]>
+  unreadById?: Record<string, number>
 }
 
 type ChatContextValue = {
@@ -46,6 +47,8 @@ type ChatContextValue = {
   getTarget: (conversationId: string) => ConversationTarget | undefined
   getTypingUsers: (conversationId: string) => string[]
   sendTyping: (conversationId: string) => void
+  clearUnread?: (conversationId: string) => void
+  getUnread?: (conversationId: string) => number
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined)
@@ -66,7 +69,7 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { user,isAuthenticated } = useAuth()
-  const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {} })
+  const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {},unreadById: {}})
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
@@ -146,6 +149,24 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const getMessages = useCallback(
     (conversationId: string) => state.messagesById[conversationId] ?? [],
     [state.messagesById],
+  )
+  
+  const clearUnread = useCallback((conversationId: string) => {
+    console.log('Clearing unread for', conversationId)
+    setState((prev) => {
+      if (!prev.unreadById || !(conversationId in prev.unreadById)) return prev
+      const updatedUnread = { ...prev.unreadById }
+      delete updatedUnread[conversationId]
+      return {
+        ...prev,
+        unreadById: updatedUnread,
+      }
+    })
+  }, [])
+
+  const getUnread = useCallback(
+    (conversationId: string) => state.unreadById?.[conversationId] ?? 0,
+    [state.unreadById],
   )
 
   const getTarget = useCallback((conversationId: string) => state.targets[conversationId], [state.targets])
@@ -261,9 +282,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         // Server will trigger conversation update which refreshes history.
         return
       }
+      
       const conversationId = normalizeId(payload.sender_id)
       ensureConversation({ id: conversationId, nickname: payload.sender_nickname })
       appendMessage(conversationId, mapDtoToChatMessage(payload))
+      setState((prev) => {
+        const currentUnread = prev.unreadById?.[conversationId] ?? 0
+        return {
+          ...prev,
+          unreadById: {
+            ...prev.unreadById,
+            [conversationId]: currentUnread + 1,
+          },
+        }
+      })
+      
     },
     [appendMessage, ensureConversation],
   )
@@ -329,6 +362,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         const targets = { ...prev.targets }
         conversations.forEach((conversation: Conversation) => {
           const id = normalizeId(conversation.friend_id)
+          const unreadCount = conversation.unread_count ?? 0
+          if (unreadCount > 0) {
+            prev.unreadById = {
+              ...prev.unreadById,
+              [id]: unreadCount,
+            }
+          }
           targets[id] = {
             id,
             nickname: conversation.friend_nickname,
@@ -383,7 +423,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isAuthenticated) return
-    setState({ messagesById: {}, targets: {}, typingById: {} })
+    setState({ messagesById: {}, targets: {}, typingById: {},unreadById: {} })
     loadingConversationsRef.current.clear()
     loadedConversationsRef.current.clear()
     typingThrottleRef.current.clear()
@@ -400,8 +440,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getTypingUsers,
       sendTyping,
+      clearUnread,
+      getUnread,
     }),
-    [ensureConversation, getMessages, getTarget, getTypingUsers, sendMessage, sendTyping, setIncomingMessage],
+    [getUnread,ensureConversation, getMessages, getTarget, getTypingUsers, sendMessage, sendTyping, setIncomingMessage,clearUnread],
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
