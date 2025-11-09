@@ -67,6 +67,13 @@ export const CompleteLobbyScreen = () => {
     }
   }, [currentLobby])
 
+  useEffect(() => {
+    if (error?.error_code === 'KICKED') {
+    clearError()
+    navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })  // Przekieruj na home
+    }
+  }, [error, navigate, clearError])
+
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
       sendMessage(message)
@@ -169,18 +176,12 @@ export const CompleteLobbyScreen = () => {
 
   if (!currentLobby) {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-background-primary">
-        <div className="text-center">
-          <div className="text-headline text-2xl mb-8">No Lobby Selected</div>
-          <button
-            onClick={() => createLobby(6, false)}
-            className="px-6 py-3 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600"
-          >
-            Create Lobby
-          </button>
-        </div>
-      </main>
-    )
+        <main className="flex items-center justify-center min-h-screen bg-background-primary">
+          <div className="text-red-500 text-xl">
+            You are not in any lobby.
+          </div>
+        </main>
+      )
   }
 
   if (error) {
