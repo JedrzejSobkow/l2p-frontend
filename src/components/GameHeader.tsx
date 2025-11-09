@@ -37,7 +37,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     };
 
     const handleCreateLobby = () => {
-        createLobby(maxPlayers, false);
+        createLobby(maxPlayers, false, newLobbyName || undefined);
         setShowNewLobbyModal(false);
         setNewLobbyName('');
     };
@@ -199,7 +199,17 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         onClick={(e) => e.stopPropagation()}
                     >
                         <h2 className="text-highlight text-xl font-bold mb-4">Create New Lobby</h2>
-                        <p className="text-paragraph mb-4">Lobby will be created with {maxPlayers} max players.</p>
+                        <p className="text-paragraph mb-4">Lobby will be created for {maxPlayers} players.</p>
+                        <div className="mb-4">
+                            <label className="block text-paragraph text-sm mb-2">Lobby Name (Optional)</label>
+                            <input
+                                type="text"
+                                value={newLobbyName}
+                                onChange={handleLobbyNameChange}
+                                placeholder="Enter lobby name..."
+                                className="w-full px-3 py-2 rounded bg-background-secondary text-highlight border border-gray-400"
+                            />
+                        </div>
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={handleCreateLobby}

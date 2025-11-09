@@ -74,7 +74,7 @@ type LobbyContextValue = {
   typingUsers: string[]
   publicLobbies: LobbyState[]
   error: LobbyError | null
-  createLobby: (maxPlayers?: number, isPublic?: boolean) => void
+  createLobby: (maxPlayers?: number, isPublic?: boolean, name?: string) => void
   joinLobby: (lobbyCode: string) => void
   leaveLobby: () => void
   updateSettings: (maxPlayers: number, isPublic: boolean) => void
@@ -257,10 +257,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [])
 
-  const createLobbyHandler = useCallback((maxPlayers: number = 6, isPublic: boolean = false) => {
+  const createLobbyHandler = useCallback((maxPlayers: number = 6, isPublic: boolean = false, name?: string) => {
     setIsLoading(true)
     setError(null)
-    emitCreateLobby(maxPlayers, isPublic)
+    emitCreateLobby(maxPlayers, isPublic, name)
   }, [])
 
   const joinLobbyHandler = useCallback((lobbyCode: string) => {
