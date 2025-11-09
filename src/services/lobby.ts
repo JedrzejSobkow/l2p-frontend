@@ -23,6 +23,8 @@ export type LobbyState = {
   is_public: boolean
   members: LobbyMember[]
   created_at: string
+  selected_game?: string
+  game_rules?: Record<string, any>
 }
 
 export type LobbyMessage = {

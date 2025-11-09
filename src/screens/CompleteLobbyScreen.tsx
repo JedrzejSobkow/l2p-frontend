@@ -150,6 +150,26 @@ export const CompleteLobbyScreen = () => {
                   </div>
                 </div>
 
+                {currentLobby.selected_game && (
+                  <div className="bg-gray-700 rounded p-4">
+                    <p className="text-sm text-gray-300">Selected Game</p>
+                    <p className="text-lg font-semibold">{currentLobby.selected_game}</p>
+                  </div>
+                )}
+
+                {currentLobby.game_rules && Object.keys(currentLobby.game_rules).length > 0 && (
+                  <div className="bg-gray-700 rounded p-4">
+                    <p className="text-sm text-gray-300 mb-2">Game Rules</p>
+                    <div className="space-y-1 text-sm">
+                      {Object.entries(currentLobby.game_rules).map(([key, value]) => (
+                        <p key={key} className="text-gray-200">
+                          <span className="text-gray-400">{key}:</span> <span className="font-semibold">{String(value)}</span>
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {isHost && (
                   <div className="space-y-2">
                     <button
