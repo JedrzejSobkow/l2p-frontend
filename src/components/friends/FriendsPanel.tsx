@@ -4,8 +4,8 @@ import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
 import { useFriends } from './FriendsContext'
 import type { Friendship, FriendResult } from '../../services/friends'
-import Popup from '../popup/Popup'
 import { usePopup } from '../PopupContext'
+import { useChat } from '../chat/ChatProvider'
 
 type FriendsPanelProps = {
   onFriendSelect?: (friend: Friendship) => void
@@ -36,6 +36,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   } = useFriends()
   const { openChat } = useChatDock()
   const {showPopup} = usePopup();
+  const {getUnread} = useChat()
 
   const [mode, setMode] = useState<'friends' | 'discover'>('friends')
   const [searchTerm, setSearchTerm] = useState('')
@@ -134,9 +135,11 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const renderFriend = (friend: Friendship) => {
     console.log('Rendering friend:', friend)
     const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
+    console.log('Unread count for', key, ':', getUnread?.(key))
     const isSelected = selectedKey ? key === selectedKey : false
     return (
       <FriendCard
+        unreadCount={getUnread?.(key) ?? 0}
         key={key}
         {...friend}
         isSelected={isSelected}

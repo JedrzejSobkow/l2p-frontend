@@ -21,21 +21,31 @@ const ChatDock = () => {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-row-reverse items-end gap-1 p-5">
       {minimized.length > 0 && (
         <div className="pointer-events-auto flex flex-col flex-wrap gap-2 ">
-          {minimized.map((s) => (
-            <button
-              key={s.target.id}
-              onClick={() => minimizeChat(s.target.id, false)}
-              className="flex items-center gap-2 rounded-full border text-headline border-white/15 bg-[rgba(21,20,34,0.98)] hover:border-white/30 hover:text-white"
-              title={s.target.nickname}
-            >
-              <img
-                src={s.target.avatarUrl || '/assets/images/pfp.png'}
-                alt={s.target.nickname}
-                className="h-15 w-15 rounded-full"
-              />
-              <span className="max-w-[80px] min-w-[80px] truncate">{s.target.nickname}</span>
-            </button>
-          ))}
+          {minimized.map((s) => {
+            const unread = chat.getUnread?.(s.target.id) ?? 0
+            return (
+              <button
+                key={s.target.id}
+                onClick={() => minimizeChat(s.target.id, false)}
+                className="flex items-center gap-2 rounded-full border text-headline border-white/15 bg-[rgba(21,20,34,0.98)] hover:border-white/30 hover:text-white"
+                title={s.target.nickname}
+              >
+                <span className="relative inline-flex">
+                  <img
+                    src={s.target.avatarUrl || '/assets/images/pfp.png'}
+                    alt={s.target.nickname}
+                    className="h-15 w-15 rounded-full"
+                  />
+                  {unread > 0 && (
+                    <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full border border-[rgba(21,20,34,0.98)] bg-orange-500 px-1 text-[10px] font-semibold leading-none text-white">
+                      {unread > 99 ? '99+' : unread}
+                    </span>
+                  )}
+                </span>
+                <span className="max-w-[80px] min-w-[80px] truncate">{s.target.nickname}</span>
+              </button>
+            )
+          })}
         </div>
       )}
       <div className="pointer-events-auto flex max-w-full flex-row-reverse flex-wrap gap-3">
