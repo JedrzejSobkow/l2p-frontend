@@ -104,6 +104,7 @@ const FriendsScreen: FC = () => {
               messages={activeMessages}
               currentUserId={user?.id != null ? String(user.id) : currentUserIdFallback}
               friendId={normalizeId(selectedFriend.friend_user_id)}
+              friendAvatar={selectedFriend.friend_pfp_path}
               allowAttachments
               typingUsers={chat.getTypingUsers(normalizeId(selectedFriend.friend_user_id))}
               onSend={handleSend}

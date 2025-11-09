@@ -76,6 +76,7 @@ const ChatDock = () => {
               messages={chat.getMessages(s.target.id)}
               currentUserId={currentUserId}
               friendId={s.target.id}
+              friendAvatar={s.target.avatarUrl}
               allowAttachments={true}
               typingUsers={chat.getTypingUsers(s.target.id)}
               onSend={async ({ text, attachment }) => chat.sendMessage(s.target.id, { text, attachment })}

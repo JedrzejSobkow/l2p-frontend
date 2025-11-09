@@ -29,6 +29,7 @@ export interface ChatWindowProps {
   messages: ChatMessage[]
   currentUserId: string
   friendId: string
+  friendAvatar?: string
   allowAttachments?: boolean
   placeholder?: string
   className?: string
@@ -60,6 +61,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   messages,
   currentUserId,
   friendId,
+  friendAvatar,
   allowAttachments = false,
   placeholder = 'Write a message...',
   className,
@@ -84,7 +86,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
     }
     container.scrollTo({
       top: container.scrollHeight,
-      behavior: 'smooth'
+      behavior: 'instant'
     })
   }, [messages])
 
@@ -166,7 +168,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
         <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
           <img
             className='w-12 h-12 rounded-full'
-            src='src/assets/images/pfp.png'></img>
+            src={friendAvatar}></img>
           <h2 className="text-s font-semibold text-headline">{title}</h2>
           
         </header>
@@ -190,7 +192,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
                 <img
-                  src={message.avatarUrl || 'src/assets/images/pfp.png'}
+                  src={friendAvatar || 'src/assets/images/pfp.png'}
                   alt={message.senderName}
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
