@@ -214,7 +214,7 @@ export const CompleteLobbyScreen = () => {
           {/* Lobby Header */}
           <div className="w-full flex items-center justify-between p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
             <span className="text-base sm:text-lg font-bold text-white truncate">
-              Lobby: {currentLobby.lobby_code ? `${currentLobby.lobby_code.slice(0, 3)}-${currentLobby.lobby_code.slice(3)}` : 'Loading...'}
+              {currentLobby.name}
             </span>
             <button 
               disabled={true}
