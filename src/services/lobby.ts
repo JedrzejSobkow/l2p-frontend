@@ -16,6 +16,7 @@ export type LobbyMember = {
 
 export type LobbyState = {
   lobby_code: string
+  name: string
   host_id: number | string
   max_players: number
   current_players: number

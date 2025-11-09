@@ -130,6 +130,11 @@ export const CompleteLobbyScreen = () => {
             ) : (
               <div className="space-y-4">
                 <div className="bg-gray-700 rounded p-4">
+                  <p className="text-sm text-gray-300">Name</p>
+                  <p className="text-lg font-semibold">{currentLobby.name}</p>
+                </div>
+
+                <div className="bg-gray-700 rounded p-4">
                   <p className="text-sm text-gray-300">Code</p>
                   <p className="text-xl font-mono font-bold">{currentLobby.lobby_code}</p>
                 </div>
