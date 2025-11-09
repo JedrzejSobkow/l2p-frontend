@@ -82,9 +82,10 @@ export const disconnectLobbySocket = () => {
 }
 
 // Emitters
-export const emitCreateLobby = (maxPlayers: number = 6, isPublic: boolean = false, name?: string) => {
+export const emitCreateLobby = (maxPlayers: number = 6, isPublic: boolean = false, name?: string, gameName?: string) => {
   const payload: any = { max_players: maxPlayers, is_public: isPublic }
   if (name) payload.name = name
+  if (gameName) payload.game_name = gameName
   lobbySocket?.emit('create_lobby', payload)
 }
 

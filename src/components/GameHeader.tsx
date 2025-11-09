@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useLobby } from './lobby/LobbyContext';
 import Popup from './Popup';
 import type { PopupProps } from './Popup';
@@ -15,6 +15,7 @@ interface GameHeaderProps {
 
 const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, estimatedPlaytime, path }) => {
     const navigate = useNavigate();
+    const { gameName } = useParams<{ gameName: string }>();
     const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby();
 
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -37,7 +38,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     };
 
     const handleCreateLobby = () => {
-        createLobby(maxPlayers, false, newLobbyName || undefined);
+        createLobby(maxPlayers, false, newLobbyName || undefined, gameName);
         setShowNewLobbyModal(false);
         setNewLobbyName('');
     };

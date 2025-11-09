@@ -19,7 +19,7 @@ const HomeScreen: React.FC = () => {
   const topPlayers = leaderboardData.slice(0, 5);
 
   const topPicksImages = [
-    { src: '/src/assets/images/tic-tac-toe.png', alt: 'Tic Tac Toe', gameName: 'tic-tac-toe' },
+    { src: '/src/assets/images/tic-tac-toe.png', alt: 'Tic Tac Toe', gameName: 'tictactoe' },
     { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
   ];
 
