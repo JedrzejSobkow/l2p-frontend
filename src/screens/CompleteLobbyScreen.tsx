@@ -216,7 +216,7 @@ export const CompleteLobbyScreen = () => {
   const isReady = userMember?.is_ready || false
   const allMembersReady = members.length > 0 && members.every(m => m.is_ready)
   const currentPlayerCount = members.length
-  const canStartGame = isUserHost && allMembersReady && currentPlayerCount === selectedPlayerCount
+  const canStartGame = isUserHost && allMembersReady && currentPlayerCount === selectedPlayerCount && !!currentLobby?.selected_game
 
   const disabledPlayerCounts = ['2', '4', '6'].filter(
     value => parseInt(value) < currentPlayerCount
