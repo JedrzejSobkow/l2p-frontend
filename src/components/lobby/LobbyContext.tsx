@@ -63,6 +63,9 @@ import {
   emitSelectGame,
   offGameSelected,
   onGameSelected,
+  emitClearGameSelection,
+  offGameSelectionCleared,
+  onGameSelectionCleared,
 } from '../../services/lobby'
 
 
@@ -96,6 +99,7 @@ type LobbyContextValue = {
   startGame: (gameName: string) => void
   getAvailableGames: () => void
   selectGame: (gameName: string) => void
+  clearGameSelection: () => void
 }
 
 const LobbyContext = createContext<LobbyContextValue | undefined>(undefined)
@@ -242,6 +246,15 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       } : null)
     }
 
+    const handleGameSelectionCleared = (data: any) => {
+      console.log('Game selection cleared:', data)
+      setCurrentLobby(prev => prev ? { 
+        ...prev, 
+        selected_game: undefined,
+        game_rules: {} 
+      } : null)
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -261,6 +274,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onGameStarted(handleGameStarted)
     onAvailableGames(handleAvailableGames)
     onGameSelected(handleGameSelected)
+    onGameSelectionCleared(handleGameSelectionCleared)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -282,6 +296,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offGameStarted(handleGameStarted)
       offAvailableGames(handleAvailableGames)
       offGameSelected(handleGameSelected)
+      offGameSelectionCleared(handleGameSelectionCleared)
     }
   }, [])
 
@@ -369,6 +384,12 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     emitSelectGame(currentLobby.lobby_code, gameName)
   }, [currentLobby])
 
+  const clearGameSelectionHandler = useCallback(() => {
+    if (!currentLobby) return
+    setError(null)
+    emitClearGameSelection(currentLobby.lobby_code)
+  }, [currentLobby])
+
   const value: LobbyContextValue = useMemo(
     () => ({
       isLoading,
@@ -394,6 +415,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       startGame: startGameHandler,
       getAvailableGames: getAvailableGamesHandler,
       selectGame: selectGameHandler,
+      clearGameSelection: clearGameSelectionHandler,
     }),
     [
       isLoading,
@@ -419,6 +441,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       startGameHandler,
       getAvailableGamesHandler,
       selectGameHandler,
+      clearGameSelectionHandler,
     ],
   )
 

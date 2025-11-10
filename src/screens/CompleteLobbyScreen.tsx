@@ -38,6 +38,7 @@ export const CompleteLobbyScreen = () => {
     availableGames,
     getAvailableGames,
     selectGame,
+    clearGameSelection,
   } = useLobby()
 
   const [messageInput, setMessageInput] = useState('')
@@ -130,6 +131,11 @@ export const CompleteLobbyScreen = () => {
 
   const handleSelectGame = (gameName: string) => {
     selectGame(gameName)
+    setIsShowingCatalogue(false)
+  }
+
+  const handleClearGameSelection = () => {
+    clearGameSelection()
     setIsShowingCatalogue(false)
   }
 
@@ -307,17 +313,29 @@ export const CompleteLobbyScreen = () => {
           {/* Game Header */}
           <div className="w-full flex items-center justify-between gap-2 p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-              <img
-                src={gameInfo.img_path || '/src/assets/images/tic-tac-toe.png'}
-                alt={`${gameInfo.name} image`}
-                className="h-5 sm:h-7 w-auto flex-shrink-0"
-              />
-              <span className="text-sm sm:text-lg font-bold text-white truncate">{gameInfo.name}</span>
+              {currentLobby?.selected_game && (
+                <img
+                  src={gameInfo.img_path || '/src/assets/images/tic-tac-toe.png'}
+                  alt={`${gameInfo.name} image`}
+                  className="h-5 sm:h-7 w-auto flex-shrink-0"
+                />
+              )}
+              <span className={`text-sm sm:text-lg font-bold truncate ${
+                currentLobby?.selected_game 
+                  ? 'text-white' 
+                  : 'text-gray-400'
+              }`}>
+                {currentLobby?.selected_game ? gameInfo.name : 'Game not selected'}
+              </span>
               <button 
                 onClick={() => setIsShowingGameInfo(true)}
                 className="focus:outline-none hover:scale-105 transition-transform cursor-pointer p-1"
+                disabled={!currentLobby?.selected_game}
               >
-                <AiOutlineInfoCircle className="text-highlight" size={24} />
+                <AiOutlineInfoCircle 
+                  className={currentLobby?.selected_game ? 'text-highlight' : 'text-gray-500'} 
+                  size={24} 
+                />
               </button>
             </div>
 
@@ -416,6 +434,7 @@ export const CompleteLobbyScreen = () => {
         currentPlayerCount={currentPlayerCount}
         onClose={() => setIsShowingCatalogue(false)}
         onSelectGame={handleSelectGame}
+        onClearGameSelection={handleClearGameSelection}
         isUserHost={isUserHost}
       />
 

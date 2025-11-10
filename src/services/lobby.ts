@@ -143,6 +143,10 @@ export const emitSelectGame = (lobbyCode: string, gameName: string) => {
   lobbySocket?.emit('select_game', { lobby_code: lobbyCode, game_name: gameName })
 }
 
+export const emitClearGameSelection = (lobbyCode: string) => {
+  lobbySocket?.emit('clear_game_selection', { lobby_code: lobbyCode })
+}
+
 // Listeners
 export const onLobbyCreated = (cb: (data: { lobby_code: string }) => void) => 
   lobbySocket?.on('lobby_created', cb)
@@ -275,4 +279,11 @@ export const onGameSelected = (cb: (data: { game_name: string; game_info: any; c
 export const offGameSelected = (cb?: (data: { game_name: string; game_info: any; current_rules: any }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('game_selected', cb) : lobbySocket.off('game_selected')
+}
+
+export const onGameSelectionCleared = (cb: (data: any) => void) => 
+  lobbySocket?.on('game_selection_cleared', cb)
+export const offGameSelectionCleared = (cb?: (data: any) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('game_selection_cleared', cb) : lobbySocket.off('game_selection_cleared')
 }

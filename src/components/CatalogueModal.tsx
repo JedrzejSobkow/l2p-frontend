@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from './Modal';
+import { MdClear } from 'react-icons/md';
 
 interface Game {
     gameDisplayName: string;
@@ -14,6 +15,7 @@ interface CatalogueModalProps {
     currentPlayerCount: number;
     onClose: () => void;
     onSelectGame?: (gameName: string) => void;
+    onClearGameSelection?: () => void;
     isUserHost?: boolean;
 }
 
@@ -23,6 +25,7 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
     currentPlayerCount, 
     onClose,
     onSelectGame,
+    onClearGameSelection,
     isUserHost = false
 }) => {
     const isGameAvailable = (supportedPlayers: number[]) => {
@@ -37,6 +40,12 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
         }
     };
 
+    const handleClearClick = () => {
+        if (isUserHost && onClearGameSelection) {
+            onClearGameSelection();
+        }
+    };
+
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <div
@@ -46,7 +55,28 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
                 }}
             >
                 <h2 className="text-highlight text-xl font-bold mb-4">Game Catalogue</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-grow overflow-y-auto">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-grow overflow-visible p-2">
+                    {/* Clear Game Selection Tile */}
+                    <div
+                        onClick={handleClearClick}
+                        className={`flex flex-col items-center justify-center gap-2 p-4 rounded-lg transition-transform ${
+                            isUserHost
+                                ? 'bg-background-secondary border-2 border-dashed border-red-500 hover:border-red-400 hover:bg-red-500/10 hover:scale-105 cursor-pointer'
+                                : 'bg-gray-600 opacity-50 cursor-not-allowed border-2 border-dashed border-gray-500'
+                        }`}
+                    >
+                        <MdClear className="text-4xl text-red-400" />
+                        <span className="text-sm font-semibold text-red-400 text-center">
+                            Clear Selection
+                        </span>
+                        {!isUserHost && (
+                            <span className="text-xs text-gray-400 font-semibold">
+                                (Host only)
+                            </span>
+                        )}
+                    </div>
+
+                    {/* Game Tiles */}
                     {games.map((gameItem, index) => {
                         const isAvailable = isGameAvailable(gameItem.supportedPlayers);
                         const canSelect = isAvailable && isUserHost;
