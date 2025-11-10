@@ -237,7 +237,20 @@ export const CompleteLobbyScreen = () => {
     {
       label: 'Players',
       icon: <LuUsers size={20} />,
-      availableValues: ['2', '4', '6'],
+      availableValues: currentLobby?.selected_game 
+        ? (() => {
+            const selectedGameData = availableGames.find(g => g.game_name === currentLobby?.selected_game)
+            if (selectedGameData) {
+              const minPlayers = selectedGameData.min_players || 2
+              const maxPlayers = selectedGameData.max_players || 6
+              const values = []
+              for (let i = minPlayers; i <= maxPlayers; i++) {
+                values.push(String(i))
+              }
+              return values
+            }
+          })()
+        : ['2', '3', '4', '5', '6'],
       defaultValue: '6',
     },
   ]
