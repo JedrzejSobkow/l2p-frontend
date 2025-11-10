@@ -346,16 +346,21 @@ export const CompleteLobbyScreen = () => {
         <div className="flex flex-col items-center gap-3 sm:gap-4">
           {/* Lobby Header */}
           <div className="w-full flex items-center justify-between p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
-            <span className="text-base sm:text-lg font-bold text-white truncate">
-              {currentLobby.name}
+            <div className="flex items-center gap-2">
+              <span className="text-base sm:text-lg font-bold text-white truncate">
+                {currentLobby.name}
+              </span>
+              <button 
+                disabled={!isUserHost}
+                onClick={() => setIsEditLobbyNameModalOpen(true)}
+                className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform flex-shrink-0"
+              >
+                <FaRegEdit className="text-highlight" size={20} />
+              </button>
+            </div>
+            <span className="text-sm sm:text-base font-mono text-gray-600 bg-background-primary/40 px-2 sm:px-3 py-1 rounded flex-shrink-0">
+              {currentLobby.lobby_code.substring(0, 3)}-{currentLobby.lobby_code.substring(3, 6)}
             </span>
-            <button 
-              disabled={!isUserHost}
-              onClick={() => setIsEditLobbyNameModalOpen(true)}
-              className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer ml-2 flex-shrink-0"
-            >
-              <FaRegEdit className="text-highlight" size={24} />
-            </button>
           </div>
 
           {/* Players Grid */}
