@@ -11,6 +11,8 @@ import CatalogueModal from '../components/CatalogueModal'
 import PassHostModal from '../components/PassHostModal'
 import LeaveModal from '../components/LeaveModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
+import { useGameSettings } from '../hooks/useGameSettings'
+import { emitUpdateGameRules } from '../services/lobby'
 import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
 import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
@@ -47,6 +49,7 @@ export const CompleteLobbyScreen = () => {
   
   const [selectedPlayerCount, setSelectedPlayerCount] = useState(6)
   const [isPublic, setIsPublic] = useState(false)
+  const [currentGameRules, setCurrentGameRules] = useState<Record<string, any>>({})
   const myUsername = user?.nickname || 'Unknown'
 
   // Modal states
@@ -57,6 +60,13 @@ export const CompleteLobbyScreen = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isInviteFriendsModalOpen, setIsInviteFriendsModalOpen] = useState(false)
 
+  // Get dynamic game settings
+  const selectedGameFullInfo = availableGames.find(g => g.game_name === currentLobby?.selected_game)
+  const dynamicGameSettings = useGameSettings({
+    supported_rules: selectedGameFullInfo?.supported_rules,
+    current_rules: currentGameRules,
+  })
+
   useEffect(() => {
     if (currentLobby) {
       getMessages(50)
@@ -65,6 +75,13 @@ export const CompleteLobbyScreen = () => {
       getAvailableGames()
     }
   }, [currentLobby, getMessages, getAvailableGames])
+
+  // Update game rules when lobby state changes
+  useEffect(() => {
+    if (currentLobby?.game_rules) {
+      setCurrentGameRules(currentLobby.game_rules)
+    }
+  }, [currentLobby?.game_rules])
 
   useEffect(() => {
     if (error?.error_code === 'KICKED') {
@@ -171,6 +188,29 @@ export const CompleteLobbyScreen = () => {
     setIsShowingCatalogue(false)
   }
 
+  const handleGameRuleChange = (key: string, value: string) => {
+    // Convert value to appropriate type
+    const setting = dynamicGameSettings.find(s => s.key === key)
+    let convertedValue: any = value
+
+    if (setting?.type === 'range') {
+      convertedValue = parseInt(value, 10)
+    }
+
+    setCurrentGameRules(prev => ({
+      ...prev,
+      [key]: convertedValue,
+    }))
+
+    // Emit update to backend
+    if (currentLobby && isUserHost) {
+      emitUpdateGameRules(currentLobby.lobby_code, {
+        ...currentGameRules,
+        [key]: convertedValue
+      })
+    }
+  }
+
   const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.user_id === currentLobby.host_id))
   const userMember = members.find(m => m.user_id === user?.id)
   const isReady = userMember?.is_ready || false
@@ -198,7 +238,6 @@ export const CompleteLobbyScreen = () => {
   }
 
   // Find full game info from available games for the modal
-  const selectedGameFullInfo = availableGames.find(g => g.game_name === currentLobby?.selected_game)
   const gameModalInfo = selectedGameFullInfo ? {
     name: selectedGameFullInfo.display_name,
     rules: selectedGameFullInfo.description || selectedGameFullInfo.game_rules || 'No description available'
@@ -249,6 +288,7 @@ export const CompleteLobbyScreen = () => {
               }
               return values
             }
+            return ['2', '4', '6']
           })()
         : ['2', '3', '4', '5', '6'],
       defaultValue: '6',
@@ -433,8 +473,8 @@ export const CompleteLobbyScreen = () => {
               </div>
             </div>
 
-            {/* Game Settings */}
-            <div>
+            {/* Player Count Settings */}
+            <div className="mb-3 sm:mb-4">
               <h3 className="text-base sm:text-lg font-bold text-white mb-2">Game Settings</h3>
               <div className="flex flex-col gap-y-2">
                 {gameSettings.map((setting, index) => (
@@ -449,8 +489,20 @@ export const CompleteLobbyScreen = () => {
                     onChange={(value) => handleUpdatePlayerCount(parseInt(value))}
                   />
                 ))}
+                {dynamicGameSettings.map((setting, index) => (
+                    <Setting
+                      key={`${setting.key}-${currentGameRules[setting.key] ?? setting.defaultValue}`}
+                      label={setting.label}
+                      icon={null}
+                      availableValues={setting.availableValues}
+                      defaultValue={String(currentGameRules[setting.key] ?? setting.defaultValue)}
+                      disabled={!isUserHost}
+                      onChange={(value) => handleGameRuleChange(setting.key, value)}
+                    />
+                  ))}
               </div>
             </div>
+
           </div>
 
           {/* Action Buttons - Desktop */}

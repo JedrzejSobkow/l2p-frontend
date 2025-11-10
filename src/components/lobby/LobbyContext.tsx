@@ -66,6 +66,8 @@ import {
   emitClearGameSelection,
   offGameSelectionCleared,
   onGameSelectionCleared,
+  onGameRulesUpdated,
+  offGameRulesUpdated,
 } from '../../services/lobby'
 
 
@@ -255,6 +257,14 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       } : null)
     }
 
+    const handleGameRulesUpdated = (data: { rules: Record<string, any> }) => {
+      console.log('Game rules updated:', data)
+      setCurrentLobby(prev => prev ? { 
+        ...prev, 
+        game_rules: data.rules 
+      } : null)
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -275,6 +285,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onAvailableGames(handleAvailableGames)
     onGameSelected(handleGameSelected)
     onGameSelectionCleared(handleGameSelectionCleared)
+    onGameRulesUpdated(handleGameRulesUpdated)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -297,6 +308,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offAvailableGames(handleAvailableGames)
       offGameSelected(handleGameSelected)
       offGameSelectionCleared(handleGameSelectionCleared)
+      offGameRulesUpdated(handleGameRulesUpdated)
     }
   }, [])
 
