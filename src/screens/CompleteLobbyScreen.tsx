@@ -12,6 +12,7 @@ import PassHostModal from '../components/PassHostModal'
 import LeaveModal from '../components/LeaveModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
 import EditLobbyNameModal from '../components/EditLobbyNameModal'
+import Popup from '../components/Popup'
 import { useGameSettings } from '../hooks/useGameSettings'
 import { emitUpdateGameRules } from '../services/lobby'
 import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
@@ -61,6 +62,8 @@ export const CompleteLobbyScreen = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isInviteFriendsModalOpen, setIsInviteFriendsModalOpen] = useState(false)
   const [isEditLobbyNameModalOpen, setIsEditLobbyNameModalOpen] = useState(false)
+  const [showErrorPopup, setShowErrorPopup] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // Get dynamic game settings
   const selectedGameFullInfo = availableGames.find(g => g.game_name === currentLobby?.selected_game)
@@ -89,6 +92,13 @@ export const CompleteLobbyScreen = () => {
     if (error?.error_code === 'KICKED') {
     clearError()
     navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })  // Przekieruj na home
+    } else if (error) {
+      setErrorMessage(typeof error === 'string' ? error : error.message || 'An error occurred')
+      setShowErrorPopup(true)
+      const timer = setTimeout(() => {
+        clearError()
+      }, 3500)
+      return () => clearTimeout(timer)
     }
   }, [error, navigate, clearError])
 
@@ -315,16 +325,6 @@ export const CompleteLobbyScreen = () => {
           </div>
         </main>
       )
-  }
-
-  if (error) {
-    return (
-      <main className="flex items-center justify-center min-h-screen bg-background-primary">
-        <div className="text-red-500 text-xl">
-          {typeof error === 'string' ? error : error.message || 'An error occurred'}
-        </div>
-      </main>
-    )
   }
 
   return (
@@ -589,6 +589,15 @@ export const CompleteLobbyScreen = () => {
         onSave={handleUpdateLobbyName}
         onCancel={() => setIsEditLobbyNameModalOpen(false)}
       />
+
+      {/* Error Popup */}
+      {showErrorPopup && (
+        <Popup
+          type="error"
+          message={errorMessage}
+          onClose={() => setShowErrorPopup(false)}
+        />
+      )}
     </main>
   )
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 
 interface EditLobbyNameModalProps {
@@ -10,6 +10,12 @@ interface EditLobbyNameModalProps {
 
 const EditLobbyNameModal: React.FC<EditLobbyNameModalProps> = ({ isOpen, currentName, onSave, onCancel }) => {
     const [editedName, setEditedName] = useState(currentName);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setEditedName(currentName);
+        }
+    }, [isOpen, currentName]);
 
     const handleSave = () => {
         if (editedName.trim()) {
