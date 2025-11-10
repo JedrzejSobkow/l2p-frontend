@@ -89,7 +89,7 @@ type LobbyContextValue = {
   createLobby: (maxPlayers?: number, isPublic?: boolean, name?: string, gameName?: string) => void
   joinLobby: (lobbyCode: string) => void
   leaveLobby: () => void
-  updateSettings: (maxPlayers: number, isPublic: boolean) => void
+  updateSettings: (maxPlayers: number, isPublic: boolean, lobbyName?: string) => void
   transferHost: (newHostId: number | string) => void
   kickMember: (userId: number | string) => void
   toggleReady: () => void
@@ -172,9 +172,14 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setCurrentLobby(prev => prev ? { ...prev, host_id: data.new_host_id } : null)
     }
 
-    const handleSettingsUpdated = (data: { max_players: number; is_public: boolean }) => {
+    const handleSettingsUpdated = (data: { max_players: number; is_public: boolean; name?: string }) => {
       console.log('Settings updated:', data)
-      setCurrentLobby(prev => prev ? { ...prev, max_players: data.max_players, is_public: data.is_public } : null)
+      setCurrentLobby(prev => prev ? { 
+        ...prev, 
+        max_players: data.max_players, 
+        is_public: data.is_public,
+        ...(data.name && { name: data.name })
+      } : null)
     }
 
     const handleMemberKicked = (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => {
@@ -330,10 +335,20 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     emitLeaveLobby(currentLobby.lobby_code)
   }, [currentLobby])
 
-  const updateSettingsHandler = useCallback((maxPlayers: number, isPublic: boolean) => {
-    setError(null)
-    emitUpdateSettings(maxPlayers, isPublic)
-  }, [])
+  const updateSettingsHandler = useCallback((maxPlayers: number, isPublic: boolean, lobbyName?: string) => {
+    if (!currentLobby) return
+    
+    const payload: Record<string, any> = {
+      max_players: maxPlayers,
+      is_public: isPublic,
+    }
+    
+    if (lobbyName) {
+      payload.name = lobbyName
+    }
+    
+    emitUpdateSettings(currentLobby.lobby_code, maxPlayers, isPublic, lobbyName)
+  }, [currentLobby])
 
   const transferHostHandler = useCallback((newHostId: number | string) => {
     setError(null)

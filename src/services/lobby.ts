@@ -99,8 +99,17 @@ export const emitLeaveLobby = (lobbyCode: string) => {
   lobbySocket?.emit('leave_lobby', { lobby_code: lobbyCode })
 }
 
-export const emitUpdateSettings = (maxPlayers: number, isPublic: boolean) => {
-  lobbySocket?.emit('update_settings', { max_players: maxPlayers, is_public: isPublic })
+export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number, isPublic: boolean, name?: string): void => {
+  const payload: Record<string, any> = {
+    max_players: maxPlayers,
+    is_public: isPublic,
+  }
+  
+  if (name) {
+    payload.name = name
+  }
+  
+  lobbySocket?.emit('update_settings', payload)
 }
 
 export const emitTransferHost = (newHostId: number | string) => {
@@ -201,9 +210,9 @@ export const offHostTransferred = (cb?: (data: { old_host_id: number | string; n
   cb ? lobbySocket.off('host_transferred', cb) : lobbySocket.off('host_transferred')
 }
 
-export const onSettingsUpdated = (cb: (data: { max_players: number; is_public: boolean }) => void) => 
+export const onSettingsUpdated = (cb: (data: { max_players: number; is_public: boolean; name?: string }) => void) => 
   lobbySocket?.on('settings_updated', cb)
-export const offSettingsUpdated = (cb?: (data: { max_players: number; is_public: boolean }) => void) => {
+export const offSettingsUpdated = (cb?: (data: { max_players: number; is_public: boolean; name?: string }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('settings_updated', cb) : lobbySocket.off('settings_updated')
 }

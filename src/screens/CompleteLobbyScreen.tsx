@@ -11,6 +11,7 @@ import CatalogueModal from '../components/CatalogueModal'
 import PassHostModal from '../components/PassHostModal'
 import LeaveModal from '../components/LeaveModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
+import EditLobbyNameModal from '../components/EditLobbyNameModal'
 import { useGameSettings } from '../hooks/useGameSettings'
 import { emitUpdateGameRules } from '../services/lobby'
 import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
@@ -59,6 +60,7 @@ export const CompleteLobbyScreen = () => {
   const [passHostUsername, setPassHostUsername] = useState('')
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isInviteFriendsModalOpen, setIsInviteFriendsModalOpen] = useState(false)
+  const [isEditLobbyNameModalOpen, setIsEditLobbyNameModalOpen] = useState(false)
 
   // Get dynamic game settings
   const selectedGameFullInfo = availableGames.find(g => g.game_name === currentLobby?.selected_game)
@@ -214,6 +216,13 @@ export const CompleteLobbyScreen = () => {
     }
   }
 
+  const handleUpdateLobbyName = (newName: string) => {
+    if (currentLobby) {
+      updateSettings(selectedPlayerCount, isPublic, newName)
+      setIsEditLobbyNameModalOpen(false)
+    }
+  }
+
   const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.user_id === currentLobby.host_id))
   const userMember = members.find(m => m.user_id === user?.id)
   const isReady = userMember?.is_ready || false
@@ -341,7 +350,8 @@ export const CompleteLobbyScreen = () => {
               {currentLobby.name}
             </span>
             <button 
-              disabled={true}
+              disabled={!isUserHost}
+              onClick={() => setIsEditLobbyNameModalOpen(true)}
               className="focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-transform cursor-pointer ml-2 flex-shrink-0"
             >
               <FaRegEdit className="text-highlight" size={24} />
@@ -571,6 +581,13 @@ export const CompleteLobbyScreen = () => {
         onClose={() => setIsInviteFriendsModalOpen(false)}
         onInvite={handleInviteFriend}
         lobbyCode={currentLobby.lobby_code || ''}
+      />
+
+      <EditLobbyNameModal
+        isOpen={isEditLobbyNameModalOpen}
+        currentName={currentLobby?.name || ''}
+        onSave={handleUpdateLobbyName}
+        onCancel={() => setIsEditLobbyNameModalOpen(false)}
       />
     </main>
   )
