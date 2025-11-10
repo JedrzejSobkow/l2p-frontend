@@ -197,6 +197,16 @@ export const CompleteLobbyScreen = () => {
     rules: 'Select a game to start playing',
   }
 
+  // Find full game info from available games for the modal
+  const selectedGameFullInfo = availableGames.find(g => g.game_name === currentLobby?.selected_game)
+  const gameModalInfo = selectedGameFullInfo ? {
+    name: selectedGameFullInfo.display_name,
+    rules: selectedGameFullInfo.description || selectedGameFullInfo.game_rules || 'No description available'
+  } : {
+    name: gameInfo.name,
+    rules: gameInfo.rules
+  }
+
   const mockGames = availableGames.length > 0 ? availableGames.map((game: any) => {
     // Generate supported players array from min_players to max_players
     const minPlayers = game.min_players || 1
@@ -455,8 +465,8 @@ export const CompleteLobbyScreen = () => {
       {/* Modals */}
       <GameInfoModal
         isOpen={isShowingGameInfo}
-        gameName={gameInfo.name}
-        gameRules={gameInfo.rules || 'No rules available'}
+        gameName={gameModalInfo.name}
+        gameRules={gameModalInfo.rules}
         onClose={() => setIsShowingGameInfo(false)}
       />
 
