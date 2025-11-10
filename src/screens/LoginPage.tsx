@@ -1,13 +1,14 @@
 import type { FormEventHandler } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
 import { usePopup } from '../components/PopupContext'
+import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, googleAuth } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,9 +17,41 @@ const LoginPage = () => {
     const popupData = localStorage.getItem('popupData');
     if (popupData) {
       showPopup(JSON.parse(popupData));
-      localStorage.removeItem('popupData'); // Clear popup data after displaying
+      localStorage.removeItem('popupData');
     }
   }, []);
+
+  const handleGoogleSignIn = useCallback(() => {
+    if (typeof window === 'undefined') return
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) {
+      showPopup({ type: 'informative', message: 'Google sign-in is not configured yet.' })
+      return
+    }
+    const google = (window as typeof window & { google?: any }).google
+    if (!google?.accounts?.id) {
+      showPopup({ type: 'informative', message: 'Google SDK not loaded. Try again in a moment.' })
+      return
+    }
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: async (response: { credential?: string }) => {
+        if (!response.credential) {
+          showPopup({ type: 'error', message: 'Google sign-in was cancelled.' })
+          return
+        }
+        try {
+          await googleAuth(response.credential)
+          navigate('/', { replace: true })
+        } catch (error) {
+          showPopup({ type: 'error', message: 'Google sign-in failed. Try again later.' })
+        } finally {
+          google.accounts.id.cancel?.()
+        }
+      },
+    })
+    google.accounts.id.prompt()
+  }, [googleAuth, navigate, showPopup])
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -59,6 +92,7 @@ const LoginPage = () => {
             Track matches, join new lobbies, and stay on the leaderboard.
           </p>
         </div>
+
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">
@@ -109,19 +143,31 @@ const LoginPage = () => {
           )}
         </form>
 
-        <p className="mt-6 auth-note">
+        <p className="mt-3 auth-note">
           Need an account?{' '}
           <Link to="/register" className="auth-link">
             Create one now
           </Link>
         </p>
+        <div className="mt-6 mb-3 flex items-center gap-3 text-xs uppercase tracking-wide text-white/40">
+          <span className="h-px flex-1 bg-white/10" />
+          <span>OR</span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+        <div className="mb-2 flex flex-col gap-3">
+          <AuthGoogleButton
+            label="Sign in with Google"
+            disabled={submitting}
+            onClick={handleGoogleSignIn}
+          />
+        </div>
+
+        
       </div>
     </div>
   )
 }
 
 export default LoginPage
-
-
 
 

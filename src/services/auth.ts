@@ -37,6 +37,12 @@ export type ActivateUserPayload = {
 
 // /auth/ endpoints
 
+export async function googleAuth(token: string): Promise<User> {
+  const body = { token }
+  const data = await request<any>('/auth/google', { method: 'POST', body,  auth: false })
+  return (data?.user as User) ?? (await getMe().catch(() => null as unknown as User))
+}
+
 
 export async function login(payload: LoginPayload): Promise<User> {
   const form = new URLSearchParams()

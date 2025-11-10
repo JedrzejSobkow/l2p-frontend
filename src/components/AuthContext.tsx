@@ -11,6 +11,7 @@ type AuthContextValue = {
   status: AuthStatus
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
+  googleAuth: (token: string) => Promise<void>
   logout: () => Promise<void>
   updateProfile: (payload: Partial<User>) => Promise<User>
   deleteAccount: () => Promise<void>
@@ -84,6 +85,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [status])
 
+  const googleAuth = async (token: string) => {
+    const me = await auth.googleAuth(token)
+    setUser(me)
+    setStatus('authenticated')
+  }
+
   const login = async (payload: LoginPayload) => {
     const me = await auth.login(payload)
     setUser(me)
@@ -119,6 +126,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       status,
       login,
       register,
+      googleAuth,
       logout,
       updateProfile,
       deleteAccount
@@ -137,4 +145,3 @@ export const useAuth = () => {
 
   return context
 }
-
