@@ -21,6 +21,7 @@ import {
   emitToggleReady,
   emitSendLobbyMessage,
   emitGetLobbyMessages,
+  emitGetAvailableGames,
   offLobbyCreated,
   offLobbyJoined,
   offLobbyLeft,
@@ -37,6 +38,7 @@ import {
   offLobbyUserTyping,
   offKickedFromLobby,
   offLobbyError,
+  offAvailableGames,
   onLobbyCreated,
   onLobbyJoined,
   onLobbyLeft,
@@ -53,10 +55,14 @@ import {
   onLobbyUserTyping,
   onKickedFromLobby,
   onLobbyError,
+  onAvailableGames,
   type LobbyState,
   type LobbyMember,
   type LobbyMessage,
   type LobbyError,
+  emitSelectGame,
+  offGameSelected,
+  onGameSelected,
 } from '../../services/lobby'
 
 
@@ -74,6 +80,7 @@ type LobbyContextValue = {
   typingUsers: string[]
   publicLobbies: LobbyState[]
   error: LobbyError | null
+  availableGames: any[]
   createLobby: (maxPlayers?: number, isPublic?: boolean, name?: string, gameName?: string) => void
   joinLobby: (lobbyCode: string) => void
   leaveLobby: () => void
@@ -87,6 +94,8 @@ type LobbyContextValue = {
   getLobbyState: () => void
   clearError: () => void
   startGame: (gameName: string) => void
+  getAvailableGames: () => void
+  selectGame: (gameName: string) => void
 }
 
 const LobbyContext = createContext<LobbyContextValue | undefined>(undefined)
@@ -97,6 +106,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [messages, setMessages] = useState<LobbyMessage[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [publicLobbies, setPublicLobbies] = useState<LobbyState[]>([])
+  const [availableGames, setAvailableGames] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<LobbyError | null>(null)
 
@@ -218,6 +228,20 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false)
     }
 
+    const handleAvailableGames = (data: { games: any[]; total: number }) => {
+      console.log('Available games:', data)
+      setAvailableGames(data.games)
+    }
+
+    const handleGameSelected = (data: { game_name: string; game_info: any; current_rules: any }) => {
+      console.log('Game selected:', data)
+      setCurrentLobby(prev => prev ? { 
+        ...prev, 
+        selected_game: data.game_name,
+        game_rules: data.current_rules 
+      } : null)
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -235,6 +259,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onKickedFromLobby(handleKickedFromLobby)
     onLobbyError(handleLobbyError)
     onGameStarted(handleGameStarted)
+    onAvailableGames(handleAvailableGames)
+    onGameSelected(handleGameSelected)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -254,6 +280,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offKickedFromLobby(handleKickedFromLobby)
       offLobbyError(handleLobbyError)
       offGameStarted(handleGameStarted)
+      offAvailableGames(handleAvailableGames)
+      offGameSelected(handleGameSelected)
     }
   }, [])
 
@@ -330,6 +358,17 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     emitCreateGame(gameName)
   }, [currentLobby])
 
+  const getAvailableGamesHandler = useCallback(() => {
+    setError(null)
+    emitGetAvailableGames()
+  }, [])
+
+  const selectGameHandler = useCallback((gameName: string) => {
+    if (!currentLobby) return
+    setError(null)
+    emitSelectGame(currentLobby.lobby_code, gameName)
+  }, [currentLobby])
+
   const value: LobbyContextValue = useMemo(
     () => ({
       isLoading,
@@ -339,6 +378,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       typingUsers,
       publicLobbies,
       error,
+      availableGames,
       createLobby: createLobbyHandler,
       joinLobby: joinLobbyHandler,
       leaveLobby: leaveLobbyHandler,
@@ -352,6 +392,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getLobbyState: getLobbyStateHandler,
       clearError: clearErrorHandler,
       startGame: startGameHandler,
+      getAvailableGames: getAvailableGamesHandler,
+      selectGame: selectGameHandler,
     }),
     [
       isLoading,
@@ -361,6 +403,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       typingUsers,
       publicLobbies,
       error,
+      availableGames,
       createLobbyHandler,
       joinLobbyHandler,
       leaveLobbyHandler,
@@ -374,6 +417,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getLobbyStateHandler,
       clearErrorHandler,
       startGameHandler,
+      getAvailableGamesHandler,
+      selectGameHandler,
     ],
   )
 

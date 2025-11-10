@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from './Modal';
 
 interface Game {
+    gameDisplayName: string;
     gameName: string;
     src: string;
     supportedPlayers: number[];
@@ -12,11 +13,28 @@ interface CatalogueModalProps {
     games: Game[];
     currentPlayerCount: number;
     onClose: () => void;
+    onSelectGame?: (gameName: string) => void;
+    isUserHost?: boolean;
 }
 
-const CatalogueModal: React.FC<CatalogueModalProps> = ({ isOpen, games, currentPlayerCount, onClose }) => {
+const CatalogueModal: React.FC<CatalogueModalProps> = ({ 
+    isOpen, 
+    games, 
+    currentPlayerCount, 
+    onClose,
+    onSelectGame,
+    isUserHost = false
+}) => {
     const isGameAvailable = (supportedPlayers: number[]) => {
-        return supportedPlayers.includes(currentPlayerCount);
+        if (supportedPlayers.length === 0) return false
+        const maxPlayers = Math.max(...supportedPlayers)
+        return currentPlayerCount <= maxPlayers
+    };
+
+    const handleGameClick = (gameName: string, isAvailable: boolean) => {
+        if (isAvailable && isUserHost && onSelectGame) {
+            onSelectGame(gameName);
+        }
     };
 
     return (
@@ -31,22 +49,27 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({ isOpen, games, currentP
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 flex-grow overflow-y-auto">
                     {games.map((gameItem, index) => {
                         const isAvailable = isGameAvailable(gameItem.supportedPlayers);
+                        const canSelect = isAvailable && isUserHost;
+                        
                         return (
                             <div
                                 key={index}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-lg cursor-pointer transition-transform ${
-                                    isAvailable
-                                        ? 'bg-background-secondary hover:bg-background-primary hover:scale-105'
+                                onClick={() => handleGameClick(gameItem.gameName, isAvailable)}
+                                className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-transform ${
+                                    canSelect
+                                        ? 'bg-background-secondary hover:bg-background-primary hover:scale-105 cursor-pointer'
+                                        : isAvailable
+                                        ? 'bg-background-secondary opacity-75 cursor-not-allowed'
                                         : 'bg-gray-600 opacity-50 cursor-not-allowed'
                                 }`}
                             >
                                 <img
                                     src={gameItem.src}
-                                    alt={gameItem.gameName}
+                                    alt={gameItem.gameDisplayName}
                                     className="w-20 h-20 rounded-lg object-cover"
                                 />
                                 <span className="text-sm font-medium text-headline text-center">
-                                    {gameItem.gameName}
+                                    {gameItem.gameDisplayName}
                                 </span>
                                 <span className="text-xs text-paragraph">
                                     {gameItem.supportedPlayers.join(', ')} player{gameItem.supportedPlayers.length > 1 ? 's' : ''}
@@ -54,6 +77,11 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({ isOpen, games, currentP
                                 {!isAvailable && (
                                     <span className="text-xs text-red-400 font-semibold">
                                         Not available
+                                    </span>
+                                )}
+                                {isAvailable && !isUserHost && (
+                                    <span className="text-xs text-gray-400 font-semibold">
+                                        (Host only)
                                     </span>
                                 )}
                             </div>

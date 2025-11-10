@@ -35,6 +35,9 @@ export const CompleteLobbyScreen = () => {
     getMessages,
     startGame,
     clearError,
+    availableGames,
+    getAvailableGames,
+    selectGame,
   } = useLobby()
 
   const [messageInput, setMessageInput] = useState('')
@@ -53,19 +56,14 @@ export const CompleteLobbyScreen = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isInviteFriendsModalOpen, setIsInviteFriendsModalOpen] = useState(false)
 
-  const mockGames = [
-    { gameName: 'Tic Tac Toe', src: '/src/assets/images/tic-tac-toe.png', supportedPlayers: [2, 3, 4] },
-    { gameName: 'Clobber', src: '/src/assets/images/clobber.png', supportedPlayers: [2, 3, 4, 5, 6] },
-    { gameName: 'Chess', src: '/src/assets/images/clobber.png', supportedPlayers: [2] },
-  ]
-
   useEffect(() => {
     if (currentLobby) {
       getMessages(50)
       setSelectedPlayerCount(currentLobby.max_players)
       setIsPublic(currentLobby.is_public)
+      getAvailableGames()
     }
-  }, [currentLobby])
+  }, [currentLobby, getMessages, getAvailableGames])
 
   useEffect(() => {
     if (error?.error_code === 'KICKED') {
@@ -130,6 +128,11 @@ export const CompleteLobbyScreen = () => {
     console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
   }
 
+  const handleSelectGame = (gameName: string) => {
+    selectGame(gameName)
+    setIsShowingCatalogue(false)
+  }
+
   const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.user_id === currentLobby.host_id))
   const userMember = members.find(m => m.user_id === user?.id)
   const isReady = userMember?.is_ready || false
@@ -151,10 +154,27 @@ export const CompleteLobbyScreen = () => {
 
   const gameInfo = currentLobby?.game || {
     display_name: currentLobby?.selected_game,
-    name: 'tictactoe',
+    name: currentLobby?.selected_game,
     img_path: '/src/assets/images/tic-tac-toe.png',
     rules: 'Select a game to start playing',
   }
+
+  const mockGames = availableGames.length > 0 ? availableGames.map((game: any) => {
+    // Generate supported players array from min_players to max_players
+    const minPlayers = game.min_players || 1
+    const maxPlayers = game.max_players || 6
+    const supportedPlayers = Array.from(
+      { length: maxPlayers - minPlayers + 1 },
+      (_, i) => minPlayers + i
+    )
+
+    return {
+      gameDisplayName: game.display_name,
+      gameName: game.game_name,
+      src: game.game_image_path,
+      supportedPlayers,
+    }
+  }) : []
 
   const lobbySettings = [
     {
@@ -395,6 +415,8 @@ export const CompleteLobbyScreen = () => {
         games={mockGames}
         currentPlayerCount={currentPlayerCount}
         onClose={() => setIsShowingCatalogue(false)}
+        onSelectGame={handleSelectGame}
+        isUserHost={isUserHost}
       />
 
       <PassHostModal

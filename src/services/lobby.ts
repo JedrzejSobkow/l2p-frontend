@@ -135,6 +135,14 @@ export const emitGetLobbyMessages = (lobbyCode: string, limit: number = 50) => {
   lobbySocket?.emit('get_lobby_messages', { lobby_code: lobbyCode, limit })
 }
 
+export const emitGetAvailableGames = () => {
+  lobbySocket?.emit('get_available_games', {})
+}
+
+export const emitSelectGame = (lobbyCode: string, gameName: string) => {
+  lobbySocket?.emit('select_game', { lobby_code: lobbyCode, game_name: gameName })
+}
+
 // Listeners
 export const onLobbyCreated = (cb: (data: { lobby_code: string }) => void) => 
   lobbySocket?.on('lobby_created', cb)
@@ -253,4 +261,18 @@ export const onLobbyClosed = (cb: (data: any) => void) =>
 export const offLobbyClosed = (cb?: (data: any) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('lobby_closed', cb) : lobbySocket.off('lobby_closed')
+}
+
+export const onAvailableGames = (cb: (data: { games: any[]; total: number }) => void) => 
+  lobbySocket?.on('available_games', cb)
+export const offAvailableGames = (cb?: (data: { games: any[]; total: number }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('available_games', cb) : lobbySocket.off('available_games')
+}
+
+export const onGameSelected = (cb: (data: { game_name: string; game_info: any; current_rules: any }) => void) => 
+  lobbySocket?.on('game_selected', cb)
+export const offGameSelected = (cb?: (data: { game_name: string; game_info: any; current_rules: any }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('game_selected', cb) : lobbySocket.off('game_selected')
 }
