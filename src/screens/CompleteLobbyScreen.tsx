@@ -363,9 +363,10 @@ export const CompleteLobbyScreen = () => {
               />
             ))}
             {/* Empty Seats */}
-            {Array.from({ length: selectedPlayerCount - currentPlayerCount }).map((_, index) => (
+            {Array.from({ length: 6 - currentPlayerCount }).map((_, index) => (
               <InviteToLobbyUserTile 
                 key={`empty-${index}`} 
+                enabled={index < selectedPlayerCount - currentPlayerCount}
                 onInviteClick={() => setIsInviteFriendsModalOpen(true)} 
               />
             ))}
