@@ -189,12 +189,15 @@ export const CompleteLobbyScreen = () => {
   }
 
   const handleGameRuleChange = (key: string, value: string) => {
-    // Convert value to appropriate type
+    // Convert value to appropriate type based on the rule definition
     const setting = dynamicGameSettings.find(s => s.key === key)
     let convertedValue: any = value
 
-    if (setting?.type === 'range') {
+    // Parse value to appropriate type
+    if (setting?.type === 'integer') {
       convertedValue = parseInt(value, 10)
+    } else if (setting?.type === 'string') {
+      convertedValue = value
     }
 
     setCurrentGameRules(prev => ({
