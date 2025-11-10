@@ -25,6 +25,7 @@ export type LobbyState = {
   created_at: string
   selected_game?: string
   game_rules?: Record<string, any>
+  selected_game_info?: Record<string, any>
 }
 
 export type LobbyMessage = {

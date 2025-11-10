@@ -252,10 +252,15 @@ export const CompleteLobbyScreen = () => {
     isHost: currentLobby?.host_id === member.user_id,
   }))
 
-  const gameInfo = currentLobby?.game || {
-    display_name: currentLobby?.selected_game,
-    name: currentLobby?.selected_game,
-    img_path: '/src/assets/images/tic-tac-toe.png',
+  const gameInfo = currentLobby?.selected_game_info ? {
+    display_name: currentLobby.selected_game_info.display_name,
+    name: currentLobby.selected_game_info.game_name,
+    img_path: `/src/assets/images/games/${currentLobby.selected_game}.png`,
+    rules: currentLobby.selected_game_info.description,
+  } : {
+    display_name: 'Game not selected',
+    name: undefined,
+    img_path: '',
     rules: 'Select a game to start playing',
   }
 
@@ -429,8 +434,8 @@ export const CompleteLobbyScreen = () => {
             <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               {currentLobby?.selected_game && (
                 <img
-                  src={gameInfo.img_path || '/src/assets/images/tic-tac-toe.png'}
-                  alt={`${gameInfo.name} image`}
+                  src={gameInfo.img_path}
+                  alt={`${gameInfo.display_name} image`}
                   className="h-5 sm:h-7 w-auto flex-shrink-0"
                 />
               )}
@@ -439,7 +444,7 @@ export const CompleteLobbyScreen = () => {
                   ? 'text-white' 
                   : 'text-gray-400'
               }`}>
-                {currentLobby?.selected_game ? gameInfo.name : 'Game not selected'}
+                {gameInfo.display_name}
               </span>
               <button 
                 onClick={() => setIsShowingGameInfo(true)}

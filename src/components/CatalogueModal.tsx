@@ -99,7 +99,7 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
                                 }`}
                             >
                                 <img
-                                    src={gameItem.src}
+                                    src={`/src/assets/images/games/${gameItem.gameName}.png`}
                                     alt={gameItem.gameDisplayName}
                                     className="w-20 h-20 rounded-lg object-cover"
                                 />
