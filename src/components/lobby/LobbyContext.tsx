@@ -248,7 +248,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       console.log('Game selected:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
-        selected_game: data.game_name,
+        selected_game: data.game_info.display_name,
+        
         game_rules: data.current_rules 
       } : null)
     }
