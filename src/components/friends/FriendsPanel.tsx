@@ -135,7 +135,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const renderFriend = (friend: Friendship) => {
     console.log('Rendering friend:', friend)
     const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
-    console.log('Unread count for', key, ':', getUnread?.(key))
     const isSelected = selectedKey ? key === selectedKey : false
     return (
       <FriendCard

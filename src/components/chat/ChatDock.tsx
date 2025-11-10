@@ -32,7 +32,7 @@ const ChatDock = () => {
               >
                 <span className="relative inline-flex">
                   <img
-                    src={s.target.avatarUrl || '/assets/images/pfp.png'}
+                    src={s.target.avatarUrl|| '/src/assets/images/pfp.png'}
                     alt={s.target.nickname}
                     className="h-15 w-15 rounded-full"
                   />
@@ -76,7 +76,7 @@ const ChatDock = () => {
               messages={chat.getMessages(s.target.id)}
               currentUserId={currentUserId}
               friendId={s.target.id}
-              friendAvatar={s.target.avatarUrl}
+              friendAvatar={s.target.avatarUrl || 'src/assets/images/pfp.png'}
               allowAttachments={true}
               typingUsers={chat.getTypingUsers(s.target.id)}
               onSend={async ({ text, attachment }) => chat.sendMessage(s.target.id, { text, attachment })}

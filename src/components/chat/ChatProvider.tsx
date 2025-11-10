@@ -25,6 +25,7 @@ import {
   type UserTypingEvent,
 } from '../../services/chat'
 import { withAssetsPrefix } from '../../services/auth'
+import { useFriends } from '../friends/FriendsContext'
 
 export type ConversationTarget = {
   id: string
@@ -39,6 +40,8 @@ type ConversationsState = {
   unreadById?: Record<string, number>
 }
 
+type IncomingMessageListener = (payload: { conversationId: string; target: ConversationTarget }) => void
+
 type ChatContextValue = {
   getMessages: (conversationId: string) => ChatMessage[]
   sendMessage: (conversationId: string, payload: { text?: string; attachment?: File | null }) => Promise<void>
@@ -49,6 +52,7 @@ type ChatContextValue = {
   sendTyping: (conversationId: string) => void
   clearUnread: (conversationId: string) => void
   getUnread: (conversationId: string) => number
+  subscribeToIncomingMessages: (listener: IncomingMessageListener) => () => void
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined)
@@ -69,11 +73,13 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { user,isAuthenticated } = useAuth()
+  const {friends} = useFriends()
   const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {},unreadById: {}})
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const typingThrottleRef = useRef<Map<string, number>>(new Map())
+  const incomingMessageListenersRef = useRef<Set<IncomingMessageListener>>(new Set())
 
   const replaceMessages = useCallback((conversationId: string, messages: ChatMessage[]) => {
     setState((prev) => ({
@@ -175,6 +181,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     (conversationId: string) => state.typingById[conversationId] ?? [],
     [state.typingById],
   )
+
+  const subscribeToIncomingMessages = useCallback((listener: IncomingMessageListener) => {
+    incomingMessageListenersRef.current.add(listener)
+    return () => {
+      incomingMessageListenersRef.current.delete(listener)
+    }
+  }, [])
 
   const sendMessage = useCallback(
     async (conversationId: string, payload: { text?: string; attachment?: File | null }) => {
@@ -284,7 +297,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       }
       
       const conversationId = normalizeId(payload.sender_id)
-      ensureConversation({ id: conversationId, nickname: payload.sender_nickname })
+      const friendAvatar = friends.find(f => normalizeId(f.friend_user_id) === conversationId)?.friend_pfp_path
+      console.log(friendAvatar)
+      ensureConversation({ id: conversationId, nickname: payload.sender_nickname, avatarUrl: friendAvatar })
       appendMessage(conversationId, mapDtoToChatMessage(payload))
       setState((prev) => {
         const currentUnread = prev.unreadById?.[conversationId] ?? 0
@@ -296,9 +311,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
         }
       })
-      
+      const target: ConversationTarget = {
+        id: conversationId,
+        nickname: payload.sender_nickname,
+        avatarUrl: friendAvatar,
+      }
+      incomingMessageListenersRef.current.forEach((listener) => {
+        try {
+          console.log(target.avatarUrl)
+          listener({ conversationId, target })
+        } catch (error) {
+          console.error('Incoming message listener failed', error)
+        }
+      })
     },
-    [appendMessage, ensureConversation],
+    [appendMessage, ensureConversation,friends],
   )
 
   const handleConversationUpdated = useCallback(
@@ -310,6 +337,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         avatarUrl: payload.friend_pfp_path ?? undefined,
       })
       void fetchConversationHistory(conversationId, true)
+      const target: ConversationTarget = {
+        id: conversationId,
+        nickname: payload.friend_nickname,
+        avatarUrl: payload.friend_pfp_path ?? undefined,
+      }
+      incomingMessageListenersRef.current.forEach((listener) => {
+        try {
+          listener({ conversationId, target })
+        } catch (error) {
+          console.error('Incoming message listener failed', error)
+        }
+      })
     },
     [ensureConversation, fetchConversationHistory],
   )
@@ -442,8 +481,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       sendTyping,
       clearUnread,
       getUnread,
+      subscribeToIncomingMessages,
     }),
-    [getUnread,ensureConversation, getMessages, getTarget, getTypingUsers, sendMessage, sendTyping, setIncomingMessage,clearUnread],
+    [
+      getUnread,
+      ensureConversation,
+      getMessages,
+      getTarget,
+      getTypingUsers,
+      sendMessage,
+      sendTyping,
+      setIncomingMessage,
+      clearUnread,
+      subscribeToIncomingMessages,
+    ],
   )
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
