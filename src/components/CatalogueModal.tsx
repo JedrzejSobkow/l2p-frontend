@@ -17,6 +17,7 @@ interface CatalogueModalProps {
     onSelectGame?: (gameName: string) => void;
     onClearGameSelection?: () => void;
     isUserHost?: boolean;
+    selectedGameName?: string;
 }
 
 const CatalogueModal: React.FC<CatalogueModalProps> = ({ 
@@ -26,7 +27,8 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
     onClose,
     onSelectGame,
     onClearGameSelection,
-    isUserHost = false
+    isUserHost = false,
+    selectedGameName = undefined
 }) => {
     const isGameAvailable = (supportedPlayers: number[]) => {
         if (supportedPlayers.length === 0) return false
@@ -80,13 +82,16 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
                     {games.map((gameItem, index) => {
                         const isAvailable = isGameAvailable(gameItem.supportedPlayers);
                         const canSelect = isAvailable && isUserHost;
+                        const isSelected = selectedGameName === gameItem.gameName;
                         
                         return (
                             <div
                                 key={index}
                                 onClick={() => handleGameClick(gameItem.gameName, isAvailable)}
-                                className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-transform ${
-                                    canSelect
+                                className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-all ${
+                                    isSelected
+                                        ? 'bg-background-secondary border-2 border-highlight ring-2 ring-highlight scale-105'
+                                        : canSelect
                                         ? 'bg-background-secondary hover:bg-background-primary hover:scale-105 cursor-pointer'
                                         : isAvailable
                                         ? 'bg-background-secondary opacity-75 cursor-not-allowed'
@@ -104,6 +109,11 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
                                 <span className="text-xs text-paragraph">
                                     {gameItem.supportedPlayers.join(', ')} player{gameItem.supportedPlayers.length > 1 ? 's' : ''}
                                 </span>
+                                {isSelected && (
+                                    <span className="text-xs text-highlight font-bold">
+                                        Selected
+                                    </span>
+                                )}
                                 {!isAvailable && (
                                     <span className="text-xs text-red-400 font-semibold">
                                         Not available

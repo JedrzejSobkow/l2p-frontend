@@ -468,6 +468,7 @@ export const CompleteLobbyScreen = () => {
         onSelectGame={handleSelectGame}
         onClearGameSelection={handleClearGameSelection}
         isUserHost={isUserHost}
+        selectedGameName={currentLobby?.selected_game}
       />
 
       <PassHostModal
