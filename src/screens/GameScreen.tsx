@@ -21,7 +21,7 @@ interface Game {
 
 const GameScreen: React.FC = () => {
     const { gameName } = useParams<{ gameName: string }>();
-    const { availableGames, getAvailableGames } = useLobby();
+    const { availableGames, getAvailableGames, getPublicLobbiesByGame, publicLobbies, isLoading } = useLobby();
     
     const [selectedSection, setSelectedSection] = useState<string>('Available Lobbies');
     const [playerCount, setPlayerCount] = useState<number>(2);
@@ -29,7 +29,13 @@ const GameScreen: React.FC = () => {
 
     useEffect(() => {
         getAvailableGames();
-    }, []);
+    }, [getAvailableGames]);
+
+    useEffect(() => {
+        if (gameName) {
+            getPublicLobbiesByGame(gameName);
+        }
+    }, [gameName, getPublicLobbiesByGame]);
 
     useEffect(() => {
         if (availableGames.length > 0 && gameName) {
@@ -43,23 +49,8 @@ const GameScreen: React.FC = () => {
         }
     }, [availableGames, gameName]);
 
-    const lobbies = [
-        { title: 'ttt_adventure', occupiedSlots: 1, totalSlots: 4, creator: 'player222', timeAgo: '120 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
-        { title: 'ttt_adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/4.png' },
-        { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 3, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/3.png' },
-        { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 4, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
-        { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/3.png' },
-        { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 4, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/3.png' },
-        { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 3, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/7.png' },
-        { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 4, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/2.png' },
-        { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/12.png' },
-        { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 3, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
-        { title: 'ttt adventure', occupiedSlots: 1, totalSlots: 2, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/15.png' },
-        { title: 'ttt adventure', occupiedSlots: 2, totalSlots: 4, creator: 'player222', timeAgo: '20 seconds ago', profileImagePath: '/src/assets/images/avatar/3.png' },
-    ];
-
-    const filteredLobbies = lobbies.filter(
-        (lobby) => lobby.totalSlots == playerCount
+    const filteredLobbies = publicLobbies.filter(
+        (lobby) => lobby.max_players === playerCount
     );
 
     if (!currentGame) {
@@ -93,19 +84,25 @@ const GameScreen: React.FC = () => {
                             onChange={setPlayerCount} 
                             icon={<FaUsers />} 
                         />
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
-                            {filteredLobbies.map((lobby, index) => (
-                                <LobbyShortTile 
-                                    key={index} 
-                                    title={lobby.title} 
-                                    occupiedSlots={lobby.occupiedSlots} 
-                                    totalSlots={lobby.totalSlots} 
-                                    creator={lobby.creator} 
-                                    timeAgo={lobby.timeAgo} 
-                                    profileImagePath={lobby.profileImagePath} 
-                                />
-                            ))}
-                        </div>
+                        {isLoading ? (
+                            <div className="mt-6 text-center text-headline">Loading lobbies...</div>
+                        ) : filteredLobbies.length === 0 ? (
+                            <div className="mt-6 text-center text-headline">No lobbies available</div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
+                                {filteredLobbies.map((lobby) => (
+                                    <LobbyShortTile 
+                                        key={lobby.lobby_code} 
+                                        title={lobby.name} 
+                                        occupiedSlots={lobby.current_players} 
+                                        totalSlots={lobby.max_players} 
+                                        creator={lobby.members[0]?.nickname || 'Unknown'} 
+                                        timeAgo={new Date(lobby.created_at).toLocaleString()} 
+                                        profileImagePath={`/src/assets${lobby.members[0]?.pfp_path || '/images/avatar/default.png'}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                     </>
                 )}

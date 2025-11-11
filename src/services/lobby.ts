@@ -125,6 +125,10 @@ export const emitGetPublicLobbies = () => {
   lobbySocket?.emit('get_public_lobbies', {})
 }
 
+export const emitGetPublicLobbiesByGame = (gameName: string) => {
+  lobbySocket?.emit('get_public_lobbies', { game_name: gameName })
+}
+
 export const emitKickMember = (userId: number | string) => {
   lobbySocket?.emit('kick_member', { user_id: userId })
 }

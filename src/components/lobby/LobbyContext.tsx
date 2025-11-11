@@ -68,6 +68,7 @@ import {
   onGameSelectionCleared,
   onGameRulesUpdated,
   offGameRulesUpdated,
+  emitGetPublicLobbiesByGame,
 } from '../../services/lobby'
 
 
@@ -96,6 +97,7 @@ type LobbyContextValue = {
   sendMessage: (content: string) => void
   getMessages: (limit?: number) => void
   getPublicLobbies: () => void
+  getPublicLobbiesByGame: (gameName: string) => void
   getLobbyState: () => void
   clearError: () => void
   startGame: (gameName: string) => void
@@ -385,6 +387,12 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     emitGetPublicLobbies()
   }, [])
 
+  const getPublicLobbiesByGameHandler = useCallback((gameName: string) => {
+    setIsLoading(true)
+    setError(null)
+    emitGetPublicLobbiesByGame(gameName)
+  }, [])
+
   const getLobbyStateHandler = useCallback(() => {
     setIsLoading(true)
     setError(null)
@@ -439,6 +447,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       sendMessage: sendMessageHandler,
       getMessages: getMessagesHandler,
       getPublicLobbies: getPublicLobbiesHandler,
+      getPublicLobbiesByGame: getPublicLobbiesByGameHandler,
       getLobbyState: getLobbyStateHandler,
       clearError: clearErrorHandler,
       startGame: startGameHandler,
@@ -465,6 +474,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       sendMessageHandler,
       getMessagesHandler,
       getPublicLobbiesHandler,
+      getPublicLobbiesByGameHandler,
       getLobbyStateHandler,
       clearErrorHandler,
       startGameHandler,
