@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLobby } from '../components/lobby/LobbyContext'
 import { useAuth } from '../components/AuthContext'
-import { useChat } from '../components/chat/ChatProvider'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import InLobbyUserTile from '../components/InLobbyUserTile'
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile'
 import Setting from '../components/Setting'
@@ -22,9 +21,7 @@ import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 
 export const CompleteLobbyScreen = () => {
-  const { lobbyCode } = useParams<{ lobbyCode?: string }>()
   const { user } = useAuth()
-  const { sendMessage } = useChat()
   const navigate = useNavigate()
   const {
     currentLobby,
@@ -38,7 +35,7 @@ export const CompleteLobbyScreen = () => {
     transferHost,
     kickMember,
     toggleReady,
-    sendMessage: sendLobbyMessage,
+    sendMessage,
     getMessages,
     startGame,
     clearError,
@@ -98,6 +95,9 @@ export const CompleteLobbyScreen = () => {
     } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'Lobby is full') {
       clearError()
       navigate('/', { state: { message: error.message, type: 'error' } })
+    } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
+      clearError()
+      navigate('/', { state: { message: error.message, type: 'error' } })
     } else if (error?.error_code === 'NOT_FOUND') {
       clearError()
       navigate('/', { state: { message: 'Lobby not found', type: 'error' } })
@@ -111,24 +111,9 @@ export const CompleteLobbyScreen = () => {
     }
   }, [error, navigate, clearError])
 
-  // Auto-join lobby from URL
-  useEffect(() => {
-    if (lobbyCode && !currentLobby) {
-      // Normalize lobby code: remove dashes if present
-      const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase()
-      
-      // Validate format: should be 6 alphanumeric characters
-      if (/^[A-Z0-9]{6}$/.test(normalizedCode)) {
-        joinLobby(normalizedCode)
-      } else {
-        navigate('/', { state: { message: 'Invalid lobby code format', type: 'error' } })
-      }
-    }
-  }, [lobbyCode, currentLobby, joinLobby, navigate])
-
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
-      sendLobbyMessage(message)
+      sendMessage(message)
     }
   }
 
@@ -175,18 +160,11 @@ export const CompleteLobbyScreen = () => {
     navigate('/')
   }
 
-  const handleInviteFriend = async (friendUserId: number | string, friendNickname: string) => {
+  const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {
     if (!currentLobby) return
-    
     const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
     const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
-    
-    try {
-      await sendMessage(String(friendUserId), { text: inviteMessage })
-      console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
-    } catch (error) {
-      console.error(`Failed to send invitation to ${friendNickname}:`, error)
-    }
+    console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
   }
 
   const handleSelectGame = (gameName: string) => {
@@ -357,7 +335,7 @@ export const CompleteLobbyScreen = () => {
     return (
         <main className="flex items-center justify-center min-h-screen bg-background-primary">
           <div className="text-red-500 text-xl">
-            {lobbyCode ? 'Joining lobby...' : 'You are not in any lobby.'}
+            You are not in any lobby.
           </div>
         </main>
       )
