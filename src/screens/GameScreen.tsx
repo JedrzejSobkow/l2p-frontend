@@ -1,27 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GameHeader from '../components/GameHeader';
 import SectionButton from '../components/SectionButton';
 import LobbyShortTile from '../components/LobbyShortTile';
 import RangeSlider from '../components/RangeSlider';
 import { FaUsers } from 'react-icons/fa';
+import { useParams } from 'react-router-dom';
+import { useLobby } from '../components/lobby/LobbyContext';
+
+interface Game {
+    game_name: string;
+    display_name: string;
+    description: string;
+    min_players: number;
+    max_players: number;
+    game_image_path: string;
+    supported_rules?: Record<string, any>;
+    turn_based?: boolean;
+    category?: string;
+}
 
 const GameScreen: React.FC = () => {
+    const { gameName } = useParams<{ gameName: string }>();
+    const { availableGames, getAvailableGames } = useLobby();
+    
     const [selectedSection, setSelectedSection] = useState<string>('Available Lobbies');
     const [playerCount, setPlayerCount] = useState<number>(2);
+    const [currentGame, setCurrentGame] = useState<Game | null>(null);
 
-    const gameRules = `
-        Tic-tac-toe is a simple yet strategic game where two players take turns marking spaces in a 3×3 grid.
-        The objective is to be the first player to place three of your marks in a horizontal, vertical, or diagonal row.
-        Players alternate turns, and each turn consists of marking an empty space with their symbol (either X or O).
+    useEffect(() => {
+        getAvailableGames();
+    }, []);
 
-        The game begins with an empty grid, and the first player is chosen randomly or by agreement.
-        As the game progresses, players must carefully plan their moves to block their opponent's attempts to form a row
-        while simultaneously creating opportunities to win.
-
-        If all spaces in the grid are filled and no player has succeeded in forming a row, the game ends in a draw.
-        Tic-tac-toe is not only a fun pastime but also a great way to develop strategic thinking and problem-solving skills.
-        It is a timeless game enjoyed by people of all ages around the world.
-    `;
+    useEffect(() => {
+        if (availableGames.length > 0 && gameName) {
+            const game = availableGames.find(
+                (g: Game) => g.game_name.toLowerCase() === gameName.toLowerCase()
+            );
+            if (game) {
+                setCurrentGame(game);
+                setPlayerCount(game.min_players);
+            }
+        }
+    }, [availableGames, gameName]);
 
     const lobbies = [
         { title: 'ttt_adventure', occupiedSlots: 1, totalSlots: 4, creator: 'player222', timeAgo: '120 seconds ago', profileImagePath: '/src/assets/images/avatar/1.png' },
@@ -42,14 +62,18 @@ const GameScreen: React.FC = () => {
         (lobby) => lobby.totalSlots == playerCount
     );
 
+    if (!currentGame) {
+        return <div className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">Loading...</div>;
+    }
+
     return (
         <main className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">
             <GameHeader 
-                title="Tic-tac-toe" 
-                minPlayers={2} 
-                maxPlayers={4} 
-                estimatedPlaytime="20 minutes" 
-                path="/src/assets/images/tic-tac-toe.png" 
+                title={currentGame.display_name} 
+                minPlayers={currentGame.min_players} 
+                maxPlayers={currentGame.max_players} 
+                path={`/src/assets/images/games/${currentGame.game_name}.png`}
+                
             />
             <div className="mt-4">
                 <SectionButton
@@ -63,8 +87,8 @@ const GameScreen: React.FC = () => {
                     <>
                     <div className='bg-background-secondary p-4 sm:p-6 md:p-7 rounded-lg'>
                         <RangeSlider 
-                            min={2} 
-                            max={10} 
+                            min={currentGame.min_players} 
+                            max={currentGame.max_players} 
                             value={playerCount} 
                             onChange={setPlayerCount} 
                             icon={<FaUsers />} 
@@ -87,7 +111,7 @@ const GameScreen: React.FC = () => {
                 )}
                 {selectedSection === 'Game Rules' && (
                     <div className="bg-background-secondary p-4 sm:p-6 md:p-7 rounded-lg">
-                        <p className="text-sm sm:text-base text-headline">{gameRules}</p>
+                        <p className="text-sm sm:text-base text-headline">{currentGame.description}</p>
                     </div>
                 )}
             </div>

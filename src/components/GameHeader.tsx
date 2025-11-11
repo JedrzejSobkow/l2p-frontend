@@ -9,11 +9,10 @@ interface GameHeaderProps {
     title: string;
     minPlayers: number;
     maxPlayers: number;
-    estimatedPlaytime: string;
     path: string;
 }
 
-const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, estimatedPlaytime, path }) => {
+const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, path }) => {
     const navigate = useNavigate();
     const { gameName } = useParams<{ gameName: string }>();
     const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby();
@@ -38,7 +37,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     };
 
     const handleCreateLobby = () => {
-        createLobby(maxPlayers, false, newLobbyName || undefined, gameName);
+        createLobby(minPlayers, false, newLobbyName || undefined, gameName);
         setShowNewLobbyModal(false);
         setNewLobbyName('');
     };
@@ -103,7 +102,6 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         <br />
                         Maximum number of players: {maxPlayers}
                         <br />
-                        Estimated playtime: {estimatedPlaytime}
                     </p>
                 </div>
                 <div className="game-header-actions mt-4 sm:mt-0 flex flex-wrap gap-3 justify-center mx-auto">
