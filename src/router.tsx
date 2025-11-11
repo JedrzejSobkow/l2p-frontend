@@ -59,7 +59,7 @@ export const router = createBrowserRouter([
             //     element: <RequireAuth> <LobbyScreen /> </RequireAuth>
             // },
             {
-                path: 'lobby-test',
+                path: 'lobby-test/:lobbyCode?',
                 element: <RequireAuth> <CompleteLobbyScreen /> </RequireAuth>
             },
             // {

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLobby } from '../components/lobby/LobbyContext'
 import { useAuth } from '../components/AuthContext'
 import { useChat } from '../components/chat/ChatProvider'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import InLobbyUserTile from '../components/InLobbyUserTile'
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile'
 import Setting from '../components/Setting'
@@ -22,6 +22,7 @@ import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 
 export const CompleteLobbyScreen = () => {
+  const { lobbyCode } = useParams<{ lobbyCode?: string }>()
   const { user } = useAuth()
   const { sendMessage } = useChat()
   const navigate = useNavigate()
@@ -92,8 +93,14 @@ export const CompleteLobbyScreen = () => {
 
   useEffect(() => {
     if (error?.error_code === 'KICKED') {
-    clearError()
-    navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })  // Przekieruj na home
+      clearError()
+      navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })
+    } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'Lobby is full') {
+      clearError()
+      navigate('/', { state: { message: error.message, type: 'error' } })
+    } else if (error?.error_code === 'NOT_FOUND') {
+      clearError()
+      navigate('/', { state: { message: 'Lobby not found', type: 'error' } })
     } else if (error) {
       setErrorMessage(typeof error === 'string' ? error : error.message || 'An error occurred')
       setShowErrorPopup(true)
@@ -103,6 +110,21 @@ export const CompleteLobbyScreen = () => {
       return () => clearTimeout(timer)
     }
   }, [error, navigate, clearError])
+
+  // Auto-join lobby from URL
+  useEffect(() => {
+    if (lobbyCode && !currentLobby) {
+      // Normalize lobby code: remove dashes if present
+      const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase()
+      
+      // Validate format: should be 6 alphanumeric characters
+      if (/^[A-Z0-9]{6}$/.test(normalizedCode)) {
+        joinLobby(normalizedCode)
+      } else {
+        navigate('/', { state: { message: 'Invalid lobby code format', type: 'error' } })
+      }
+    }
+  }, [lobbyCode, currentLobby, joinLobby, navigate])
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
@@ -335,7 +357,7 @@ export const CompleteLobbyScreen = () => {
     return (
         <main className="flex items-center justify-center min-h-screen bg-background-primary">
           <div className="text-red-500 text-xl">
-            You are not in any lobby.
+            {lobbyCode ? 'Joining lobby...' : 'You are not in any lobby.'}
           </div>
         </main>
       )
