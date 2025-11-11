@@ -161,29 +161,29 @@ export const CompleteLobbyScreen = () => {
   const handleSelectGame = (gameName: string) => {
     selectGame(gameName)
     
-    // Find the selected game
-    const selectedGameData = availableGames.find(g => g.game_name === gameName)
-    if (selectedGameData) {
-      // Get supported players range
-      const minPlayers = selectedGameData.min_players || 1
-      const maxPlayers = selectedGameData.max_players || 6
+    // // Find the selected game
+    // const selectedGameData = availableGames.find(g => g.game_name === gameName)
+    // if (selectedGameData) {
+    //   // Get supported players range
+    //   const minPlayers = selectedGameData.min_players || 1
+    //   const maxPlayers = selectedGameData.max_players || 6
       
-      // Find the smallest supported player count that is >= current player count
-      let newMaxPlayers = maxPlayers
-      if (currentPlayerCount > minPlayers) {
-        // Current player count is more than min, so set to current or next available
-        newMaxPlayers = Math.max(currentPlayerCount, minPlayers)
-      } else {
-        // Current player count is less than or equal to min
-        newMaxPlayers = minPlayers
-      }
+    //   // Find the smallest supported player count that is >= current player count
+    //   let newMaxPlayers = maxPlayers
+    //   if (currentPlayerCount > minPlayers) {
+    //     // Current player count is more than min, so set to current or next available
+    //     newMaxPlayers = Math.max(currentPlayerCount, minPlayers)
+    //   } else {
+    //     // Current player count is less than or equal to min
+    //     newMaxPlayers = minPlayers
+    //   }
       
-      // Update lobby settings with new max players (but only if it changed)
-      if (newMaxPlayers !== selectedPlayerCount) {
-        updateSettings(newMaxPlayers, isPublic)
-        setSelectedPlayerCount(newMaxPlayers)
-      }
-    }
+    //   // Update lobby settings with new max players (but only if it changed)
+    //   if (newMaxPlayers !== selectedPlayerCount) {
+    //     updateSettings(newMaxPlayers, isPublic)
+    //     setSelectedPlayerCount(newMaxPlayers)
+    //   }
+    // }
     
     setIsShowingCatalogue(false)
   }
@@ -192,10 +192,10 @@ export const CompleteLobbyScreen = () => {
     clearGameSelection()
     
     // Reset max players to 6 when game selection is cleared
-    if (selectedPlayerCount !== 6) {
-      updateSettings(6, isPublic)
-      setSelectedPlayerCount(6)
-    }
+    // if (selectedPlayerCount !== 6) {
+    //   updateSettings(6, isPublic)
+    //   setSelectedPlayerCount(6)
+    // }
     
     setIsShowingCatalogue(false)
   }
