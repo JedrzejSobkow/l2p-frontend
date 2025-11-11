@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLobby } from '../components/lobby/LobbyContext'
 import { useAuth } from '../components/AuthContext'
+import { useChat } from '../components/chat/ChatProvider'
 import { useNavigate } from 'react-router-dom'
 import InLobbyUserTile from '../components/InLobbyUserTile'
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile'
@@ -22,6 +23,7 @@ import { FiLock } from 'react-icons/fi'
 
 export const CompleteLobbyScreen = () => {
   const { user } = useAuth()
+  const { sendMessage } = useChat()
   const navigate = useNavigate()
   const {
     currentLobby,
@@ -35,7 +37,7 @@ export const CompleteLobbyScreen = () => {
     transferHost,
     kickMember,
     toggleReady,
-    sendMessage,
+    sendMessage: sendLobbyMessage,
     getMessages,
     startGame,
     clearError,
@@ -104,7 +106,7 @@ export const CompleteLobbyScreen = () => {
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
-      sendMessage(message)
+      sendLobbyMessage(message)
     }
   }
 
@@ -151,11 +153,18 @@ export const CompleteLobbyScreen = () => {
     navigate('/')
   }
 
-  const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {
+  const handleInviteFriend = async (friendUserId: number | string, friendNickname: string) => {
     if (!currentLobby) return
+    
     const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
     const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
-    console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
+    
+    try {
+      await sendMessage(String(friendUserId), { text: inviteMessage })
+      console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
+    } catch (error) {
+      console.error(`Failed to send invitation to ${friendNickname}:`, error)
+    }
   }
 
   const handleSelectGame = (gameName: string) => {
