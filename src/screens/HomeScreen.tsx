@@ -105,7 +105,8 @@ const HomeScreen: React.FC = () => {
           placeholder="Search for games..."
           suggestions={availableGames.map((game: any) => ({
             text: game.display_name,
-            image: game.game_image_path,
+            name: game.game_name,
+            image: `/src/assets/images/games/${game.game_name || 'default'}.png`,
           }))}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/game"
