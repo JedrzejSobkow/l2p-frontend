@@ -14,7 +14,7 @@ const HomeScreen: React.FC = () => {
 
   const [popup, setPopup] = useState<{ type: 'confirmation' | 'error'; message: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 2;
+  const itemsPerPage = 3;
 
   useEffect(() => {
     getAvailableGames();
@@ -59,18 +59,20 @@ const HomeScreen: React.FC = () => {
     : [];
 
   // Convert publicLobbies to GameLobbyCard format
-  const formattedLobbies = publicLobbies.map((lobby) => ({
-    gameName: lobby.selected_game_info?.display_name || 'Game not selected',
-    lobbyName: lobby.name,
-    gameImage: `/src/assets/images/games/${lobby.selected_game || 'default'}.png`,
-    players: lobby.members.slice(0, 2).map((member) => ({
-      username: member.nickname,
-      avatar: `/src/assets${member.pfp_path}`,
-    })),
-    maxPlayers: lobby.max_players,
-    duration: 'In progress',
-    lobbyCode: lobby.lobby_code,
-  }));
+  const formattedLobbies = publicLobbies
+    .filter((lobby) => lobby.current_players < lobby.max_players)
+    .map((lobby) => ({
+      gameName: lobby.selected_game_info?.display_name || 'Game not selected',
+      lobbyName: lobby.name,
+      gameImage: `/src/assets/images/games/${lobby.selected_game || 'default'}.png`,
+      players: lobby.members.slice(0, 2).map((member) => ({
+        username: member.nickname,
+        avatar: `/src/assets${member.pfp_path}`,
+      })),
+      maxPlayers: lobby.max_players,
+      duration: 'In progress',
+      lobbyCode: lobby.lobby_code,
+    }));
 
   // Calculate pagination
   const totalPages = Math.ceil(formattedLobbies.length / itemsPerPage);

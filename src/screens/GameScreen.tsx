@@ -51,7 +51,7 @@ const GameScreen: React.FC = () => {
     }, [availableGames, gameName]);
 
     const filteredLobbies = publicLobbies.filter(
-        (lobby) => lobby.max_players === playerCount
+        (lobby) => lobby.max_players === playerCount && lobby.current_players < lobby.max_players
     );
 
     const handleJoinLobby = (lobbyCode: string) => {
