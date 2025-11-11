@@ -6,8 +6,30 @@ import GameRecommendationWithImages from '../components/GameRecommendationWithIm
 import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
 import Popup from '../components/Popup';
+import { useLobby } from '../components/lobby/LobbyContext';
 
 const HomeScreen: React.FC = () => {
+  const { availableGames, getAvailableGames } = useLobby();
+  const location = useLocation();
+
+  const [popup, setPopup] = useState<{ type: 'confirmation' | 'error'; message: string } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    getAvailableGames();
+  }, [getAvailableGames]);
+
+  useEffect(() => {
+    if (location.state?.message) {
+      setPopup({
+        type: location.state.type || 'info',
+        message: location.state.message,
+      });
+      // Clear the state so popup doesn't show on page refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
   const leaderboardData = [
     { place: 1, pfp_path: '/src/assets/images/avatar/1.png', name: 'PlayerOne', rating: 1500 },
     { place: 2, pfp_path: '/src/assets/images/avatar/2.png', name: 'PlayerTwo', rating: 1400 },
@@ -18,14 +40,22 @@ const HomeScreen: React.FC = () => {
 
   const topPlayers = leaderboardData.slice(0, 5);
 
-  const topPicksImages = [
-    { src: '/src/assets/images/tic-tac-toe.png', alt: 'Tic Tac Toe', gameName: 'tictactoe' },
-    { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
-  ];
+  // Generate top picks and featured games from available games
+  const topPicksImages = availableGames.length > 0
+    ? availableGames.slice(0, 2).map((game: any) => ({
+        src: `/src/assets/images/games/${game.game_name || 'default'}.png`,
+        alt: game.display_name,
+        gameName: game.game_name,
+      }))
+    : [];
 
-  const featuredGamesImages = [
-    { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
-  ];
+  const featuredGamesImages = availableGames.length > 0
+    ? [availableGames[2] || availableGames[0]].map((game: any) => ({
+        src: `/src/assets/images/games/${game.game_name || 'default'}.png`,
+        alt: game.display_name,
+        gameName: game.game_name,
+      }))
+    : [];
 
   const paginatedLobbies = [
     {
@@ -126,21 +156,6 @@ const HomeScreen: React.FC = () => {
     },
   ];
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const location = useLocation();
-  const [popup, setPopup] = useState<{ type: 'confirmation' | 'error'; message: string } | null>(null);
-
-  useEffect(() => {
-    if (location.state?.message) {
-      setPopup({
-        type: location.state.type || 'info',
-        message: location.state.message,
-      });
-      // Clear the state so popup doesn't show on page refresh
-      window.history.replaceState({}, document.title);
-    }
-  }, [location]);
-
   const handleNextPage = () => {
     if (currentPage < paginatedLobbies.length) {
       setCurrentPage(currentPage + 1);
@@ -162,14 +177,10 @@ const HomeScreen: React.FC = () => {
         <SearchBar
           size="normal"
           placeholder="Search for games..."
-          suggestions={[
-            { text: 'Tic Tac Toe', image: '/src/assets/images/tic-tac-toe.png' },
-            { text: 'Clobber', image: '/src/assets/images/clobber.png' },
-            { text: 'Chess', image: '/src/assets/images/chess.png' },
-            { text: 'Checkers', image: '/src/assets/images/checkers.png' },
-            { text: 'Sudoku', image: '/src/assets/images/sudoku.png' },
-            { text: 'Minesweeper', image: '/src/assets/images/minesweeper.png' },
-          ]}
+          suggestions={availableGames.map((game: any) => ({
+            text: game.display_name,
+            image: game.game_image_path,
+          }))}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/game"
         />
@@ -178,8 +189,12 @@ const HomeScreen: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between gap-8">
         {/* Left Column: Top Picks and Featured Games */}
         <div className="w-full md:w-[70%] flex flex-col gap-8">
-          <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
-          <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
+          {topPicksImages.length > 0 && (
+            <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
+          )}
+          {featuredGamesImages.length > 0 && (
+            <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
+          )}
         </div>
 
         {/* Right Column: Leaderboard */}
