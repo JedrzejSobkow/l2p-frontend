@@ -154,6 +154,7 @@ const HomeScreen: React.FC = () => {
                 players={lobby.players}
                 maxPlayers={lobby.maxPlayers}
                 duration={lobby.duration}
+                lobbyCode={lobby.lobbyCode}
               />
             ))}
             <div className="flex justify-center items-center gap-6 mt-4">

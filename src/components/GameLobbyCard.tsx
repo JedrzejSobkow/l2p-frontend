@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLobby } from '../components/lobby/LobbyContext';
+
 
 interface GameLobbyCardProps {
   gameName: string;
@@ -8,13 +10,17 @@ interface GameLobbyCardProps {
   players: { username: string; avatar: string }[];
   maxPlayers: number;
   duration: string;
+  lobbyCode: string;
 }
 
-const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, gameImage, players, maxPlayers, duration }) => {
+const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, gameImage, players, maxPlayers, duration, lobbyCode }) => {
   const navigate = useNavigate();
+  const { joinLobby } = useLobby();
+  
 
   const handleNavigateToLobby = () => {
-    navigate(`/lobby/${lobbyName}`);
+    joinLobby(lobbyCode);
+    navigate('/lobby-test');
   };
 
   return (
@@ -49,30 +55,28 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
       {/* Player Slots */}
       <div className="flex justify-center w-full">
         <div
-          className={`grid gap-4 ${
-            maxPlayers === 1
+          className={`grid gap-4 ${maxPlayers === 1
               ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
               : maxPlayers === 2
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 3
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 4
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 5
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 6
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : ''
-          }`}
+                ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                : maxPlayers === 3
+                  ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                  : maxPlayers === 4
+                    ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                    : maxPlayers === 5
+                      ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                      : maxPlayers === 6
+                        ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                        : ''
+            }`}
         >
           {Array.from({ length: maxPlayers }).map((_, index) => (
             <div
               key={index}
-              className={`flex items-center gap-2 p-2 border rounded-lg transition-transform ${
-                players[index]
+              className={`flex items-center gap-2 p-2 border rounded-lg transition-transform ${players[index]
                   ? 'border-paragraph'
                   : 'border-paragraph hover:border-highlight hover:scale-105 cursor-pointer'
-              }`}
+                }`}
               onClick={() => {
                 if (!players[index]) {
                   handleNavigateToLobby();
