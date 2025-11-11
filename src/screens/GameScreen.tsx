@@ -4,7 +4,7 @@ import SectionButton from '../components/SectionButton';
 import LobbyShortTile from '../components/LobbyShortTile';
 import RangeSlider from '../components/RangeSlider';
 import { FaUsers } from 'react-icons/fa';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLobby } from '../components/lobby/LobbyContext';
 
 interface Game {
@@ -21,7 +21,8 @@ interface Game {
 
 const GameScreen: React.FC = () => {
     const { gameName } = useParams<{ gameName: string }>();
-    const { availableGames, getAvailableGames, getPublicLobbiesByGame, publicLobbies, isLoading } = useLobby();
+    const navigate = useNavigate();
+    const { availableGames, getAvailableGames, getPublicLobbiesByGame, publicLobbies, isLoading, joinLobby } = useLobby();
     
     const [selectedSection, setSelectedSection] = useState<string>('Available Lobbies');
     const [playerCount, setPlayerCount] = useState<number>(2);
@@ -52,6 +53,11 @@ const GameScreen: React.FC = () => {
     const filteredLobbies = publicLobbies.filter(
         (lobby) => lobby.max_players === playerCount
     );
+
+    const handleJoinLobby = (lobbyCode: string) => {
+        joinLobby(lobbyCode);
+        navigate('/lobby-test');
+    };
 
     if (!currentGame) {
         return <div className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">Loading...</div>;
@@ -91,15 +97,20 @@ const GameScreen: React.FC = () => {
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6">
                                 {filteredLobbies.map((lobby) => (
-                                    <LobbyShortTile 
-                                        key={lobby.lobby_code} 
-                                        title={lobby.name} 
-                                        occupiedSlots={lobby.current_players} 
-                                        totalSlots={lobby.max_players} 
-                                        creator={lobby.members[0]?.nickname || 'Unknown'} 
-                                        timeAgo={new Date(lobby.created_at).toLocaleString()} 
-                                        profileImagePath={`/src/assets${lobby.members[0]?.pfp_path || '/images/avatar/default.png'}`}
-                                    />
+                                    <div 
+                                        key={lobby.lobby_code}
+                                        onClick={() => handleJoinLobby(lobby.lobby_code)}
+                                        className="cursor-pointer"
+                                    >
+                                        <LobbyShortTile 
+                                            title={lobby.name} 
+                                            occupiedSlots={lobby.current_players} 
+                                            totalSlots={lobby.max_players} 
+                                            creator={lobby.members[0]?.nickname || 'Unknown'} 
+                                            timeAgo={new Date(lobby.created_at).toLocaleString()} 
+                                            profileImagePath={`/src/assets${lobby.members[0]?.pfp_path || '/images/avatar/default.png'}`}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         )}
