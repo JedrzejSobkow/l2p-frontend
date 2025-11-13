@@ -20,6 +20,7 @@ import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
+import { emitCreateGame } from '../services/game'
 
 export const CompleteLobbyScreen = () => {
   const { lobbyCode } = useParams<{ lobbyCode?: string }>()
@@ -303,6 +304,12 @@ export const CompleteLobbyScreen = () => {
     }
   }
 
+  const handleStartGame = () => {
+    if (currentLobby?.selected_game) {
+      emitCreateGame(currentLobby.selected_game, currentGameRules)
+    }
+  }
+
   const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.user_id === currentLobby.host_id))
   const userMember = members.find(m => m.user_id === user?.id)
   const isReady = userMember?.is_ready || false
@@ -478,7 +485,7 @@ export const CompleteLobbyScreen = () => {
 
             <button 
               disabled={!canStartGame} 
-              onClick={() => startGame('tictactoe')}
+              onClick={handleStartGame}
               className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
             >
               Start
@@ -612,7 +619,7 @@ export const CompleteLobbyScreen = () => {
 
             <button 
               disabled={!canStartGame} 
-              onClick={() => startGame('tictactoe')}
+              onClick={handleStartGame}
               className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
             >
               Start
