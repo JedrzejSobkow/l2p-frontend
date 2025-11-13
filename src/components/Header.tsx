@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 
@@ -7,7 +6,6 @@ const Header = ({ onToggleFriends }:{
     }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
-    const isFriendsScreen = location.pathname.startsWith('/friends');
 
     const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 

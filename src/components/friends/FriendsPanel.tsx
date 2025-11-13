@@ -4,7 +4,6 @@ import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
 import { useFriends } from './FriendsContext'
 import type { Friendship, FriendResult } from '../../services/friends'
-import Popup from '../popup/Popup'
 import { usePopup } from '../PopupContext'
 
 type FriendsPanelProps = {
