@@ -8,6 +8,7 @@ import { CgProfile } from 'react-icons/cg'
 import { AiFillHome } from 'react-icons/ai'
 import type { Friendship } from '../../services/friends'
 import { useFriends } from './FriendsContext'
+import { pfpImage } from '@assets/images'
 
 type FriendsSlideProps = {
   open: boolean
@@ -48,7 +49,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
           <div className="flex flex-col border-b border-white/10">
             <div className="flex items-center gap-3 min-w-0 border-b-1 border-separator p-5">
               <img
-                src={(user?.pfp_path ?  user.pfp_path : '/assets/images/pfp.png')}
+                src={(user?.pfp_path ?  user.pfp_path : pfpImage)}
                 alt={user?.nickname || 'User Avatar'}
                 className="h-15 w-15 rounded-full border border-white/10 object-cover"
               />

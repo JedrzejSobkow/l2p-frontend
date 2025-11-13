@@ -24,7 +24,6 @@ import {
   type ConversationUpdatedEvent,
   type UserTypingEvent,
 } from '../../services/chat'
-import { withAssetsPrefix } from '../../services/auth'
 
 export type ConversationTarget = {
   id: string
@@ -61,7 +60,7 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
   avatarUrl: undefined,
   content: dto.content ?? '',
   createdAt: dto.created_at,
-  imageUrl: withAssetsPrefix(dto.image_url ?? undefined),
+  imageUrl: dto.image_url ?? undefined,
 })
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {

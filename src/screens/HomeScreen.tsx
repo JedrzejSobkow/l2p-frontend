@@ -4,25 +4,38 @@ import LeaderboardCard from '../components/LeaderboardCard';
 import GameRecommendationWithImages from '../components/GameRecommendationWithImages';
 import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
+import {
+  ticTacToeImage,
+  clobberImage,
+  avatar1,
+  avatar2,
+  avatar3,
+  avatar4,
+  avatar5,
+  avatar6,
+  avatar7,
+  avatar8,
+  avatar9,
+} from '@assets/images';
 
 const HomeScreen: React.FC = () => {
   const leaderboardData = [
-    { place: 1, pfp_path: '/src/assets/images/avatar/1.png', name: 'PlayerOne', rating: 1500 },
-    { place: 2, pfp_path: '/src/assets/images/avatar/2.png', name: 'PlayerTwo', rating: 1400 },
-    { place: 3, pfp_path: '/src/assets/images/avatar/3.png', name: 'cool_usersdfsfsdfsdf', rating: 1300 },
-    { place: 4, pfp_path: '/src/assets/images/avatar/4.png', name: 'Cipicipi', rating: 1200 },
-    { place: 5, pfp_path: '/src/assets/images/avatar/4.png', name: 'cidsof', rating: 1150 },
+    { place: 1, pfp_path: avatar1, name: 'PlayerOne', rating: 1500 },
+    { place: 2, pfp_path: avatar2, name: 'PlayerTwo', rating: 1400 },
+    { place: 3, pfp_path: avatar3, name: 'cool_usersdfsfsdfsdf', rating: 1300 },
+    { place: 4, pfp_path: avatar4, name: 'Cipicipi', rating: 1200 },
+    { place: 5, pfp_path: avatar4, name: 'cidsof', rating: 1150 },
   ];
 
   const topPlayers = leaderboardData.slice(0, 5);
 
   const topPicksImages = [
-    { src: '/src/assets/images/tic-tac-toe.png', alt: 'Tic Tac Toe', gameName: 'tic-tac-toe' },
-    { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
+    { src: ticTacToeImage, alt: 'Tic Tac Toe', gameName: 'tic-tac-toe' },
+    { src: clobberImage, alt: 'Clobber', gameName: 'clobber' },
   ];
 
   const featuredGamesImages = [
-    { src: '/src/assets/images/clobber.png', alt: 'Clobber', gameName: 'clobber' },
+    { src: clobberImage, alt: 'Clobber', gameName: 'clobber' },
   ];
 
   const paginatedLobbies = [
@@ -32,10 +45,10 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Tic Tac Toe',
           lobbyName: 'Beginner Lobby',
-          gameImage: '/src/assets/images/tic-tac-toe.png',
+          gameImage: ticTacToeImage,
           players: [
-            { username: 'PlayerOne', avatar: '/src/assets/images/avatar/1.png' },
-            { username: 'PlayerTwo', avatar: '/src/assets/images/avatar/2.png' },
+            { username: 'PlayerOne', avatar: avatar1 },
+            { username: 'PlayerTwo', avatar: avatar2 },
           ],
           maxPlayers: 5,
           duration: '5-10 mins',
@@ -43,9 +56,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Clobber',
           lobbyName: 'Advanced Lobby',
-          gameImage: '/src/assets/images/clobber.png',
+          gameImage: clobberImage,
           players: [
-            { username: 'PlayerThree', avatar: '/src/assets/images/avatar/3.png' },
+            { username: 'PlayerThree', avatar: avatar3 },
           ],
           maxPlayers: 2,
           duration: '10-15 mins',
@@ -53,9 +66,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Chess',
           lobbyName: 'Strategy Lobby',
-          gameImage: '/src/assets/images/chess.png',
+          gameImage: clobberImage,
           players: [
-            { username: 'PlayerFour', avatar: '/src/assets/images/avatar/4.png' },
+            { username: 'PlayerFour', avatar: avatar4 },
           ],
           maxPlayers: 4,
           duration: '15-20 mins',
@@ -68,9 +81,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Checkers',
           lobbyName: 'Casual Checkers',
-          gameImage: '/src/assets/images/checkers.png',
+          gameImage: clobberImage,
           players: [
-            { username: 'PlayerFive', avatar: '/src/assets/images/avatar/5.png' },
+            { username: 'PlayerFive', avatar: avatar5 },
           ],
           maxPlayers: 3,
           duration: '10-15 mins',
@@ -78,9 +91,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Sudoku',
           lobbyName: 'Puzzle Masters',
-          gameImage: '/src/assets/images/sudoku.png',
+          gameImage: clobberImage,
           players: [
-            { username: 'PlayerSix', avatar: '/src/assets/images/avatar/6.png' },
+            { username: 'PlayerSix', avatar: avatar6 },
           ],
           maxPlayers: 6,
           duration: '20-30 mins',
@@ -88,9 +101,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Minesweeper',
           lobbyName: 'Mine Hunters',
-          gameImage: '/src/assets/images/minesweeper.png',
+          gameImage: clobberImage,
           players: [
-            { username: 'PlayerSeven', avatar: '/src/assets/images/avatar/7.png' },
+            { username: 'PlayerSeven', avatar: avatar7 },
           ],
           maxPlayers: 4,
           duration: '10-15 mins',
@@ -103,9 +116,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Tic Tac Toe',
           lobbyName: 'Pro Lobby',
-          gameImage: '/src/assets/images/tic-tac-toe.png',
+          gameImage: ticTacToeImage,
           players: [
-            { username: 'PlayerEight', avatar: '/src/assets/images/avatar/8.png' },
+            { username: 'PlayerEight', avatar: avatar8 },
           ],
           maxPlayers: 2,
           duration: '5-10 mins',
@@ -113,9 +126,9 @@ const HomeScreen: React.FC = () => {
         {
           gameName: 'Clobber',
           lobbyName: 'Clobber Champs',
-          gameImage: '/src/assets/images/clobber.png',
+          gameImage: clobberImage,
           players: [
-            { username: 'PlayerNine', avatar: '/src/assets/images/avatar/9.png' },
+            { username: 'PlayerNine', avatar: avatar9 },
           ],
           maxPlayers: 6,
           duration: '15-20 mins',
@@ -148,12 +161,12 @@ const HomeScreen: React.FC = () => {
           size="normal"
           placeholder="Search for games..."
           suggestions={[
-            { text: 'Tic Tac Toe', image: '/src/assets/images/tic-tac-toe.png' },
-            { text: 'Clobber', image: '/src/assets/images/clobber.png' },
-            { text: 'Chess', image: '/src/assets/images/chess.png' },
-            { text: 'Checkers', image: '/src/assets/images/checkers.png' },
-            { text: 'Sudoku', image: '/src/assets/images/sudoku.png' },
-            { text: 'Minesweeper', image: '/src/assets/images/minesweeper.png' },
+            { text: 'Tic Tac Toe', image: ticTacToeImage },
+            { text: 'Clobber', image: clobberImage },
+            { text: 'Chess', image: clobberImage },
+            { text: 'Checkers', image: clobberImage },
+            { text: 'Sudoku', image: clobberImage },
+            { text: 'Minesweeper', image: clobberImage },
           ]}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/game"

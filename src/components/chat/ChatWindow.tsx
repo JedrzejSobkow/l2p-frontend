@@ -12,6 +12,7 @@ import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
 import { useAuth } from '../AuthContext'
 import Lightbox from '../Lightbox'
 import { usePopup } from '../PopupContext'
+import { pfpImage } from '@assets/images'
 
 export type ChatMessage = {
   id: string
@@ -166,7 +167,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
         <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
           <img
             className='w-12 h-12 rounded-full'
-            src='src/assets/images/pfp.png'></img>
+            src={pfpImage}></img>
           <h2 className="text-s font-semibold text-headline">{title}</h2>
           
         </header>
@@ -190,7 +191,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
                 <img
-                  src={message.avatarUrl || 'src/assets/images/pfp.png'}
+                  src={message.avatarUrl || pfpImage}
                   alt={message.senderName}
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
@@ -219,7 +220,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               </div>
               {isOwn && (
                 <img
-                  src={user?.pfp_path || 'src/assets/images/pfp.png'}
+                  src={user?.pfp_path || pfpImage}
                   alt="You"
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />

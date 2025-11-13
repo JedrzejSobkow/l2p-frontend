@@ -3,6 +3,7 @@ import ChatWindow from './ChatWindow'
 import { useChatDock } from './ChatDockContext'
 import { useAuth } from '../AuthContext'
 import { useChat } from './ChatProvider'
+import { pfpImage } from '@assets/images'
 
 const ChatDock = () => {
   const { sessions, minimizeChat, closeChat } = useChatDock()
@@ -29,7 +30,7 @@ const ChatDock = () => {
               title={s.target.nickname}
             >
               <img
-                src={s.target.avatarUrl || '/assets/images/pfp.png'}
+                src={s.target.avatarUrl || pfpImage}
                 alt={s.target.nickname}
                 className="h-15 w-15 rounded-full"
               />
