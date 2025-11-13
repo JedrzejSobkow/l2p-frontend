@@ -19,6 +19,7 @@ import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
 import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
+import { sendMessage as sendPrivateMessage } from '../services/chat'
 
 export const CompleteLobbyScreen = () => {
   const { user } = useAuth()
@@ -164,6 +165,12 @@ export const CompleteLobbyScreen = () => {
     if (!currentLobby) return
     const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
     const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
+
+    sendPrivateMessage({
+      friend_user_id: friendUserId,
+      content: inviteMessage,
+    })
+
     console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
   }
 
