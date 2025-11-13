@@ -246,23 +246,25 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setAvailableGames(data.games)
     }
 
-    const handleGameSelected = (data: { game_name: string; game_info: any; current_rules: any }) => {
+    const handleGameSelected = (data: { game_name: string; game_info: any; current_rules: any; max_players?: number }) => {
       console.log('Game selected:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
         selected_game: data.game_name,
         selected_game_info: data.game_info,
-        game_rules: data.current_rules 
+        game_rules: data.current_rules,
+        ...(data.max_players !== undefined && { max_players: data.max_players }) // Update max_players if provided
       } : null)
     }
 
-    const handleGameSelectionCleared = (data: any) => {
+    const handleGameSelectionCleared = (data: { max_players: number; message: string }) => {
       console.log('Game selection cleared:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
         selected_game: undefined,
         selected_game_info: undefined,
-        game_rules: {} 
+        game_rules: {},
+        max_players: data.max_players // Update max_players based on the event data
       } : null)
     }
 

@@ -1,5 +1,5 @@
 import { io, type Socket } from 'socket.io-client'
-import { connectGameSocket, disconnectGameSocket } from './game'
+// import { connectGameSocket, disconnectGameSocket } from './game'
 
 
 const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
@@ -65,9 +65,9 @@ export const connectLobbySocket = (): Socket => {
     console.error('Lobby socket connect_error:', err)
   })
 
-  lobbySocket.on('connect', () => {
-    connectGameSocket()
-  })
+  // lobbySocket.on('connect', () => {
+  //   // connectGameSocket()
+  // })
 
   return lobbySocket
 }
@@ -80,7 +80,7 @@ export const disconnectLobbySocket = () => {
     lobbySocket = null
   }
 
-  disconnectGameSocket()
+  // disconnectGameSocket()
   console.error("ODŁąCZAM OD WEBSOCKETA GRE")
 }
 
