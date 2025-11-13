@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLobby } from '../components/lobby/LobbyContext'
 import { useAuth } from '../components/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import InLobbyUserTile from '../components/InLobbyUserTile'
 import InviteToLobbyUserTile from '../components/InviteToLobbyUserTile'
 import Setting from '../components/Setting'
@@ -22,6 +22,7 @@ import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
 
 export const CompleteLobbyScreen = () => {
+  const { lobbyCode } = useParams<{ lobbyCode?: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
   const {
@@ -112,6 +113,22 @@ export const CompleteLobbyScreen = () => {
     }
   }, [error, navigate, clearError])
 
+  // Auto-join lobby from URL
+  useEffect(() => {
+    if (lobbyCode && !currentLobby) {
+      // Normalize lobby code: remove dashes if present
+      const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase()
+      
+      // Validate format: should be 6 alphanumeric characters
+      if (/^[A-Z0-9]{6}$/.test(normalizedCode)) {
+        joinLobby(normalizedCode)
+        navigate('/lobby-test')
+      } else {
+        navigate('/', { state: { message: 'Invalid lobby code format', type: 'error' } })
+      }
+    }
+  }, [lobbyCode, currentLobby, joinLobby, navigate])
+
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
       sendMessage(message)
@@ -163,7 +180,7 @@ export const CompleteLobbyScreen = () => {
 
   const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {
     if (!currentLobby) return
-    const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
+    const lobbyUrl = `${window.location.origin}/lobby-test/${currentLobby.lobby_code}`
     const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
 
     sendPrivateMessage({
@@ -342,7 +359,7 @@ export const CompleteLobbyScreen = () => {
     return (
         <main className="flex items-center justify-center min-h-screen bg-background-primary">
           <div className="text-red-500 text-xl">
-            You are not in any lobby.
+            {lobbyCode ? 'Joining lobby...' : 'You are not in any lobby.'}
           </div>
         </main>
       )
