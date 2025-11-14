@@ -225,14 +225,14 @@ const TicTacToeView: GameClientModule["GameView"] = ({
 
   // Auto-return to lobby shortly after a win
   useEffect(() => {
-    if (resolved.winnerId) {
+    if (resolved.winnerId || resolved.draw) {
       const t = setTimeout(() => {
-        try { navigate('/lobby') } catch { /* no-op */ }
+        try { navigate('/lobby-test') } catch { /* no-op */ }
       }, 1500)
       return () => clearTimeout(t)
     }
     return
-  }, [resolved.winnerId, navigate])
+  }, [resolved.winnerId, resolved.draw, navigate])
 
   const markStyles = useMemo(
     () => ({
