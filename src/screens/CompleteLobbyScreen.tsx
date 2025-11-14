@@ -171,8 +171,8 @@ export const CompleteLobbyScreen = () => {
   useEffect(() => {
     const handleGameStarted = (data: { game_state: any }) => {
       setGameState(data.game_state); // Set game state here
-      emitToggleReady(currentLobby?.lobby_code ?? ''); // Emit status change to "inactive"
       navigate('/lobby/ingame');
+      emitToggleReady(currentLobby?.lobby_code ?? ''); // Emit status change to "inactive"
     };
 
     onGameStarted(handleGameStarted);
