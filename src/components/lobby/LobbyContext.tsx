@@ -71,11 +71,10 @@ import {
   emitGetPublicLobbiesByGame,
 } from '../../services/lobby'
 
-
 import {
     emitCreateGame,
-    offGameStarted,
-    onGameStarted
+    offGameState,
+    onGameState,
 } from '../../services/game'
 
 type LobbyContextValue = {
@@ -87,6 +86,7 @@ type LobbyContextValue = {
   publicLobbies: LobbyState[]
   error: LobbyError | null
   availableGames: any[]
+  gameState: any | null
   createLobby: (maxPlayers?: number, isPublic?: boolean, name?: string, gameName?: string) => void
   joinLobby: (lobbyCode: string) => void
   leaveLobby: () => void
@@ -104,6 +104,7 @@ type LobbyContextValue = {
   getAvailableGames: () => void
   selectGame: (gameName: string) => void
   clearGameSelection: () => void
+  setGameState: (state: any) => void
 }
 
 const LobbyContext = createContext<LobbyContextValue | undefined>(undefined)
@@ -117,6 +118,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [availableGames, setAvailableGames] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<LobbyError | null>(null)
+  const [gameState, setGameState] = useState<any | null>(null)
 
   // Initialize socket connection
   useEffect(() => {
@@ -129,12 +131,12 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   // Setup event listeners
   useEffect(() => {
     const handleLobbyCreated = (data: { lobby_code: string }) => {
-      console.log('Lobby created:', data)
+      //console('Lobby created:', data)
       setIsLoading(false)
     }
 
     const handleLobbyJoined = (data: { lobby: LobbyState }) => {
-      console.log('Lobby joined:', data)
+      //console('Lobby joined:', data)
       setCurrentLobby(data.lobby)
       setMembers(data.lobby.members)
       setMessages([])
@@ -142,7 +144,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleLobbyLeft = () => {
-      console.log('Lobby left')
+      //console('Lobby left')
       setCurrentLobby(null)
       setMembers([])
       setMessages([])
@@ -151,31 +153,31 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleLobbyState = (data: LobbyState) => {
-      console.log('Lobby state:', data)
+      //console('Lobby state:', data)
       setCurrentLobby(data)
       setMembers(data.members)
       setIsLoading(false)
     }
 
     const handleMemberJoined = (data: { member: LobbyMember; current_players: number }) => {
-      console.log('Member joined:', data)
+      //console('Member joined:', data)
       setMembers(prev => [...prev, data.member])
       setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
     const handleMemberLeft = (data: { user_id: number | string; nickname: string; current_players: number }) => {
-      console.log('Member left:', data)
+      //console('Member left:', data)
       setMembers(prev => prev.filter(m => m.user_id !== data.user_id))
       setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
     const handleHostTransferred = (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => {
-      console.log('Host transferred:', data)
+      //console('Host transferred:', data)
       setCurrentLobby(prev => prev ? { ...prev, host_id: data.new_host_id } : null)
     }
 
     const handleSettingsUpdated = (data: { max_players: number; is_public: boolean; name?: string }) => {
-      console.log('Settings updated:', data)
+      //console('Settings updated:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
         max_players: data.max_players, 
@@ -185,33 +187,33 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleMemberKicked = (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => {
-      console.log('Member kicked:', data)
+      //console('Member kicked:', data)
       setMembers(prev => prev.filter(m => m.user_id !== data.user_id))
     }
 
     const handleMemberReadyChanged = (data: { user_id: number | string; nickname: string; is_ready: boolean }) => {
-      console.log('Member ready changed:', data)
+      //console('Member ready changed:', data)
       setMembers(prev => prev.map(m => m.user_id === data.user_id ? { ...m, is_ready: data.is_ready } : m))
     }
 
     const handlePublicLobbies = (data: { lobbies: LobbyState[]; total: number }) => {
-      console.log('Public lobbies:', data)
+      //console('Public lobbies:', data)
       setPublicLobbies(data.lobbies)
       setIsLoading(false)
     }
 
     const handleLobbyMessage = (data: LobbyMessage) => {
-      console.log('Lobby message:', data)
+      //console('Lobby message:', data)
       setMessages(prev => [...prev, data])
     }
 
     const handleLobbyMessagesHistory = (data: { messages: LobbyMessage[]; lobby_code: string; total: number }) => {
-      console.log('Lobby messages history:', data)
+      //console('Lobby messages history:', data)
       setMessages(data.messages)
     }
 
     const handleLobbyUserTyping = (data: { user_id: number | string; nickname: string }) => {
-      console.log('User typing:', data)
+      //console('User typing:', data)
       setTypingUsers(prev => {
         const key = String(data.user_id)
         if (prev.includes(key)) return prev
@@ -223,7 +225,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleKickedFromLobby = (data: { lobby_code: string; message: string }) => {
-      console.log('Kicked from lobby:', data)
+      //console('Kicked from lobby:', data)
       setCurrentLobby(null)
       setMembers([])
       setMessages([])
@@ -236,18 +238,13 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false)
     }
 
-    const handleGameStarted = (data: { lobby_code: string; game_name: string; game_state: any }) => {
-      console.log('Game started:', data)
-      setIsLoading(false)
-    }
-
     const handleAvailableGames = (data: { games: any[]; total: number }) => {
-      console.log('Available games:', data)
+      //console('Available games:', data)
       setAvailableGames(data.games)
     }
 
     const handleGameSelected = (data: { game_name: string; game_info: any; current_rules: any; max_players?: number }) => {
-      console.log('Game selected:', data)
+      //console('Game selected:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
         selected_game: data.game_name,
@@ -258,7 +255,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleGameSelectionCleared = (data: { max_players: number; message: string }) => {
-      console.log('Game selection cleared:', data)
+      //console('Game selection cleared:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
         selected_game: undefined,
@@ -269,11 +266,15 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleGameRulesUpdated = (data: { rules: Record<string, any> }) => {
-      console.log('Game rules updated:', data)
+      //console('Game rules updated:', data)
       setCurrentLobby(prev => prev ? { 
         ...prev, 
         game_rules: data.rules 
       } : null)
+    }
+
+    const handleGameState = (data: { game_state: any }) => {
+      setGameState(data.game_state)
     }
 
     onLobbyCreated(handleLobbyCreated)
@@ -292,11 +293,11 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onLobbyUserTyping(handleLobbyUserTyping)
     onKickedFromLobby(handleKickedFromLobby)
     onLobbyError(handleLobbyError)
-    onGameStarted(handleGameStarted)
     onAvailableGames(handleAvailableGames)
     onGameSelected(handleGameSelected)
     onGameSelectionCleared(handleGameSelectionCleared)
     onGameRulesUpdated(handleGameRulesUpdated)
+    onGameState(handleGameState)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -315,11 +316,11 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offLobbyUserTyping(handleLobbyUserTyping)
       offKickedFromLobby(handleKickedFromLobby)
       offLobbyError(handleLobbyError)
-      offGameStarted(handleGameStarted)
       offAvailableGames(handleAvailableGames)
       offGameSelected(handleGameSelected)
       offGameSelectionCleared(handleGameSelectionCleared)
       offGameRulesUpdated(handleGameRulesUpdated)
+      offGameState(handleGameState)
     }
   }, [])
 
@@ -429,6 +430,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     emitClearGameSelection(currentLobby.lobby_code)
   }, [currentLobby])
 
+  const setGameStateHandler = useCallback((state: any) => {
+    setGameState(state);
+  }, []);
+
   const value: LobbyContextValue = useMemo(
     () => ({
       isLoading,
@@ -439,6 +444,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       publicLobbies,
       error,
       availableGames,
+      gameState,
       createLobby: createLobbyHandler,
       joinLobby: joinLobbyHandler,
       leaveLobby: leaveLobbyHandler,
@@ -456,6 +462,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getAvailableGames: getAvailableGamesHandler,
       selectGame: selectGameHandler,
       clearGameSelection: clearGameSelectionHandler,
+      setGameState: setGameStateHandler,
     }),
     [
       isLoading,
@@ -466,6 +473,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       publicLobbies,
       error,
       availableGames,
+      gameState,
       createLobbyHandler,
       joinLobbyHandler,
       leaveLobbyHandler,
@@ -483,6 +491,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getAvailableGamesHandler,
       selectGameHandler,
       clearGameSelectionHandler,
+      setGameStateHandler,
     ],
   )
 

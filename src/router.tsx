@@ -16,6 +16,7 @@ import FriendsScreen from "./screens/FriendsScreen";
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import { CompleteLobbyScreen } from "./screens/CompleteLobbyScreen";
 // import { GamePlayScreen } from "./screens/GamePlayScreen";
+import LobbyInGameScreen from "./screens/LobbyInGameScreen";
 
 export const router = createBrowserRouter([
     {
@@ -61,6 +62,10 @@ export const router = createBrowserRouter([
             {
                 path: 'lobby-test/:lobbyCode?',
                 element: <RequireAuth> <CompleteLobbyScreen /> </RequireAuth>
+            },
+            {
+                path: 'lobby/ingame',
+                element: <RequireAuth> <LobbyInGameScreen /> </RequireAuth>
             },
             // {
             //     path: 'gameplay',

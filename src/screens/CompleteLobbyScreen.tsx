@@ -20,7 +20,7 @@ import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
-import { emitCreateGame } from '../services/game'
+import { emitCreateGame, onGameStarted, offGameStarted } from '../services/game'
 
 export const CompleteLobbyScreen = () => {
   const { lobbyCode } = useParams<{ lobbyCode?: string }>()
@@ -46,6 +46,7 @@ export const CompleteLobbyScreen = () => {
     getAvailableGames,
     selectGame,
     clearGameSelection,
+    setGameState
   } = useLobby()
 
   const [messageInput, setMessageInput] = useState('')
@@ -167,6 +168,20 @@ export const CompleteLobbyScreen = () => {
     }
   }, [lobbyCode, currentLobby, joinLobby, navigate])
 
+  useEffect(() => {
+    const handleGameStarted = (data: { game_state: any }) => {
+      setGameState(data.game_state); // Set game state here
+      //console("dup")
+      //console(data.game_state)
+      navigate('/lobby/ingame');
+    };
+
+    onGameStarted(handleGameStarted);
+    return () => {
+      offGameStarted(handleGameStarted);
+    };
+  }, [navigate, setGameState]);
+
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
       sendMessage(message)
@@ -226,7 +241,7 @@ export const CompleteLobbyScreen = () => {
       content: inviteMessage,
     })
 
-    console.log(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
+    //console(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
   }
 
   const handleSelectGame = (gameName: string) => {
