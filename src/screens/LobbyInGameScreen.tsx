@@ -3,7 +3,8 @@ import GameShell from '../components/games/GameShell';
 import TicTacToeModule from '../components/games/ticTacToe/module';
 import { useAuth } from '../components/AuthContext';
 import { useLobby } from '../components/lobby/LobbyContext';
-import { emitMakeMove, onMoveMade, offMoveMade } from '../services/game';
+import { emitMakeMove, onMoveMade, offMoveMade, onGameEnded, offGameEnded } from '../services/game';
+// import { useNavigate } from 'react-router-dom';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -36,6 +37,19 @@ const LobbyInGameScreen = () => {
     };
   }, [setGameState]);
 
+  useEffect(() => {
+    const handleGameEnded = (data: { result: string; winner_id: number | null; game_state: any }) => {
+      console.log('Game ended event received:', data);
+      setGameState(data.game_state); // Update the final game state
+    //   navigate('/lobby-test'); // Redirect to the lobby
+    };
+
+    onGameEnded(handleGameEnded);
+    return () => {
+      offGameEnded(handleGameEnded);
+    };
+  }, [setGameState]);
+
   const players = useMemo(() => {
     if (!members || members.length === 0) return [];
     const playerSymbols: Record<string, string> | undefined = gameState?.player_symbols;
@@ -50,9 +64,6 @@ const LobbyInGameScreen = () => {
   }, [members, gameState]);
 
   const isMyTurn = useMemo(() => {
-    //console("TURN")
-    //console(user)
-    //console(gameState)
     if (!user || !gameState) return false;
     const cur = (gameState as any).current_turn_player_id;
     return String(cur) === String(user.id);
