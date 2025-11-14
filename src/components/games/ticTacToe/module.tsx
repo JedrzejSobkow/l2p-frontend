@@ -37,8 +37,11 @@ const TicTacToeView: GameClientModule["GameView"] = ({
       const winner = players.find((player) => String(player.userId) === String(gameState.winner_id));
       return `${winner?.nickname ?? "Unknown player"} wins!`;
     }
+    if (String(gameState?.current_turn_player_id) === localPlayerId) {
+      return "Your turn"; // Display "Your turn" for the local player
+    }
     const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_player_id));
-    return gameState?.current_turn_player_id === localPlayerId ? "Your turn" : `${nextPlayer?.nickname ?? "Waiting..."}'s turn`;
+    return `${nextPlayer?.nickname ?? "Waiting..."}'s turn`;
   }, [rawState, players, localPlayerId]);
 
   useEffect(() => {
