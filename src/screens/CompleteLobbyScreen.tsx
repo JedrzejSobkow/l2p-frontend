@@ -14,7 +14,7 @@ import InviteFriendsModal from '../components/InviteFriendsModal'
 import EditLobbyNameModal from '../components/EditLobbyNameModal'
 import Popup from '../components/Popup'
 import { useGameSettings } from '../hooks/useGameSettings'
-import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined } from '../services/lobby'
+import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined, emitToggleReady } from '../services/lobby'
 import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
 import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
@@ -171,8 +171,7 @@ export const CompleteLobbyScreen = () => {
   useEffect(() => {
     const handleGameStarted = (data: { game_state: any }) => {
       setGameState(data.game_state); // Set game state here
-      //console("dup")
-      //console(data.game_state)
+      emitToggleReady(currentLobby?.lobby_code ?? ''); // Emit status change to "inactive"
       navigate('/lobby/ingame');
     };
 
@@ -180,7 +179,7 @@ export const CompleteLobbyScreen = () => {
     return () => {
       offGameStarted(handleGameStarted);
     };
-  }, [navigate, setGameState]);
+  }, [navigate, setGameState, currentLobby?.lobby_code]);
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
