@@ -43,7 +43,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const refreshFriends = useCallback(async () => {
-    // setIsLoading(true)
+    setIsLoading(true)
     try {
       const data = await getFriendsList()
       const normalized = Array.isArray(data)

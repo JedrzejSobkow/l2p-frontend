@@ -276,7 +276,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                 {!isLoading && filteredFriends.length === 0 && (
                   <p className="text-sm text-white/50">No friends yet. Add someone to start chatting.</p>
                 )}
-                {isLoading && <p className="text-sm text-white/60">Loading friends...</p>}
+                {/* {isLoading && <p className="text-sm text-white/60">Loading friends...</p>} */}
                 {filteredFriends.length > 0 && filteredFriends.map(renderFriend)}
               </div>
             </section>

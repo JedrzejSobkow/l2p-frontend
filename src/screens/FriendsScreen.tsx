@@ -33,6 +33,7 @@ const FriendsScreen: FC = () => {
   useEffect(() => {
     if (!selectedFriend) return
     const id = normalizeId(selectedFriend.friend_user_id)
+    chat.clearUnread(id)
     chat.ensureConversation({
       id,
       nickname: selectedFriend.friend_nickname,
