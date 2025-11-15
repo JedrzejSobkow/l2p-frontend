@@ -7,6 +7,7 @@ import BackButton from '../components/BackButton'
 import { useFriends } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
+import { pfpImage } from '@assets/images'
 
 const currentUserIdFallback = 'current-user'
 const normalizeId = (value: string | number) => String(value)
@@ -171,7 +172,7 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove, rem
     <aside className="flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.98)]">
       <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
         <img
-          src={friend.friend_pfp_path || '/assets/images/pfp.png'}
+          src={friend.friend_pfp_path || pfpImage}
           alt={friend.friend_nickname}
           className="h-20 w-20 rounded-full border border-white/10 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
         />

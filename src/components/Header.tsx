@@ -1,13 +1,13 @@
-import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext';
+import { logoImage, pfpImage } from '@assets/images';
+import { wifiIcon, playIcon, globeIcon, peopleIcon, menuIcon } from '@assets/icons';
 
 const Header = ({ onToggleFriends }:{
     onToggleFriends?:() => void
     }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const location = useLocation();
-    const isFriendsScreen = location.pathname.startsWith('/friends');
 
     const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 
@@ -24,7 +24,7 @@ const Header = ({ onToggleFriends }:{
             <div className="flex items-center gap-2 pr-2 flex-shrink-0">
                 <Link to="/">
                     <img
-                        src="/src/assets/images/logo.png"
+                        src={logoImage}
                         alt="L2P Logo"
                         className="h-18 w-auto cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
                     />
@@ -35,7 +35,7 @@ const Header = ({ onToggleFriends }:{
                 {/* WiFi Section */}
                 <div className="flex items-center gap-2 hide-on-smaller">
                     <img
-                        src="/src/assets/icons/wifi.png"
+                        src={wifiIcon}
                         alt="WiFi Icon"
                         className="w-9 h-9"
                     />
@@ -44,7 +44,7 @@ const Header = ({ onToggleFriends }:{
                 {/* Element 2 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/src/assets/icons/play.png"
+                        src={playIcon}
                         alt="Play Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -53,7 +53,7 @@ const Header = ({ onToggleFriends }:{
                 {/* Element 3 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/src/assets/icons/globe.png"
+                        src={globeIcon}
                         alt="Globe Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -62,7 +62,7 @@ const Header = ({ onToggleFriends }:{
                 {/* Element 4 */}
                 <div className="flex items-center gap-2">
                     <img
-                        src="/src/assets/icons/people.png"
+                        src={peopleIcon}
                         alt="People Icon"
                         className="w-9 h-9 hide-on-small"
                     />
@@ -75,7 +75,7 @@ const Header = ({ onToggleFriends }:{
                     <>
                         <Link to="/profile">
                             <img
-                                src={user?.pfp_path || "/src/assets/avatars/default.png"}
+                                src={user?.pfp_path || pfpImage}
                                 alt="User Icon"
                                 className="w-10 h-10 rounded-full cursor-pointer"
                             />
@@ -120,7 +120,7 @@ const Header = ({ onToggleFriends }:{
                 <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <img
                     onClick={onToggleFriends}
-                    src="/src/assets/icons/menu.png"
+                    src={menuIcon}
                     alt="Menu Icon"
                     className="w-9 h-9"
                 />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { userIcon, clockIcon, addPlayerIcon } from '@assets/icons';
 
 interface GameLobbyCardProps {
   gameName: string;
@@ -36,11 +37,11 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
         </button>
         <div className="text-paragraph text-sm mt-2">
           <div className="flex items-center gap-2">
-            <img src="/src/assets/icons/user.png" alt="Players Icon" className="w-4 h-4" />
+            <img src={userIcon} alt="Players Icon" className="w-4 h-4" />
             <span>{players.length}/{maxPlayers} players</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <img src="/src/assets/icons/clock.png" alt="Clock Icon" className="w-4 h-4" />
+            <img src={clockIcon} alt="Clock Icon" className="w-4 h-4" />
             <span>{duration}</span>
           </div>
         </div>
@@ -102,7 +103,7 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
                 <>
                   <div className="h-10 content-center">
                     <img
-                      src="/src/assets/icons/add-player.png"
+                      src={addPlayerIcon}
                       alt="Add Player"
                       className="w-7"
                     />

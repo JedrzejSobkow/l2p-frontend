@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { moreGamesImage } from '@assets/images';
 
 interface GameRecommendationWithImages {
   title: string;
@@ -22,7 +23,7 @@ const GameRecommendationWithImages: React.FC<GameRecommendationWithImages> = ({ 
         ))}
         <Link to="/find_games">
           <img
-            src="/src/assets/images/more-games.png"
+            src={moreGamesImage}
             alt="More Games"
             className="w-24 h-24 md:w-32 md:h-32 rounded-lg shadow-md cursor-pointer hover:scale-105 transition-transform"
           />
