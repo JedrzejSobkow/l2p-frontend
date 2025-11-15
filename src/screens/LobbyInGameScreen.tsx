@@ -3,12 +3,13 @@ import GameShell from '../components/games/GameShell';
 import TicTacToeModule from '../components/games/ticTacToe/module';
 import { useAuth } from '../components/AuthContext';
 import { useLobby } from '../components/lobby/LobbyContext';
+import LobbyChat from '../components/LobbyChat'; // Import LobbyChat
 import { emitMakeMove, onMoveMade, offMoveMade, onGameEnded, offGameEnded } from '../services/game';
 // import { useNavigate } from 'react-router-dom';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
-  const { gameState, members, setGameState } = useLobby();
+  const { gameState, members, setGameState, messages, sendMessage } = useLobby(); // Access messages and sendMessage
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
 
   useEffect(() => {
@@ -84,19 +85,37 @@ const LobbyInGameScreen = () => {
     emitMakeMove({ row, col });
   }, [gameState]);
 
+  const handleSendMessage = (message: string) => {
+    if (message.trim()) {
+      sendMessage(message); // Use sendMessage from LobbyContext
+    }
+  };
+
   const module = TicTacToeModule;
 
   return (
     <div className="w-full">
-      <GameShell
-        module={module}
-        state={gameState ?? { board: Array(9).fill(null), current_turn_player_id: user?.id ? String(user.id) : undefined }}
-        players={players}
-        localPlayerId={String(user?.id ?? '')}
-        lastMove={lastMove}
-        isMyTurn={isMyTurn}
-        onProposeMove={handleProposeMove}
-      />
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-1">
+          <GameShell
+            module={module}
+            state={gameState ?? { board: Array(9).fill(null), current_turn_player_id: user?.id ? String(user.id) : undefined }}
+            players={players}
+            localPlayerId={String(user?.id ?? '')}
+            lastMove={lastMove}
+            isMyTurn={isMyTurn}
+            onProposeMove={handleProposeMove}
+          />
+        </div>
+        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 sm:p-4">
+          <h3 className="text-base sm:text-lg font-bold text-white mb-2">Chat</h3>
+          <LobbyChat 
+            messages={messages.map(m => ({ username: m.nickname, text: m.content }))}
+            onSendMessage={handleSendMessage}
+            typingUsers={[]} // Typing indicator can be added if needed
+          />
+        </div>
+      </div>
     </div>
   );
 };
