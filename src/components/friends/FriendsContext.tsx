@@ -43,7 +43,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const refreshFriends = useCallback(async () => {
-    setIsLoading(true)
+    // setIsLoading(true)
     try {
       const data = await getFriendsList()
       const normalized = Array.isArray(data)
@@ -64,7 +64,12 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       return
     }
     void refreshFriends()
+    const interval = window.setInterval(()=>{
+      void refreshFriends()
+    },2_000)
+    return () => window.clearInterval(interval)
   }, [isAuthenticated, refreshFriends])
+
 
   const upsertFriendship = useCallback((entry: Friendship) => {
     setFriendships((prev) => {
