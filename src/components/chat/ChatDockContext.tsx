@@ -46,7 +46,11 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
       const id = String(target.id)
       setState((prev) => {
         const existing = prev.sessions[id]
+
         if (existing) {
+          if (existing.minimized === false){
+            chat.clearUnread(id)
+          }
           const mergedTarget: ChatTarget = {
             id,
             nickname: target.nickname ?? existing.target.nickname,
@@ -127,9 +131,6 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     if (!isAuthenticated) return
     if (!chat.subscribeToIncomingMessages) return
     const unsubscribe = chat.subscribeToIncomingMessages(({ target }) => {
-      const existingTarget = chat.getTarget(target.id)
-      console.log(target)
-      console.log(existingTarget)
       upsertSession(
         {
           id: target.id,
