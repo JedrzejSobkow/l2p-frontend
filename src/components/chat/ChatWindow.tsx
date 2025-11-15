@@ -160,7 +160,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl rounded-b-none border border-separator bg-background-secondary max-h-[77vh]',
+        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl border border-separator bg-background-secondary max-h-[81vh]',
         className
       )}
     >
@@ -239,7 +239,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t-1 border-separator">
+      <form onSubmit={handleSubmit}>
         <div className="relative items-center flex gap-2">
           {allowAttachments && (
             <>
@@ -272,7 +272,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               rows={1}
-              className={"w-full rounded-2xl resize-none border border-transparent bg-white/10 text-sm text-white outline-none transition focus:border-orange-400/60" + (allowAttachments && " px-10 py-4 pr-16" || " px-4 py-4")}
+              className={"w-full rounded-2xl rounded-t-none rounded-r-none resize-none border border-transparent bg-white/10 text-sm text-white outline-none transition focus:border-orange-400/60" + (allowAttachments && " px-10 py-4 pr-16" || " px-4 py-4")}
               disabled={isComposerDisabled}
             />
             <button

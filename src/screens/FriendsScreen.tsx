@@ -16,6 +16,7 @@ const FriendsScreen: FC = () => {
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
   const [removing, setRemoving] = useState(false)
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
+  const [activeMobileTab, setActiveMobileTab] = useState<'friends' | 'chat' | 'details'>('friends')
 
   const { user } = useAuth()
   const chat = useChat()
@@ -53,6 +54,7 @@ const FriendsScreen: FC = () => {
 
   const handleSelectFriend = (friend: Friendship) => {
     setSelectedFriendId(normalizeId(friend.friend_user_id))
+    setActiveMobileTab('chat')
   }
 
   const handleRemoveRequest = () => {
@@ -80,8 +82,41 @@ const FriendsScreen: FC = () => {
   }
 
   return (
-    <div className="flex h-full min-h-[calc(100vh-6rem)] flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)]">
-      <div className="order-1 w-full">
+    <div className="flex h-full flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)]">
+      {/* Mobile tabs */}
+      <div className="mb-4 flex lg:hidden">
+        <button
+          type="button"
+          onClick={() => setActiveMobileTab('friends')}
+          className={`flex-1 rounded-l-2xl text-sm font-semibold transition ${
+            activeMobileTab === 'friends' ? 'bg-button text-headline' : 'bg-white/10 text-white/70'
+          }`}
+        >
+          Friends
+        </button>
+        <button
+          type="button"
+          onClick={() => selectedFriend && setActiveMobileTab('chat')}
+          disabled={!selectedFriend}
+          className={`flex-1 text-sm font-semibold transition ${
+            activeMobileTab === 'chat' ? 'bg-button text-headline' : 'bg-white/10 text-white/70'
+          } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
+        >
+          Chat
+        </button>
+        <button
+          type="button"
+          onClick={() => selectedFriend && setActiveMobileTab('details')}
+          disabled={!selectedFriend}
+          className={`flex-1 rounded-r-2xl py-2 text-sm font-semibold transition ${
+            activeMobileTab === 'details' ? 'bg-button text-headline' : 'bg-white/10 text-white/70'
+          } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
+        >
+          Details
+        </button>
+      </div>
+
+      <div className={`order-1 w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
         <FriendsPanel
           onFriendSelect={handleSelectFriend}
           title="Your Friends"
@@ -89,17 +124,13 @@ const FriendsScreen: FC = () => {
           selectedFriendId={selectedFriend?.friend_user_id}
         />
       </div>
-      <div className="order-3 flex w-full h-full flex-1 flex-col min-h-0 gap-4 lg:order-2">
+      <div
+        className={`order-3 flex flex-col w-full h-full flex-1 min-h-0 ${
+          activeMobileTab === 'chat' ? 'flex' : 'hidden'
+        } lg:order-2 lg:flex`}
+      >
         {selectedFriend ? (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
-              </div>
-              <BackButton label='Go back'>
-              </BackButton>
-            </div>
-
             <ChatWindow
               title={selectedFriend.friend_nickname}
               messages={activeMessages}
@@ -122,7 +153,11 @@ const FriendsScreen: FC = () => {
           </div>
         )}
       </div>
-      <div className="order-2 w-full lg:order-3">
+      <div
+        className={`order-2 w-full ${
+          activeMobileTab === 'details' ? 'block' : 'hidden'
+        } lg:order-3 lg:block`}
+      >
         {selectedFriend ? (
           <FriendDetailsPanel friend={selectedFriend} onRemove={handleRemoveRequest} removing={removing} />
         ) : (
