@@ -1,73 +1,118 @@
-# React + TypeScript + Vite
+# L2P-Online Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web client for L2P-Online built with React, TypeScript, Vite, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Table of Contents
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Configuration](#configuration)
+- [Development Setup](#development-setup)
+- [Docker](#docker)
+- [Scripts](#scripts)
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- Node.js 20+ (LTS recommended)
+- npm (comes with Node.js)
+- Docker and Docker Compose (optional, for containerized runs)
+- Git
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Run the frontend locally with Node.js:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+```bash
+# Clone the repository
+git clone <repository-url>
+cd l2p-frontend
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+# Install dependencies
+npm ci
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Copy environment configuration
+cp .env.example .env
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The application will be available at:
+- **Frontend**: http://localhost:5173
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Configuration
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Environment Variables
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
 ```
+
+Then edit the values as needed.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_BASE_URL` | Base URL of the backend API (versioned) | `http://localhost:8000/v1` |
+| `VITE_SOCKET_IO_URL` | Socket.IO server URL | `http://localhost:8000` |
+
+All environment variables exposed to the client must be prefixed with `VITE_`. They are read at build time.
+
+## Development Setup
+
+Install dependencies and run the app locally:
+
+```bash
+# Install dependencies (first time)
+npm ci
+
+# Start dev server with hot reload
+npm run dev
+```
+
+Create a production build and preview it:
+
+```bash
+# Build for production
+npm run build
+
+# Preview the built app
+npm run preview
+```
+
+## Docker
+
+Run the frontend using Docker Compose:
+
+```bash
+# Build and start the container (rebuild image if needed)
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop the container
+docker-compose down
+```
+
+The application will be available at:
+- **Frontend (Docker)**: http://localhost:5173
+
+You can also build the image manually and pass environment variables as build arguments:
+
+```bash
+docker build \
+  --build-arg VITE_API_BASE_URL=http://localhost:8000/v1 \
+  --build-arg VITE_SOCKET_IO_URL=http://localhost:8000 \
+  -t l2p-frontend .
+```
+
+## Scripts
+
+Useful npm scripts:
+
+- `npm run dev` – start the development server.
+- `npm run build` – type-check and create a production build.
+- `npm run preview` – preview the production build locally.
+- `npm run lint` – run ESLint on the project.
