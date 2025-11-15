@@ -3,13 +3,13 @@ import GameShell from '../components/games/GameShell';
 import TicTacToeModule from '../components/games/ticTacToe/module';
 import { useAuth } from '../components/AuthContext';
 import { useLobby } from '../components/lobby/LobbyContext';
-import LobbyChat from '../components/LobbyChat'; // Import LobbyChat
+import LobbyChat from '../components/LobbyChat';
+import InGameUserTile from '../components/InGameUserTile'; // Import InGameUserTile
 import { emitMakeMove, onMoveMade, offMoveMade, onGameEnded, offGameEnded } from '../services/game';
-// import { useNavigate } from 'react-router-dom';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
-  const { gameState, members, setGameState, messages, sendMessage } = useLobby(); // Access messages and sendMessage
+  const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember } = useLobby();
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
 
   useEffect(() => {
@@ -42,7 +42,6 @@ const LobbyInGameScreen = () => {
     const handleGameEnded = (data: { result: string; winner_id: number | null; game_state: any }) => {
       console.log('Game ended event received:', data);
       setGameState(data.game_state); // Update the final game state
-    //   navigate('/lobby-test'); // Redirect to the lobby
     };
 
     onGameEnded(handleGameEnded);
@@ -91,6 +90,14 @@ const LobbyInGameScreen = () => {
     }
   };
 
+  const handlePassHost = (userId: number | string) => {
+    transferHost(userId);
+  };
+
+  const handleKickOut = (userId: number | string) => {
+    kickMember(userId);
+  };
+
   const module = TicTacToeModule;
 
   return (
@@ -108,7 +115,25 @@ const LobbyInGameScreen = () => {
           />
         </div>
         <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 sm:p-4">
-          <h3 className="text-base sm:text-lg font-bold text-white mb-2">Chat</h3>
+          <h3 className="text-base sm:text-lg font-bold text-white mb-2">Players</h3>
+          <div className="flex flex-col gap-2">
+            {members.map((member, index) => (
+              <InGameUserTile
+                key={member.user_id}
+                avatar={`/src/assets${member.pfp_path}`|| '/default-avatar.png'}
+                username={member.nickname}
+                place={index + 1}
+                isHost={currentLobby?.host_id === member.user_id}
+                displayPassHost={currentLobby?.host_id === user?.id && user?.id !== member.user_id}
+                displayKickOut={currentLobby?.host_id === user?.id && user?.id !== member.user_id}
+                isYou={String(user?.id) === String(member.user_id)}
+                isCurrentTurn={String(gameState?.current_turn_player_id) === String(member.user_id)}
+                onPassHost={() => handlePassHost(member.user_id)}
+                onKickOut={() => handleKickOut(member.user_id)}
+              />
+            ))}
+          </div>
+          <h3 className="text-base sm:text-lg font-bold text-white mt-4 mb-2">Chat</h3>
           <LobbyChat 
             messages={messages.map(m => ({ username: m.nickname, text: m.content }))}
             onSendMessage={handleSendMessage}
