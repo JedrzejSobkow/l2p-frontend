@@ -52,8 +52,8 @@ const FriendsScreen: FC = () => {
     await chat.sendMessage(normalizeId(selectedFriend.friend_user_id), { text, attachment })
   }
 
-  const handleSelectFriend = (friend: Friendship) => {
-    setSelectedFriendId(normalizeId(friend.friend_user_id))
+  const handleSelectFriend = (friendId: string | number) => {
+    setSelectedFriendId(normalizeId(friendId))
     setActiveMobileTab('chat')
   }
 

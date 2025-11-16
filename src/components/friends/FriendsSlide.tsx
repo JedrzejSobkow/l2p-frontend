@@ -6,20 +6,20 @@ import { useAuth } from '../AuthContext'
 import { FaUserFriends } from 'react-icons/fa'
 import { CgProfile } from 'react-icons/cg'
 import { AiFillHome } from 'react-icons/ai'
-import type { Friendship } from '../../services/friends'
 import { useFriends } from './FriendsContext'
+import { useChatDock } from '../chat/ChatDockContext'
 
 type FriendsSlideProps = {
   open: boolean
   onClose: () => void
-  onFriendSelect?: (friend: Friendship) => void
   title?: string
   selectedFriendId?: string | number
 }
 
-const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, title, selectedFriendId }) => {
+const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFriendId }) => {
   const { user } = useAuth()
-  const { refreshFriends } = useFriends()
+  const { openChat} = useChatDock()
+  const { refreshFriends,friends } = useFriends()
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation()
   }
@@ -92,7 +92,15 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
             </div>
           </div>
           <FriendsPanel
-            onFriendSelect={onFriendSelect}
+            onFriendSelect={(friendId) => {
+              const friend = friends.find((val) => val.friend_user_id === friendId)
+              if (friend)
+                openChat({
+                  id: String(friend?.friend_user_id),
+                  nickname: friend?.friend_nickname,
+                  avatarUrl: friend?.friend_pfp_path
+                })
+            }}
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"

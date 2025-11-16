@@ -8,7 +8,8 @@ import { usePopup } from '../PopupContext'
 import { useChat } from '../chat/ChatProvider'
 
 type FriendsPanelProps = {
-  onFriendSelect?: (friend: Friendship) => void
+  onFriendSelect?: (friendId: string | number) => void
+  onFriendMessage?: (friendId: string | number) => void
   title?: string
   className?: string
   selectedFriendId?: string | number
@@ -20,6 +21,7 @@ const normalizeId = (value: string | number | undefined | null) =>
 
 const FriendsPanel: FC<FriendsPanelProps> = ({
   onFriendSelect,
+  onFriendMessage,
   title = 'Friends',
   className,
   selectedFriendId,
@@ -34,7 +36,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     declineRequest,
     isLoading,
   } = useFriends()
-  const { openChat } = useChatDock()
   const {showPopup} = usePopup();
   const {getUnread} = useChat()
 
@@ -132,8 +133,9 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     }
   }
 
+
   const renderFriend = (friend: Friendship) => {
-    console.log('Rendering friend:', friend)
+    // console.log('Rendering friend:', friend)
     const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
     const isSelected = selectedKey ? key === selectedKey : false
     return (
@@ -142,14 +144,8 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         key={key}
         {...friend}
         isSelected={isSelected}
-        onClick={() => onFriendSelect?.(friend)}
-        onMessage={() =>
-          openChat({
-            id: key,
-            nickname: friend.friend_nickname,
-            avatarUrl: friend.friend_pfp_path,
-          })
-        }
+        onClick={() => onFriendSelect?.(friend.friend_user_id)}
+        onMessage={()=> onFriendMessage?.(friend.friend_user_id)}
       />
     )
   }
