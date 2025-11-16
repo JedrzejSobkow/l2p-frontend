@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type FC } from 'react'
+import { useLocation } from 'react-router-dom'
 import ChatWindow from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import { useAuth } from '../components/AuthContext'
 import { useChat } from '../components/chat/ChatProvider'
-import BackButton from '../components/BackButton'
 import { useFriends } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
@@ -13,10 +13,16 @@ const normalizeId = (value: string | number) => String(value)
 
 const FriendsScreen: FC = () => {
   const { friends, removeFriend } = useFriends()
-  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
+  const location = useLocation()
+  const initialFriendId =
+    (location.state as { friendId?: string } | null)?.friendId ?? null
+
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(initialFriendId)
   const [removing, setRemoving] = useState(false)
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
-  const [activeMobileTab, setActiveMobileTab] = useState<'friends' | 'chat' | 'details'>('friends')
+  const [activeMobileTab, setActiveMobileTab] = useState<'friends' | 'chat' | 'details'>(
+    initialFriendId ? 'chat' : 'friends',
+  )
 
   const { user } = useAuth()
   const chat = useChat()
@@ -26,10 +32,19 @@ const FriendsScreen: FC = () => {
   }, [friends, selectedFriendId])
 
   useEffect(() => {
-    if (!selectedFriend && friends.length > 0) {
+    const friendIdFromState =
+      (location.state as { friendId?: string } | null)?.friendId
+    if (friendIdFromState) {
+      setSelectedFriendId(String(friendIdFromState))
+      setActiveMobileTab('chat')
+    }
+  }, [location.state])
+
+  useEffect(() => {
+    if (!selectedFriendId && friends.length > 0) {
       setSelectedFriendId(normalizeId(friends[0].friend_user_id))
     }
-  }, [friends, selectedFriend])
+  }, [friends, selectedFriendId])
 
   useEffect(() => {
     if (!selectedFriend) return

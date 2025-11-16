@@ -28,6 +28,10 @@ type ChatDockContextValue = {
   sendMessage: (targetId: string, payload: { text?: string; attachment?: File | null }) => Promise<void>
 }
 
+const toSessionId = (id: string | number) => {
+  return `u:${String(id)}`
+}
+
 const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefined)
 
 export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
@@ -44,8 +48,9 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const upsertSession = useCallback(
     (target: ChatTarget, options?: { minimized?: boolean; addOnly?: boolean }) => {
       const id = String(target.id)
+      const key = toSessionId(id)
       setState((prev) => {
-        const existing = prev.sessions[id]
+        const existing = prev.sessions[key]
 
         if (existing) {
           if (existing.minimized === false){
@@ -64,20 +69,22 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
             mergedTarget.nickname !== existing.target.nickname ||
             mergedTarget.avatarUrl !== existing.target.avatarUrl ||
             mergedTarget.status !== existing.target.status
+
           if (!targetChanged && nextMinimized === existing.minimized) {
             return prev
           }
-          return {
+
+           return {
             sessions: {
               ...prev.sessions,
-              [id]: { ...existing, target: mergedTarget, minimized: nextMinimized },
+              [key]: { ...existing, target: mergedTarget, minimized: nextMinimized },
             },
-          }
+            }
         }
         return {
           sessions: {
             ...prev.sessions,
-            [id]: {
+            [key]: {
               target: { id, nickname: target.nickname, avatarUrl: target.avatarUrl, status: target.status },
               messages: [],
               minimized: options?.minimized ?? false,
@@ -88,6 +95,38 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     },
     [],
   )
+  //         const updated: ChatSession = {
+  //           ...existing,
+  //           target: mergedTarget,
+  //           minimized: nextMinimized,
+  //         }
+
+  //         // Move this session to the end to mark it as most recently interacted
+  //         const { [id]: _removed, ...rest } = prev.sessions
+  //         return {
+  //           sessions: {
+  //             ...rest,
+  //             [id]: updated,
+  //           },
+  //         }
+  //       }
+
+  //       const created: ChatSession = {
+  //         target: { id, nickname: target.nickname, avatarUrl: target.avatarUrl, status: target.status },
+  //         messages: [],
+  //         minimized: options?.minimized ?? false,
+  //       }
+
+  //       return {
+  //         sessions: {
+  //           ...prev.sessions,
+  //           [id]: created,
+  //         },
+  //       }
+  //     })
+  //   },
+  //   [],
+  // )
 
   const openChat = useCallback((target: ChatTarget) => {
     if (!isAuthenticated) return
@@ -103,7 +142,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const closeChat = useCallback((targetId: string) => {
     setState((prev) => {
       const copy = { ...prev.sessions }
-      delete copy[String(targetId)]
+      delete copy[String(toSessionId(targetId))]
       return { sessions: copy }
     })
   }, [])
@@ -113,9 +152,13 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
       chat.clearUnread(String(targetId))
     }
     setState((prev) => {
-      const s = prev.sessions[String(targetId)]
-      if (!s) return prev
-      return { sessions: { ...prev.sessions, [String(targetId)]: { ...s, minimized } } }
+      const id = toSessionId(targetId)
+      const existing = prev.sessions[id]
+      if (!existing) return prev
+
+      const updated: ChatSession = { ...existing, minimized }
+      const { [id]: _removed, ...rest } = prev.sessions
+      return { sessions: { ...rest, [id]: updated } }
     })
   }, [chat])
 
@@ -133,7 +176,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = chat.subscribeToIncomingMessages(({ target }) => {
       upsertSession(
         {
-          id: target.id,
+          id: toSessionId(target.id),
           nickname: target.nickname,
           avatarUrl: target.avatarUrl,
         },

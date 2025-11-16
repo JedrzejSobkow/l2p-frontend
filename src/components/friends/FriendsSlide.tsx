@@ -1,5 +1,5 @@
 import { useEffect, type FC, type MouseEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FiX } from 'react-icons/fi'
 import FriendsPanel from './FriendsPanel'
 import { useAuth } from '../AuthContext'
@@ -20,8 +20,32 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   const { user } = useAuth()
   const { openChat} = useChatDock()
   const { refreshFriends,friends } = useFriends()
+  const navigate = useNavigate()
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation()
+  }
+
+  const friendSelect = (friendId: string | number) => {
+    const normalizedId = String(friendId)
+    const friend = friends.find((val) => String(val.friend_user_id) === normalizedId)
+    if (!friend) {
+      onClose()
+      return
+    }
+
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+
+    if (isSmallScreen) {
+      navigate('/friends', { state: { friendId: normalizedId } })
+    } else {
+      openChat({
+        id: normalizedId,
+        nickname: friend.friend_nickname,
+        avatarUrl: friend.friend_pfp_path,
+      })
+    }
+    onClose()
   }
 
   useEffect(() => {
@@ -92,15 +116,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
             </div>
           </div>
           <FriendsPanel
-            onFriendSelect={(friendId) => {
-              const friend = friends.find((val) => val.friend_user_id === friendId)
-              if (friend)
-                openChat({
-                  id: String(friend?.friend_user_id),
-                  nickname: friend?.friend_nickname,
-                  avatarUrl: friend?.friend_pfp_path
-                })
-            }}
+            onFriendSelect={friendSelect}
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"

@@ -136,7 +136,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     })
-    console.log('Friends categorized:', { accepted, incoming, outgoing })
     return {
       friends: accepted,
       incomingRequests: incoming,

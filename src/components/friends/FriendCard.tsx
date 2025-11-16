@@ -33,7 +33,7 @@ const FriendCard: FC<FriendCardProps> = ({
       className={cn(
         'flex items-center justify-between gap-3 rounded-2xl border px-3 py-2 transition',
         isSelected
-          ? 'border-orange-400/70 bg-[rgba(45,44,63,0.95)] shadow-[0_12px_28px_rgba(255,149,0,0.18)]'
+          ? 'border-orange-400/70 bg-[rgba(45,44,63,0.95)]'
           : 'border-white/10 bg-[rgba(31,30,43,0.95)] hover:border-orange-400/40'
       )}
       role="button"
