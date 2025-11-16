@@ -1,18 +1,27 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GameShell from '../components/games/GameShell';
 import TicTacToeModule from '../components/games/ticTacToe/module';
 import { useAuth } from '../components/AuthContext';
 import { useLobby } from '../components/lobby/LobbyContext';
 import LobbyChat from '../components/LobbyChat';
-import InGameUserTile from '../components/InGameUserTile'; // Import InGameUserTile
-import { emitMakeMove, onMoveMade, offMoveMade, onGameEnded, offGameEnded } from '../services/game';
+import InGameUserTile from '../components/InGameUserTile';
+import GameResultModal from '../components/GameResultModal';
+import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, offGameEnded, onGameState, offGameState } from '../services/game';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember } = useLobby();
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [winnerName, setWinnerName] = useState<string | null>(null);
+  const [result, setResult] = useState<"win" | "draw">("draw");
 
   useEffect(() => {
+    // Emit get_game_state on page load
+    emitGetGameState();
+
     if (gameState) {
       const lm = gameState?.last_move;
       if (lm && typeof lm.row === 'number' && typeof lm.col === 'number' && Array.isArray(gameState?.board)) {
@@ -49,6 +58,35 @@ const LobbyInGameScreen = () => {
       offGameEnded(handleGameEnded);
     };
   }, [setGameState]);
+
+  useEffect(() => {
+    const handleGameState = (data: { game_state: any }) => {
+      console.log('Game state event received:', data);
+      setGameState(data.game_state); // Update the game state in the context
+
+    //   if (data.game_state.result !== 'in_progress') {
+    //     navigate('/lobby-test'); // Redirect to lobby-test if the game is not in progress
+    //   }
+    };
+
+    onGameState(handleGameState); // Listen for the game_state event
+    return () => {
+      offGameState(handleGameState); // Clean up the listener
+    };
+  }, [setGameState, navigate]);
+
+  useEffect(() => {
+    if (gameState?.result === "draw") {
+      setResult("draw");
+      setWinnerName(null);
+      setIsModalOpen(true);
+    } else if (gameState?.winner_id) {
+      const winner = members.find((member) => String(member.user_id) === String(gameState.winner_id));
+      setResult("win");
+      setWinnerName(winner?.nickname ?? "Unknown player");
+      setIsModalOpen(true);
+    }
+  }, [gameState, members]);
 
   const players = useMemo(() => {
     if (!members || members.length === 0) return [];
@@ -120,7 +158,7 @@ const LobbyInGameScreen = () => {
             {members.map((member, index) => (
               <InGameUserTile
                 key={member.user_id}
-                avatar={`/src/assets${member.pfp_path}`|| '/default-avatar.png'}
+                avatar={`/src/assets${member.pfp_path}` || '/default-avatar.png'}
                 username={member.nickname}
                 place={index + 1}
                 isHost={currentLobby?.host_id === member.user_id}
@@ -141,6 +179,12 @@ const LobbyInGameScreen = () => {
           />
         </div>
       </div>
+      <GameResultModal
+        isOpen={isModalOpen}
+        winnerName={winnerName}
+        result={result}
+        onReturnToLobby={() => navigate("/lobby-test")}
+      />
     </div>
   );
 };

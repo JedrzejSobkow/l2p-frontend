@@ -20,7 +20,7 @@ import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
-import { emitCreateGame, onGameStarted, offGameStarted } from '../services/game'
+import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
 
 export const CompleteLobbyScreen = () => {
   const { lobbyCode } = useParams<{ lobbyCode?: string }>()
@@ -77,6 +77,8 @@ export const CompleteLobbyScreen = () => {
   })
 
   useEffect(() => {
+    emitGetGameState();
+
     if (currentLobby) {
       getMessages(50)
       setSelectedPlayerCount(currentLobby.max_players)
@@ -180,6 +182,22 @@ export const CompleteLobbyScreen = () => {
       offGameStarted(handleGameStarted);
     };
   }, [navigate, setGameState, currentLobby?.lobby_code]);
+
+  useEffect(() => {
+    const handleGameState = (data: { game_state: any }) => {
+    if (data.game_state.result == 'in_progress') {
+      navigate('/lobby/ingame'); // Redirect to lobby/ingame if the game is not in progress
+    }
+
+      console.log('Game state event received:', data);
+      setGameState(data.game_state); // Update the game state in the context
+    };
+
+    onGameState(handleGameState); // Listen for the game_state event
+    return () => {
+      offGameState(handleGameState); // Clean up the listener
+    };
+  }, [setGameState, navigate]);
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {

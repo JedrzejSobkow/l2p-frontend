@@ -1,9 +1,7 @@
-import { useMemo, useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Application, extend } from "@pixi/react";
 import { Container, Graphics, Text, TextStyle, type Graphics as PixiGraphics } from "pixi.js";
 import type { GameClientModule } from "../GameClientModule";
-import { useNavigate } from "react-router-dom";
-import GameResultModal from "../../GameResultModal";
 
 extend({ Container, Graphics, Text });
 
@@ -25,11 +23,6 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   isMyTurn,
   onProposeMove,
 }) => {
-  const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [winnerName, setWinnerName] = useState<string | null>(null);
-  const [result, setResult] = useState<"win" | "draw">("draw");
-
   const board = useMemo(() => parseBoard((rawState as any)?.board), [rawState]);
   const dim = useMemo(() => Math.max(1, Math.floor(Math.sqrt(board.length))), [board.length]);
 
@@ -48,20 +41,6 @@ const TicTacToeView: GameClientModule["GameView"] = ({
     const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_player_id));
     return `${nextPlayer?.nickname ?? "Waiting..."}'s turn`;
   }, [rawState, players, localPlayerId]);
-
-  useEffect(() => {
-    const gameState = rawState as any;
-    if (gameState?.result === "draw") {
-      setResult("draw");
-      setWinnerName(null);
-      setIsModalOpen(true);
-    } else if (gameState?.winner_id) {
-      const winner = players.find((player) => String(player.userId) === String(gameState.winner_id));
-      setResult("win");
-      setWinnerName(winner?.nickname ?? "Unknown player");
-      setIsModalOpen(true);
-    }
-  }, [rawState, players]);
 
   const handleCellClick = (index: number) => {
     if (!isMyTurn || board[index] !== null) return;
@@ -128,12 +107,6 @@ const TicTacToeView: GameClientModule["GameView"] = ({
           ))}
         </div>
       </div>
-      <GameResultModal
-        isOpen={isModalOpen}
-        winnerName={winnerName}
-        result={result}
-        onReturnToLobby={() => navigate("/lobby-test")}
-      />
     </div>
   );
 };
