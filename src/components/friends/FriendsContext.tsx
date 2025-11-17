@@ -35,8 +35,6 @@ type FriendsContextValue = {
 
 const FriendsContext = createContext<FriendsContextValue | undefined>(undefined)
 
-const normalizeId = (value: number | string) => String(value)
-
 export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const {isAuthenticated} = useAuth()
   const [friendships, setFriendships] = useState<Friendship[]>([])
@@ -75,9 +73,9 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
 
   const upsertFriendship = useCallback((entry: Friendship) => {
     setFriendships((prev) => {
-      const key = normalizeId(entry.friendship_id ?? entry.friend_user_id)
+      const key = entry.friendship_id ?? entry.friend_user_id
       const idx = prev.findIndex(
-        (item) => normalizeId(item.friendship_id ?? item.friend_user_id) === key,
+        (item) => item.friendship_id ?? item.friend_user_id === key,
       )
       if (idx === -1) {
         return [...prev, entry]
@@ -90,9 +88,9 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const removeFriendship = useCallback((friend_user_id: number | string) => {
-    const key = normalizeId(friend_user_id)
+    const key = friend_user_id
     setFriendships((prev) =>
-      prev.filter((item) => normalizeId(item.friend_user_id) !== key),
+      prev.filter((item) => item.friend_user_id !== key),
     )
   }, [])
 

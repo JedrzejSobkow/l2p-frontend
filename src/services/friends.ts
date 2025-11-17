@@ -3,8 +3,8 @@ import {withAssetsPrefix} from './auth'
 export type FriendshipStatus = 'pending' | 'accepted' | 'blocked'
 
 export type Friendship = {
-  friendship_id: string | number
-  friend_user_id: string | number
+  friendship_id: string
+  friend_user_id: string
   friend_nickname: string
   friend_pfp_path?: string
   friend_description?: string
@@ -14,7 +14,7 @@ export type Friendship = {
 }
 
 export type FriendResult = {
-  user_id: string | number
+  user_id: string
   nickname: string
   pfp_path?: string
   description?: string

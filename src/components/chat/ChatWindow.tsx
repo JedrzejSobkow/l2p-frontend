@@ -18,8 +18,8 @@ export type ChatMessage = {
   senderId: string
   senderName: string
   avatarUrl?: string
-  content: string
-  createdAt: string | number | Date
+  content?: string
+  createdAt: string
   imageUrl?: string
   isSystem?: boolean
 }
@@ -43,7 +43,7 @@ const cn = (...classes: Array<string | false | null | undefined>) => classes.fil
 
 const formatTime = (timestamp: ChatMessage['createdAt']) => {
   try {
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
+    const date = new Date(timestamp)
     return new Intl.DateTimeFormat('en', {
       day: 'numeric',
       month: 'short',
