@@ -51,11 +51,13 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         : Array.isArray((data as any)?.friendships)
         ? ((data as any).friendships as Friendship[])
         : []
-      setFriendships(normalized)
+      if (normalized.length !== friendships.length){
+        setFriendships(normalized)
+      }
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [friendships.length])
 
   useEffect(() => {
     if (!isAuthenticated) {

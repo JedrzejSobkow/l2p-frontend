@@ -25,7 +25,7 @@ const FriendsScreen: FC = () => {
   )
 
   const { user } = useAuth()
-  const chat = useChat()
+  const {clearUnread,ensureConversation,getMessages,sendMessage,getTypingUsers,sendTyping} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
     return friends.find((friend) => normalizeId(friend.friend_user_id) === selectedFriendId) ?? null
@@ -49,22 +49,21 @@ const FriendsScreen: FC = () => {
   useEffect(() => {
     if (!selectedFriend) return
     const id = normalizeId(selectedFriend.friend_user_id)
-    chat.clearUnread(id)
-    chat.ensureConversation({
+    clearUnread(id)
+    ensureConversation({
       id,
       nickname: selectedFriend.friend_nickname,
       avatarUrl: selectedFriend.friend_pfp_path,
     })
-  }, [chat, selectedFriend])
+  }, [clearUnread,ensureConversation, selectedFriend])
 
-  const activeMessages = useMemo(() => {
-    if (!selectedFriend) return []
-    return chat.getMessages(normalizeId(selectedFriend.friend_user_id))
-  }, [chat, selectedFriend])
+  const activeMessages = selectedFriend
+  ? getMessages(normalizeId(selectedFriend.friend_user_id))
+  : []
 
   const handleSend = async ({ text, attachment }: { text: string; attachment?: File | null }) => {
     if (!selectedFriend) return
-    await chat.sendMessage(normalizeId(selectedFriend.friend_user_id), { text, attachment })
+    await sendMessage(normalizeId(selectedFriend.friend_user_id), { text, attachment })
   }
 
   const handleSelectFriend = (friendId: string | number) => {
@@ -153,10 +152,10 @@ const FriendsScreen: FC = () => {
               friendId={normalizeId(selectedFriend.friend_user_id)}
               friendAvatar={selectedFriend.friend_pfp_path}
               allowAttachments
-              typingUsers={chat.getTypingUsers(normalizeId(selectedFriend.friend_user_id))}
+              typingUsers={getTypingUsers(normalizeId(selectedFriend.friend_user_id))}
               onSend={handleSend}
               placeholder="Send a direct message..."
-              onTyping={chat.sendTyping}
+              onTyping={sendTyping}
             />
           </>
         ) : (

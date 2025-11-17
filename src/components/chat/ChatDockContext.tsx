@@ -176,7 +176,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     const unsubscribe = chat.subscribeToIncomingMessages(({ target }) => {
       upsertSession(
         {
-          id: toSessionId(target.id),
+          id: target.id,
           nickname: target.nickname,
           avatarUrl: target.avatarUrl,
         },
