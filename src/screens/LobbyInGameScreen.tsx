@@ -8,15 +8,35 @@ import LobbyChat from '../components/LobbyChat';
 import InGameUserTile from '../components/InGameUserTile';
 import GameResultModal from '../components/GameResultModal';
 import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, offGameEnded, onGameState, offGameState } from '../services/game';
+import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember } = useLobby();
+  const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember, clearError, error } = useLobby();
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [winnerName, setWinnerName] = useState<string | null>(null);
   const [result, setResult] = useState<"win" | "draw">("draw");
+
+  useEffect(() => {
+    if (error?.error_code === 'KICKED') {
+      clearError();
+      navigate('/', { state: { message: 'You have been kicked from the game', type: 'error' } });
+    }
+  }, [error, navigate, clearError]);
+
+  useEffect(() => {
+    const handleKickedFromLobby = (data: { lobby_code: string; message: string }) => {
+      console.log('Kicked from lobby:', data);
+      navigate('/', { state: { message: data.message || 'You have been kicked from the game', type: 'error' } });
+    };
+
+    onKickedFromLobby(handleKickedFromLobby);
+    return () => {
+      offKickedFromLobby(handleKickedFromLobby);
+    };
+  }, [navigate]);
 
   useEffect(() => {
     // Emit get_game_state on page load
