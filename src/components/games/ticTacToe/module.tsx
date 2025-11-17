@@ -25,6 +25,14 @@ const TicTacToeView: GameClientModule["GameView"] = ({
 }) => {
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
 
+  // Dynamically calculate cell size based on screen width
+  const cellSize = useMemo(() => {
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 640) return 60; // Small screens (e.g., mobile)
+    if (screenWidth < 1024) return 90; // Medium screens (e.g., tablets)
+    return CELL_SIZE; // Default size for larger screens
+  }, []);
+
   const board = useMemo(() => parseBoard((rawState as any)?.board), [rawState]);
   const dim = useMemo(() => Math.max(1, Math.floor(Math.sqrt(board.length))), [board.length]);
 
@@ -74,31 +82,31 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   const drawGrid = (g: PixiGraphics) => {
     g.clear();
     g.setStrokeStyle({ width: 6, color: 0xffffff, alpha: 0.35 });
-    g.roundRect(0, 0, CELL_SIZE * dim, CELL_SIZE * dim, BORDER_RADIUS);
+    g.roundRect(0, 0, cellSize * dim, cellSize * dim, BORDER_RADIUS);
     g.stroke();
 
     g.setStrokeStyle({ width: 4, color: 0xffffff, alpha: 0.25 });
     for (let i = 1; i < dim; i++) {
-      const pos = i * CELL_SIZE;
-      g.moveTo(pos, 0).lineTo(pos, CELL_SIZE * dim);
-      g.moveTo(0, pos).lineTo(CELL_SIZE * dim, pos);
+      const pos = i * cellSize;
+      g.moveTo(pos, 0).lineTo(pos, cellSize * dim);
+      g.moveTo(0, pos).lineTo(cellSize * dim, pos);
     }
     g.stroke();
   };
 
   const markStyles = useMemo(
     () => ({
-      X: new TextStyle({ fill: 0xffa94d, fontSize: 72, fontWeight: "700" }),
-      O: new TextStyle({ fill: 0x74c0fc, fontSize: 72, fontWeight: "700" }),
+      X: new TextStyle({ fill: 0xffa94d, fontSize: cellSize * 0.6, fontWeight: "700" }),
+      O: new TextStyle({ fill: 0x74c0fc, fontSize: cellSize * 0.6, fontWeight: "700" }),
     }),
-    []
+    [cellSize]
   );
 
   return (
     <div className="flex flex-col items-center gap-6">
       <div className="text-center text-lg font-semibold text-white">
         {status}
-        <br/>
+        <br />
         {remainingTime !== null && (
           <span className="text-sm text-gray-400">
             {`Time left: ${Math.floor(remainingTime)}s`}
@@ -106,20 +114,20 @@ const TicTacToeView: GameClientModule["GameView"] = ({
         )}
       </div>
       <div className="relative">
-        <Application width={CELL_SIZE * dim} height={CELL_SIZE * dim} backgroundAlpha={0}>
+        <Application width={cellSize * dim} height={cellSize * dim} backgroundAlpha={0}>
           <pixiContainer>
             <pixiGraphics draw={drawGrid} />
             {board.map((cell, index) => {
               const row = Math.floor(index / dim);
               const col = index % dim;
               return (
-                <pixiContainer key={index} x={col * CELL_SIZE} y={row * CELL_SIZE}>
+                <pixiContainer key={index} x={col * cellSize} y={row * cellSize}>
                   {cell && (cell === "X" || cell === "O") && (
                     <pixiText
                       text={cell}
                       anchor={0.5}
-                      x={CELL_SIZE / 2}
-                      y={CELL_SIZE / 2}
+                      x={cellSize / 2}
+                      y={cellSize / 2}
                       style={markStyles[cell]}
                     />
                   )}
