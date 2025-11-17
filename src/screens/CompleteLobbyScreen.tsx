@@ -588,7 +588,7 @@ export const CompleteLobbyScreen = () => {
           </div>
 
           {/* Settings Section */}
-          <div className="w-full p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md overflow-y-auto max-h-96 lg:max-h-none">
+          <div className="w-full p-3 sm:p-4 bg-background-secondary rounded-lg shadow-md">
             {/* Lobby Settings */}
             <div className="mb-3 sm:mb-4">
               <h3 className="text-base sm:text-lg font-bold text-white mb-2">Lobby Settings</h3>
