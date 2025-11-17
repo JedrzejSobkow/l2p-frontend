@@ -8,195 +8,318 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { ChatMessage } from './ChatWindow'
 import { useAuth } from '../AuthContext'
 import {
   connectChatSocket,
   disconnectChatSocket,
   getConversations,
-  getMessages as fetchChatHistory,
   sendMessage as emitChatMessage,
   sendTyping as emitTyping,
+  getMessages as fetchMessages,
   uploadImage,
   type UploadImageResponse,
   type ChatMessageDTO,
   type Conversation,
   type ConversationUpdatedEvent,
   type UserTypingEvent,
+  type ConversationHistoryPayload
 } from '../../services/chat'
-import { withAssetsPrefix } from '../../services/auth'
 import { useFriends } from '../friends/FriendsContext'
 
 export type ConversationTarget = {
   id: string
   nickname: string
-  avatarUrl?: string
+  avatarUrl: string
 }
 
 type ConversationsState = {
   messagesById: Record<string, ChatMessage[]>
   targets: Record<string, ConversationTarget>
-  typingById: Record<string, string[]>
-  unreadById?: Record<string, number>
+  typingById: Record<string, boolean>
+  unreadById: Record<string, number>
+  hasMoreById: Record<string,boolean>
+  nextCursorById: Record<string,string | null>
+}
+
+export type ChatMessage = {
+  id: string
+  senderId: string
+  senderNickname: string
+  content?: string
+  createdAt: string
+  imageUrl?: string
+  isMine: boolean
+}
+
+const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
+  return {
+    id: String(message.id),
+    senderId: String(message.sender_id),
+    senderNickname: message.sender_nickname,
+    content: message.content,
+    imageUrl: message.image_url,
+    createdAt: message.created_at,
+    isMine: message.is_mine
+  }
 }
 
 type IncomingMessageListener = (payload: { conversationId: string; target: ConversationTarget }) => void
 
 type ChatContextValue = {
-  getMessages: (conversationId: string) => ChatMessage[]
-  sendMessage: (conversationId: string, payload: { text?: string; attachment?: File | null }) => Promise<void>
-  ensureConversation: (target: ConversationTarget) => void
-  setIncomingMessage: (conversationId: string, msg: ChatMessage) => void
-  getTarget: (conversationId: string) => ConversationTarget | undefined
-  getTypingUsers: (conversationId: string) => string[]
-  sendTyping: (conversationId: string) => void
-  clearUnread: (conversationId: string) => void
-  getUnread: (conversationId: string) => number
+  getMessages: (friendId: string) => ChatMessage[]
+  getTarget: (friendId: string) => ConversationTarget | undefined
+  getUnread: (friendId: string) => number
+  getTyping: (friendId: string) => boolean
+
+  loadMessages: (friendId: string, beforeMessageId?: string) => Promise<void>
+  loadMoreMessages: (friendId: string) => Promise<void>
+
+  ensureConversation: (id: string, nickname?: string, avatarUrl?: string) => void
+  sendMessage: (friendId: string, payload: { text?: string; attachment?: File }) => Promise<void>
+  sendTyping: (friendId: string) => void
+  clearUnread: (friendId: string) => void
+
   subscribeToIncomingMessages: (listener: IncomingMessageListener) => () => void
 }
 
 const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 
-const normalizeId = (value: string | number) => String(value)
-const isNumericId = (value: string) => /^\d+$/.test(value)
-const toApiId = (value: string): string | number => (isNumericId(value) ? Number(value) : value)
-
-const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
-  id: String(dto.id),
-  senderId: normalizeId(dto.sender_id),
-  senderName: dto.sender_nickname,
-  avatarUrl: undefined,
-  content: dto.content ?? '',
-  createdAt: dto.created_at,
-  imageUrl: withAssetsPrefix(dto.image_url ?? undefined),
-})
-
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { user,isAuthenticated } = useAuth()
   const {friends} = useFriends()
-  const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {},unreadById: {}})
+  const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {},unreadById: {},hasMoreById: {},nextCursorById: {}})
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const typingThrottleRef = useRef<Map<string, number>>(new Map())
   const incomingMessageListenersRef = useRef<Set<IncomingMessageListener>>(new Set())
+  // useEffect(() => {
+  //   if (!isAuthenticated)
+  //     return
 
-  const replaceMessages = useCallback((conversationId: string, messages: ChatMessage[]) => {
-    setState((prev) => ({
+  //   setState(prev => {
+  //     const targets = {...prev.targets}
+
+  //     friends.forEach(friend => {
+  //       if(!targets[friend.friend_user_id]){
+  //         targets[friend.friend_user_id] = {
+  //           id: friend.friend_user_id,
+  //           nickname: friend.friend_nickname,
+  //           avatarUrl: friend.friend_pfp_path || 
+  //         }
+  //       }
+  //     })
+  //     return {...prev,targets}
+  //   })
+  // },[friends,isAuthenticated])
+
+  const getMessages = useCallback(
+    (friendId: string) => state.messagesById[friendId] ?? [],
+    [state.messagesById],
+  )
+
+  const getTarget = useCallback(
+    (friendId: string) => {
+      console.log(state.targets)
+      return state.targets[String(friendId)]},
+    [state.targets],
+  )
+
+  const getTyping = useCallback(
+    (friendId: string) => !!state.typingById[friendId],
+    [state.typingById],
+  )
+
+  const getUnread = useCallback(
+    (friendId: string) => state.unreadById[friendId] ?? 0,
+    [state.unreadById],
+  )
+
+  const clearUnread = useCallback((friendId: string) => {
+    setState(prev => ({
       ...prev,
-      messagesById: { ...prev.messagesById, [conversationId]: messages },
+      unreadById: {
+        ...prev.unreadById,
+        [friendId]: 0,
+      },
     }))
   }, [])
 
-  const appendMessage = useCallback((conversationId: string, message: ChatMessage) => {
+  const subscribeToIncomingMessages = useCallback(
+    (listener: IncomingMessageListener) => {
+      incomingMessageListenersRef.current.add(listener)
+      return () => {
+        incomingMessageListenersRef.current.delete(listener)
+      }
+    },
+    [],
+  )
+
+  const loadInitialConversations = useCallback(async () => {
+    // not sure if needed
+    try {
+      const result = await getConversations()
+      const conversations = result?.conversations ?? []
+      setState((prev) => {
+        if (!conversations.length) return prev
+        const targets = { ...prev.targets }
+        conversations.forEach((conversation: Conversation) => {
+          const id = conversation.friend_id
+          const unreadCount = conversation.unread_count ?? 0
+          if (unreadCount > 0) {
+            prev.unreadById = {
+              ...prev.unreadById,
+              [id]: unreadCount,
+            }
+          }
+          targets[id] = {
+            id,
+            nickname: conversation.friend_nickname,
+            avatarUrl: conversation.friend_pfp_path ?? '',
+          }
+        })
+        return {
+          ...prev,
+          targets,
+        }
+      })
+    } catch (error) {
+      console.error('Failed to load initial conversations', error)
+    }
+  }, [])
+
+  // useEffect(() => {
+  //   if (!isAuthenticated) return
+  //   void loadInitialConversations()
+  // }, [loadInitialConversations, isAuthenticated])
+
+  const ensureConversation = useCallback(
+  (id: string, nickname?: string, avatarUrl?: string) => {
+    const key = String(id)
     setState((prev) => {
-      const existing = prev.messagesById[conversationId] ?? []
-      if (existing.some((msg) => msg.id === message.id)) {
+      const existing = prev.targets[key]
+      const friend = friends.find(f => String(f.friend_user_id) === key)
+
+      const finalNickname =
+        nickname ??
+        friend?.friend_nickname ??
+        existing?.nickname ??
+        'Unknown'
+
+      const finalAvatar =
+        avatarUrl ??
+        friend?.friend_pfp_path ??
+        existing?.avatarUrl ??
+        ''
+
+      const next: ConversationTarget = {
+        id: key,
+        nickname: finalNickname,
+        avatarUrl: finalAvatar,
+      }
+
+      if (existing &&
+          existing.nickname === finalNickname &&
+          existing.avatarUrl === finalAvatar) {
         return prev
       }
-      const sanitized = !message.id.startsWith('temp-')
-        ? existing.filter(
-            (msg) =>
-              !msg.id.startsWith('temp-') ||
-              msg.senderId !== message.senderId ||
-              msg.content !== message.content ||
-              Boolean(msg.imageUrl) !== Boolean(message.imageUrl),
-          )
-        : existing
+      return {
+        ...prev,
+        targets: {
+          ...prev.targets,
+          [key]: next,
+        },
+      }
+    })
+  },
+  [friends],
+)
+
+  const loadMessages = useCallback(
+    async (friendId: string,beforeMessageId?: string) => {
+      if (!beforeMessageId && loadedConversationsRef.current.has(friendId)){
+        return
+      }
+      const res = await fetchMessages(friendId,beforeMessageId,10)
+      const newMessages: ChatMessage[] = res.messages.map((message) => (
+        mapDtoToChatMessage(message)
+      )).reverse()
+      setState((prev) => {
+        const prevMessages = prev.messagesById[friendId] ?? []
+        const existingIds = new Set(prevMessages.map((m)=> m.id))
+
+        const dedupedNew = newMessages.filter((msg) => !existingIds.has(msg.id))
+        const merged = beforeMessageId ? [...dedupedNew, ...prevMessages] : dedupedNew
+        return {
+          ...prev,
+          messagesById: {
+            ...prev.messagesById,
+            [friendId]: merged
+          },
+          nextCursorById: {
+            ...prev.nextCursorById,
+            [friendId]: res.next_cursor
+          },
+          hasMoreById: {
+            ...prev.hasMoreById,
+            [friendId]: res.has_more
+          },
+        }
+      })
+      if (!beforeMessageId){
+        loadedConversationsRef.current.add(friendId)
+      }
+    }
+  ,[])
+
+  const loadMoreMessages = useCallback(
+    async (friendId: string) => {
+      const cursor = state.nextCursorById[friendId]
+      const hasMore = state.hasMoreById[friendId]
+
+      if (!hasMore || cursor == null) return
+
+      await loadMessages(friendId, cursor)
+    },
+    [state.nextCursorById, state.hasMoreById, loadMessages]
+  )
+
+  const appendMessage = useCallback((friendId: string, message: ChatMessage) => {
+    setState((prev) => {
+      const existing = prev.messagesById[friendId] ?? []
+
+      if (existing.some((msg) => msg.id === message.id)){
+        return prev
+      }
+
+      const sanitized = !message.id.startsWith('temp') 
+      ? existing.filter((msg) => 
+        !msg.id.startsWith('temp') || 
+        msg.senderId !== message.senderId || 
+        msg.content !== message.content ||
+        Boolean(msg.imageUrl) !== Boolean(message.imageUrl),
+      )
+      : existing
+
       return {
         ...prev,
         messagesById: {
           ...prev.messagesById,
-          [conversationId]: [...sanitized, message],
-        },
+          [friendId]: [...sanitized, message]
+        }
       }
     })
-  }, [])
-
-  const fetchConversationHistory = useCallback(
-    async (conversationId: string, force: boolean = false) => {
-      if (!force && loadedConversationsRef.current.has(conversationId)) return
-      if (loadingConversationsRef.current.has(conversationId)) return
-      loadingConversationsRef.current.add(conversationId)
-      try {
-        const history = await fetchChatHistory(toApiId(conversationId))
-        const transformed = history.messages.map(mapDtoToChatMessage).reverse()
-        replaceMessages(conversationId, transformed)
-        loadedConversationsRef.current.add(conversationId)
-      } catch (error) {
-        console.error('Failed to load conversation history', error)
-      } finally {
-        loadingConversationsRef.current.delete(conversationId)
-      }
-    },
-    [replaceMessages],
-  )
-
-  const ensureConversation = useCallback((target: ConversationTarget) => {
-    const id = normalizeId(target.id)
-    setState((prev) => {
-      if (prev.targets[id]) return prev
-      return {
-        messagesById: { ...prev.messagesById, [id]: prev.messagesById[id] ?? [] },
-        targets: {
-          ...prev.targets,
-          [id]: { id, nickname: target.nickname, avatarUrl: target.avatarUrl },
-        },
-        typingById: { ...prev.typingById },
-      }
-    })
-    void fetchConversationHistory(id)
-  }, [fetchConversationHistory])
-
-  const setIncomingMessage = useCallback((conversationId: string, msg: ChatMessage) => {
-    appendMessage(conversationId, msg)
-  }, [appendMessage])
-
-  const getMessages = useCallback(
-    (conversationId: string) => state.messagesById[conversationId] ?? [],
-    [state.messagesById],
-  )
-  
-  const clearUnread = useCallback((conversationId: string) => {
-    console.log('Clearing unread for', conversationId)
-    setState((prev) => {
-      if (!prev.unreadById || !(conversationId in prev.unreadById)) return prev
-      const updatedUnread = { ...prev.unreadById }
-      delete updatedUnread[conversationId]
-      return {
-        ...prev,
-        unreadById: updatedUnread,
-      }
-    })
-  }, [])
-
-  const getUnread = useCallback(
-    (conversationId: string) => state.unreadById?.[conversationId] ?? 0,
-    [state.unreadById],
-  )
-
-  const getTarget = useCallback((conversationId: string) => state.targets[conversationId], [state.targets])
-
-  const getTypingUsers = useCallback(
-    (conversationId: string) => state.typingById[conversationId] ?? [],
-    [state.typingById],
-  )
-
-  const subscribeToIncomingMessages = useCallback((listener: IncomingMessageListener) => {
-    incomingMessageListenersRef.current.add(listener)
-    return () => {
-      incomingMessageListenersRef.current.delete(listener)
-    }
-  }, [])
+  },[])
 
   const sendMessage = useCallback(
-    async (conversationId: string, payload: { text?: string; attachment?: File | null }) => {
-      const text = payload.text?.trim() ?? ''
-      const file = payload.attachment ?? null
+    async (friendId: string, payload: {text?: string, attachment?: File}) => {
+      const text = payload.text?.trim()
+      const file = payload.attachment
+
       if (!text && !file) return
 
-      const me = user?.id != null ? normalizeId(user.id) : 'me'
-      const nickname = user?.nickname ?? 'You'
+      const senderId = user?.id ?? 'me'
+      const senderNickname = user?.nickname ?? 'you'
       const now = new Date().toISOString()
       let tempImageUrl: string | undefined
       if (file) {
@@ -204,23 +327,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       }
       const optimisticMessage: ChatMessage = {
         id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        senderId: me,
-        senderName: nickname,
-        avatarUrl: user?.pfp_path,
+        senderId: senderId,
+        senderNickname: senderNickname,
         content: text,
         imageUrl: tempImageUrl,
+        isMine: true,
         createdAt: now,
       }
-      const currentTarget = getTarget(conversationId)
-      ensureConversation(
-        currentTarget ?? {
-          id: conversationId,
-          nickname,
-        },
-      )
-      appendMessage(conversationId, optimisticMessage)
+      appendMessage(friendId, optimisticMessage)
 
-      const payloadBase = { friend_user_id: toApiId(conversationId) }
+      const payloadBase = { friend_user_id: friendId }
 
       try {
         if (file) {
@@ -256,12 +372,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error('Failed to send message', error)
         setState((prev) => {
-          const list = prev.messagesById[conversationId] ?? []
+          const list = prev.messagesById[friendId] ?? []
           return {
             ...prev,
             messagesById: {
               ...prev.messagesById,
-              [conversationId]: list.filter((msg) => msg.id !== optimisticMessage.id),
+              [friendId]: list.filter((msg) => msg.id !== optimisticMessage.id),
             },
           }
         })
@@ -272,162 +388,100 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     },
-    [appendMessage, ensureConversation, getTarget, user?.id, user?.nickname, user?.pfp_path],
+    [appendMessage, user?.id, user?.nickname, user?.pfp_path],
   )
 
   const sendTyping = useCallback(
-    (conversationId: string) => {
+    (friendId: string) => {
       const now = Date.now()
-      const last = typingThrottleRef.current.get(conversationId)
+      const last = typingThrottleRef.current.get(friendId)
+
       if (last && now - last < 1000) {
         return
       }
-      typingThrottleRef.current.set(conversationId, now)
-      emitTyping({ friend_user_id: toApiId(conversationId) })
-    },
-    [],
-  )
+      typingThrottleRef.current.set(friendId,now)
+      emitTyping({friend_user_id: friendId})
+    }
+  ,[])
 
   const handleIncomingMessage = useCallback(
     (payload: ChatMessageDTO) => {
       if (!payload) return
-      if (payload.is_mine) {
-        // Server will trigger conversation update which refreshes history.
-        return
-      }
+      const message = mapDtoToChatMessage(payload)
+      if (message.isMine) return // if possible we could change sender_id on isMine messages
       
-      const conversationId = normalizeId(payload.sender_id)
-      const friendAvatar = friends.find(f => normalizeId(f.friend_user_id) === conversationId)?.friend_pfp_path
-      console.log(friendAvatar)
-      ensureConversation({ id: conversationId, nickname: payload.sender_nickname, avatarUrl: friendAvatar })
-      appendMessage(conversationId, mapDtoToChatMessage(payload))
+      ensureConversation(message.senderId, message.senderNickname)
+      const target = getTarget(message.senderId)
+      console.log(target)
+      appendMessage(message.senderId, message)
       setState((prev) => {
-        const currentUnread = prev.unreadById?.[conversationId] ?? 0
+        const currentUnread = prev.unreadById?.[message.senderId] ?? 0
         return {
           ...prev,
           unreadById: {
             ...prev.unreadById,
-            [conversationId]: currentUnread + 1,
+            [message.senderId]: currentUnread + 1,
           },
         }
       })
-      const target: ConversationTarget = {
-        id: conversationId,
-        nickname: payload.sender_nickname,
-        avatarUrl: friendAvatar,
-      }
+
       incomingMessageListenersRef.current.forEach((listener) => {
         try {
-          console.log(target.avatarUrl)
-          listener({ conversationId, target })
-        } catch (error) {
+          listener({conversationId: target.id, target})
+        } catch(error) {
           console.error('Incoming message listener failed', error)
         }
       })
-    },
-    [appendMessage, ensureConversation,friends],
-  )
+    }
+  ,[appendMessage,ensureConversation,getTarget])
 
   const handleConversationUpdated = useCallback(
     (payload: ConversationUpdatedEvent) => {
-      const conversationId = normalizeId(payload.friend_id)
-      ensureConversation({
-        id: conversationId,
-        nickname: payload.friend_nickname,
-        avatarUrl: payload.friend_pfp_path ?? undefined,
-      })
-      void fetchConversationHistory(conversationId, true)
-      const target: ConversationTarget = {
-        id: conversationId,
-        nickname: payload.friend_nickname,
-        avatarUrl: payload.friend_pfp_path ?? undefined,
-      }
-      incomingMessageListenersRef.current.forEach((listener) => {
-        try {
-          listener({ conversationId, target })
-        } catch (error) {
-          console.error('Incoming message listener failed', error)
-        }
-      })
-    },
-    [ensureConversation, fetchConversationHistory],
-  )
+
+    }
+  ,[])
 
   const handleTypingEvent = useCallback(
-    (payload: UserTypingEvent) => {
-      const conversationId = normalizeId(payload.user_id)
-      const nickname = payload.nickname
-      ensureConversation({ id: conversationId, nickname })
+  (payload: UserTypingEvent) => {
+    const conversationId = String(payload.user_id)
+    const nickname = payload.nickname
+
+    ensureConversation(conversationId, nickname)
+
+    setState((prev) => {
+      if (prev.typingById[conversationId]) return prev
+
+      return {
+        ...prev,
+        typingById: {
+          ...prev.typingById,
+          [conversationId]: true,
+        },
+      }
+    })
+
+    const prevTimeout = typingTimeoutRef.current.get(conversationId)
+    if (prevTimeout) clearTimeout(prevTimeout)
+
+    const timeout = setTimeout(() => {
       setState((prev) => {
-        const existing = prev.typingById[conversationId] ?? []
-        if (existing.includes(nickname)) return prev
+        if (!prev.typingById[conversationId]) return prev
+
         return {
           ...prev,
           typingById: {
             ...prev.typingById,
-            [conversationId]: [...existing, nickname],
+            [conversationId]: false,
           },
         }
       })
-      const prevTimeout = typingTimeoutRef.current.get(conversationId)
-      if (prevTimeout) clearTimeout(prevTimeout)
-      const timeout = setTimeout(() => {
-        setState((prev) => {
-          const existing = prev.typingById[conversationId]
-          if (!existing) return prev
-          const filtered = existing.filter((name) => name !== nickname)
-          if (filtered.length === existing.length) return prev
-          return {
-            ...prev,
-            typingById: {
-              ...prev.typingById,
-              [conversationId]: filtered,
-            },
-          }
-        })
-        typingTimeoutRef.current.delete(conversationId)
-      }, 3_000)
-      typingTimeoutRef.current.set(conversationId, timeout)
-    },
-    [ensureConversation],
-  )
+      typingTimeoutRef.current.delete(conversationId)
+    }, 3_000)
 
-  const loadInitialConversations = useCallback(async () => {
-    try {
-      const result = await getConversations()
-      const conversations = result?.conversations ?? []
-      setState((prev) => {
-        if (!conversations.length) return prev
-        const targets = { ...prev.targets }
-        conversations.forEach((conversation: Conversation) => {
-          const id = normalizeId(conversation.friend_id)
-          const unreadCount = conversation.unread_count ?? 0
-          if (unreadCount > 0) {
-            prev.unreadById = {
-              ...prev.unreadById,
-              [id]: unreadCount,
-            }
-          }
-          targets[id] = {
-            id,
-            nickname: conversation.friend_nickname,
-            avatarUrl: conversation.friend_pfp_path ?? undefined,
-          }
-        })
-        return {
-          ...prev,
-          targets,
-        }
-      })
-    } catch (error) {
-      console.error('Failed to load conversations', error)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isAuthenticated) return
-    void loadInitialConversations()
-  }, [loadInitialConversations, isAuthenticated])
+    typingTimeoutRef.current.set(conversationId, timeout)
+  },
+  [ensureConversation],
+)
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -458,11 +512,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       socket.off('user_typing', handleTypingEvent)
       disconnectChatSocket()
     }
-  }, [handleConversationUpdated, handleIncomingMessage, handleTypingEvent, user])
+  }, [user])
 
   useEffect(() => {
     if (isAuthenticated) return
-    setState({ messagesById: {}, targets: {}, typingById: {},unreadById: {} })
+    setState({ messagesById: {}, targets: {}, typingById: {},unreadById: {},hasMoreById: {}, nextCursorById: {} })
     loadingConversationsRef.current.clear()
     loadedConversationsRef.current.clear()
     typingThrottleRef.current.clear()
@@ -473,25 +527,29 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo<ChatContextValue>(
     () => ({
       getMessages,
-      sendMessage,
-      ensureConversation,
-      setIncomingMessage,
       getTarget,
-      getTypingUsers,
+      getUnread,
+      getTyping,
+      loadMessages,
+      loadMoreMessages,
+      ensureConversation,
+      sendMessage,
       sendTyping,
       clearUnread,
-      getUnread,
       subscribeToIncomingMessages,
+      
+
     }),
     [
-      getUnread,
-      ensureConversation,
-      getMessages,
+       getMessages,
       getTarget,
-      getTypingUsers,
+      getUnread,
+      getTyping,
+      loadMessages,
+      loadMoreMessages,
+      ensureConversation,
       sendMessage,
       sendTyping,
-      setIncomingMessage,
       clearUnread,
       subscribeToIncomingMessages,
     ],

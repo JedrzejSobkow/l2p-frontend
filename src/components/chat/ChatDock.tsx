@@ -15,9 +15,8 @@ const getMaxVisibleWindows = () => {
 
 const ChatDock = () => {
   const { sessions, minimizeChat, closeChat } = useChatDock()
-  const { user, isAuthenticated } = useAuth()
+  const { isAuthenticated } = useAuth()
   const chat = useChat()
-  const currentUserId = user?.id != null ? String(user.id) : 'me'
 
   const [maxVisible, setMaxVisible] = useState<number>(() => getMaxVisibleWindows())
 
@@ -101,16 +100,16 @@ const ChatDock = () => {
               </button>
             </div>
             <ChatWindow
-              title={s.target.nickname}
               messages={chat.getMessages(s.target.id)}
-              currentUserId={currentUserId}
-              friendId={s.target.id}
-              friendAvatar={s.target.avatarUrl || 'src/assets/images/pfp.png'}
-              allowAttachments={true}
-              typingUsers={chat.getTypingUsers(s.target.id)}
+              friendData={{
+                id: s.target.id,
+                nickname: s.target.nickname,
+                avatarUrl: s.target.avatarUrl || ''
+              }}
+              isTyping={chat.getTyping(s.target.id)}
               onSend={async ({ text, attachment }) => chat.sendMessage(s.target.id, { text, attachment })}
               onTyping={chat.sendTyping}
-              placeholder={`Message ${s.target.nickname}...`}
+              onLoadMore={() => chat.loadMoreMessages(s.target.id)}
               className="max-h-[450px] min-h-[450px]"
             />
           </div>

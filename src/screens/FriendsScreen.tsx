@@ -2,14 +2,10 @@ import { useEffect, useMemo, useState, type FC } from 'react'
 import { useLocation } from 'react-router-dom'
 import ChatWindow from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
-import { useAuth } from '../components/AuthContext'
 import { useChat } from '../components/chat/ChatProvider'
 import { useFriends } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
-
-const currentUserIdFallback = 'current-user'
-const normalizeId = (value: string | number) => String(value)
 
 const FriendsScreen: FC = () => {
   const { friends, removeFriend } = useFriends()
@@ -23,51 +19,50 @@ const FriendsScreen: FC = () => {
   const [activeMobileTab, setActiveMobileTab] = useState<'friends' | 'chat' | 'details'>(
     initialFriendId ? 'chat' : 'friends',
   )
-
-  const { user } = useAuth()
-  const {clearUnread,ensureConversation,getMessages,sendMessage,getTypingUsers,sendTyping} = useChat()
+  const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,sendTyping,loadMoreMessages,loadMessages} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
-    return friends.find((friend) => normalizeId(friend.friend_user_id) === selectedFriendId) ?? null
+    return friends.find((friend) => friend.friend_user_id === selectedFriendId) ?? null
   }, [friends, selectedFriendId])
 
   useEffect(() => {
     const friendIdFromState =
       (location.state as { friendId?: string } | null)?.friendId
     if (friendIdFromState) {
-      setSelectedFriendId(String(friendIdFromState))
+      setSelectedFriendId(friendIdFromState)
       setActiveMobileTab('chat')
     }
   }, [location.state])
 
   useEffect(() => {
     if (!selectedFriendId && friends.length > 0) {
-      setSelectedFriendId(normalizeId(friends[0].friend_user_id))
+      setSelectedFriendId(friends[0].friend_user_id)
     }
   }, [friends, selectedFriendId])
 
   useEffect(() => {
     if (!selectedFriend) return
-    const id = normalizeId(selectedFriend.friend_user_id)
+    const id = selectedFriend.friend_user_id
     clearUnread(id)
-    ensureConversation({
+    ensureConversation(
       id,
-      nickname: selectedFriend.friend_nickname,
-      avatarUrl: selectedFriend.friend_pfp_path,
-    })
-  }, [clearUnread,ensureConversation, selectedFriend])
+      selectedFriend.friend_nickname,
+      selectedFriend.friend_pfp_path,
+    )
+    loadMessages(id)
+  }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
   const activeMessages = selectedFriend
-  ? getMessages(normalizeId(selectedFriend.friend_user_id))
+  ? getMessages(selectedFriend.friend_user_id)
   : []
 
-  const handleSend = async ({ text, attachment }: { text: string; attachment?: File | null }) => {
+  const handleSend = async ({ text, attachment }: { text: string; attachment?: File }) => {
     if (!selectedFriend) return
-    await sendMessage(normalizeId(selectedFriend.friend_user_id), { text, attachment })
+    await sendMessage(selectedFriend.friend_user_id, { text, attachment })
   }
 
-  const handleSelectFriend = (friendId: string | number) => {
-    setSelectedFriendId(normalizeId(friendId))
+  const handleSelectFriend = (friendId: string ) => {
+    setSelectedFriendId(friendId)
     setActiveMobileTab('chat')
   }
 
@@ -146,16 +141,16 @@ const FriendsScreen: FC = () => {
         {selectedFriend ? (
           <>
             <ChatWindow
-              title={selectedFriend.friend_nickname}
               messages={activeMessages}
-              currentUserId={user?.id != null ? String(user.id) : currentUserIdFallback}
-              friendId={normalizeId(selectedFriend.friend_user_id)}
-              friendAvatar={selectedFriend.friend_pfp_path}
-              allowAttachments
-              typingUsers={getTypingUsers(normalizeId(selectedFriend.friend_user_id))}
+              friendData={{
+                id: selectedFriend.friend_user_id,
+                nickname: selectedFriend.friend_nickname,
+                avatarUrl: selectedFriend.friend_pfp_path || ''
+              }}
+              isTyping={getTyping(selectedFriend.friend_user_id)}
               onSend={handleSend}
-              placeholder="Send a direct message..."
               onTyping={sendTyping}
+              onLoadMore={() => loadMoreMessages(selectedFriend.friend_user_id)}
             />
           </>
         ) : (
