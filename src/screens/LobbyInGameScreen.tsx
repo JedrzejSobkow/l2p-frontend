@@ -120,11 +120,20 @@ const LobbyInGameScreen = () => {
     if (playerSymbols) {
       const withSymbols = members
         .filter(m => String(m.user_id) in playerSymbols)
-        .map(m => ({ userId: String(m.user_id), nickname: m.nickname, symbol: playerSymbols[String(m.user_id)] }));
+        .map(m => ({
+          userId: String(m.user_id),
+          nickname: m.nickname,
+          symbol: playerSymbols[String(m.user_id)],
+          timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.user_id)] ?? null,
+        }));
       withSymbols.sort((a, b) => (a.symbol === 'X' ? -1 : 1) - (b.symbol === 'X' ? -1 : 1));
-      return withSymbols.map(({ userId, nickname }) => ({ userId, nickname }));
+      return withSymbols.map(({ userId, nickname, timeRemaining }) => ({ userId, nickname, timeRemaining }));
     }
-    return members.map(m => ({ userId: String(m.user_id), nickname: m.nickname }));
+    return members.map(m => ({
+      userId: String(m.user_id),
+      nickname: m.nickname,
+      timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.user_id)] ?? null,
+    }));
   }, [members, gameState]);
 
   const isMyTurn = useMemo(() => {
@@ -222,6 +231,7 @@ const LobbyInGameScreen = () => {
                 displayKickOut={currentLobby?.host_id === user?.id && user?.id !== member.user_id}
                 isYou={String(user?.id) === String(member.user_id)}
                 isCurrentTurn={String(gameState?.current_turn_player_id) === String(member.user_id)}
+                timeRemaining={players.find(p => p.userId === String(member.user_id))?.timeRemaining ?? null}
                 onPassHost={() => handlePassHost(member.user_id)}
                 onKickOut={() => handleKickOut(member.nickname)}
               />

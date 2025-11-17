@@ -11,6 +11,7 @@ interface InGameUserTileProps {
   displayKickOut: boolean;
   isYou: boolean;
   isCurrentTurn: boolean;
+  timeRemaining: number | null; // New prop for remaining time
   onPassHost?: () => void;
   onKickOut?: () => void;
 }
@@ -24,17 +25,32 @@ const InGameUserTile: React.FC<InGameUserTileProps> = ({
   displayKickOut,
   isYou,
   isCurrentTurn,
+  timeRemaining,
   onPassHost,
   onKickOut,
 }) => {
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
+  const [displayTime, setDisplayTime] = useState(timeRemaining);
 
   useEffect(() => {
     if (textRef.current) {
       setIsOverflowing(textRef.current.scrollWidth > textRef.current.clientWidth);
     }
   }, [username]);
+
+  useEffect(() => {
+    setDisplayTime(timeRemaining); // Sync display time with the prop
+  }, [timeRemaining]);
+
+  useEffect(() => {
+    if (isCurrentTurn && displayTime !== null) {
+      const interval = setInterval(() => {
+        setDisplayTime((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isCurrentTurn, displayTime]);
 
   const truncateUsername = (name: string, maxLength: number = 10) => {
     if (name.length > maxLength) {
@@ -72,6 +88,22 @@ const InGameUserTile: React.FC<InGameUserTileProps> = ({
           >
             {displayUsername}
           </span>
+          {displayTime !== null && (
+            <span
+              className={`text-xs ${
+                isCurrentTurn ? 'text-yellow-400' : 'text-gray-400'
+              }`}
+            >
+              Time left:{" "}
+              <span
+                className={`${
+                  isCurrentTurn && displayTime < 10 ? 'text-red-500' : ''
+                }`}
+              >
+                {Math.floor(Math.max(0, displayTime))}s
+              </span>
+            </span>
+          )}
         </div>
       </div>
 
