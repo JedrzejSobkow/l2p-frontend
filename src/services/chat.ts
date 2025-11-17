@@ -7,8 +7,8 @@ const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/chat` : '/chat'
 const SOCKET_PATH = '/socket.io'
 
 export type ChatMessageDTO = {
-  id: string
-  sender_id: string
+  id: string | number
+  sender_id: string | number
   sender_nickname: string
   content?: string
   created_at: string

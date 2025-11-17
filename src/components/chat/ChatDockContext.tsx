@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import type { ChatMessage } from './ChatWindow'
+import type { ChatMessage } from './ChatProvider'
 import { useChat } from './ChatProvider'
 import { useAuth } from '../AuthContext'
 
@@ -12,7 +12,6 @@ export type ChatTarget = {
 
 export type ChatSession = {
   target: ChatTarget
-  messages: ChatMessage[]
   minimized: boolean
 }
 
@@ -25,7 +24,7 @@ type ChatDockContextValue = {
   openChat: (target: ChatTarget) => void
   closeChat: (targetId: string) => void
   minimizeChat: (targetId: string, minimized?: boolean) => void
-  sendMessage: (targetId: string, payload: { text?: string; attachment?: File | null }) => Promise<void>
+  sendMessage: (targetId: string, payload: { text?: string; attachment?: File }) => Promise<void>
 }
 
 const toSessionId = (id: string | number) => {
@@ -131,12 +130,12 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const openChat = useCallback((target: ChatTarget) => {
     if (!isAuthenticated) return
     const id = String(target.id)
+    chat.ensureConversation(id, target.nickname, target.avatarUrl)
     chat.clearUnread(id)
     upsertSession(target, { minimized: false })
     // schedule ensuring the conversation after render to avoid cross-render setState
-    setTimeout(() => {
-      chat.ensureConversation({ id, nickname: target.nickname, avatarUrl: target.avatarUrl })
-    }, 0)
+
+    chat.loadMessages(id)
   }, [chat, isAuthenticated, upsertSession])
 
   const closeChat = useCallback((targetId: string) => {
@@ -163,7 +162,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   }, [chat])
 
   const sendMessage = useCallback(
-    async (targetId: string, payload: { text?: string; attachment?: File | null }) => {
+    async (targetId: string, payload: { text?: string; attachment?: File }) => {
       if (!isAuthenticated) return
       await chat.sendMessage(targetId, payload)
     },
@@ -173,7 +172,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isAuthenticated) return
     if (!chat.subscribeToIncomingMessages) return
-    const unsubscribe = chat.subscribeToIncomingMessages(({ target }) => {
+    const unsubscribe = chat.subscribeToIncomingMessages(({target }) => {
       upsertSession(
         {
           id: target.id,

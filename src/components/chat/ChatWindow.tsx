@@ -9,34 +9,21 @@ import {
   type KeyboardEvent
 } from 'react'
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
-import { useAuth } from '../AuthContext'
 import Lightbox from '../Lightbox'
 import { usePopup } from '../PopupContext'
+import type { ChatMessage, ConversationTarget } from './ChatProvider'
+import { useAuth } from '../AuthContext'
 
-export type ChatMessage = {
-  id: string
-  senderId: string
-  senderName: string
-  avatarUrl?: string
-  content?: string
-  createdAt: string
-  imageUrl?: string
-  isSystem?: boolean
-}
+
 
 export interface ChatWindowProps {
-  title?: string
+  friendData: ConversationTarget
   messages: ChatMessage[]
-  currentUserId: string
-  friendId: string
-  friendAvatar?: string
-  allowAttachments?: boolean
-  placeholder?: string
-  className?: string
-  isSending?: boolean
-  typingUsers?: string[]
-  onSend: (payload: { text: string; attachment?: File | null }) => Promise<void> | void
+  isTyping: boolean
+  onSend: (payload: { text: string; attachment?: File }) => Promise<void> | void
   onTyping?: (friend_user_id: string) => void
+  onLoadMore: () => void
+  className?: string
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
@@ -57,23 +44,18 @@ const formatTime = (timestamp: ChatMessage['createdAt']) => {
 }
 
 const ChatWindow: FC<ChatWindowProps> = ({
-  title,
+  friendData,
   messages,
-  currentUserId,
-  friendId,
-  friendAvatar,
-  allowAttachments = false,
-  placeholder = 'Write a message...',
   className,
-  isSending,
-  typingUsers,
+  isTyping,
   onSend,
   onTyping,
+  onLoadMore
 }) => {
-  const {user} = useAuth()
   const { showPopup} = usePopup()
+  const {user} = useAuth()
   const [draft, setDraft] = useState('')
-  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachment, setAttachment] = useState<File>()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [sending, setSending] = useState(false)
@@ -90,20 +72,13 @@ const ChatWindow: FC<ChatWindowProps> = ({
     })
   }, [messages])
 
-  const isComposerDisabled = sending || isSending
+  const isComposerDisabled = sending
 
   const displayedTyping = useMemo(() => {
-    if (!typingUsers || typingUsers.length === 0) {
-      return ''
+    if (isTyping) {
+      return `${friendData.nickname} is typing...`
     }
-    if (typingUsers.length === 1) {
-      return `${typingUsers[0]} is typing...`
-    }
-    if (typingUsers.length === 2) {
-      return `${typingUsers[0]} and ${typingUsers[1]} are typing...`
-    }
-    return 'Several users are typing...'
-  }, [typingUsers])
+  }, [isTyping])
 
   const handleSend = async () => {
     if (!draft.trim() && !attachment) {
@@ -113,7 +88,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
       setSending(true)
       await onSend({ text: draft.trim(), attachment })
       setDraft('')
-      setAttachment(null)
+      setAttachment(undefined)
       fileInputRef.current?.form?.reset()
     } 
     catch (error: any) {
@@ -126,6 +101,14 @@ const ChatWindow: FC<ChatWindowProps> = ({
     }
     finally {
       setSending(false)
+    }
+  }
+
+  const handleScroll = () => {
+    const el = scrollRef.current
+    if(!el || !onLoadMore) return
+    if (el.scrollTop <= 50) {
+      onLoadMore()
     }
   }
 
@@ -146,12 +129,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
     if (file) {
       setAttachment(file)
     } else {
-      setAttachment(null)
+      setAttachment(undefined)
     }
   }
 
   const removeAttachment = () => {
-    setAttachment(null)
+    setAttachment(undefined)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -164,36 +147,40 @@ const ChatWindow: FC<ChatWindowProps> = ({
         className
       )}
     >
-      {title && (
+      {friendData.nickname && (
         <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
           <img
             className='w-12 h-12 rounded-full'
-            src={friendAvatar}></img>
-          <h2 className="text-s font-semibold text-headline">{title}</h2>
+            src={friendData.avatarUrl}></img>
+          <h2 className="text-s font-semibold text-headline">{friendData.nickname}</h2>
           
         </header>
       )}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6">
+      <div 
+      ref={scrollRef} 
+      className="flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6"
+      onScroll={handleScroll}
+      >
         {messages.map((message ) => {
-          const isOwn = message.senderId === currentUserId
-          if (message.isSystem) {
-            return (
-              <div
-                key={message.id}
-                className="flex justify-center text-xs font-medium uppercase tracking-wide text-white/50"
-              >
-                <span className="rounded-full bg-white/5 px-3 py-1">{message.content}</span>
-              </div>
-            )
-          }
+          const isOwn = message.isMine
+          // if (message.isSystem) {
+          //   return (
+          //     <div
+          //       key={message.id}
+          //       className="flex justify-center text-xs font-medium uppercase tracking-wide text-white/50"
+          //     >
+          //       <span className="rounded-full bg-white/5 px-3 py-1">{message.content}</span>
+          //     </div>
+          //   )
+          // }
 
           return (
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
                 <img
-                  src={friendAvatar || 'src/assets/images/pfp.png'}
-                  alt={message.senderName}
+                  src={friendData.avatarUrl || 'src/assets/images/pfp.png'}
+                  alt={message.senderNickname}
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
               )}
@@ -204,7 +191,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
                     isOwn ? 'bg-gradient-to-r from-orange-500 to-orange-400 text-white' : 'bg-[rgba(35,34,49,0.95)]'
                   )}
                 >
-                  {!isOwn && <span className="mb-1 text-xs font-semibold text-white/70">{message.senderName}</span>}
+                  {!isOwn && <span className="mb-1 text-xs font-semibold text-white/70">{message.senderNickname}</span>}
                   {message.content && (
                     <span className="whitespace-pre-wrap break-words leading-relaxed text-sm">{message.content}</span>
                   )}
@@ -241,38 +228,33 @@ const ChatWindow: FC<ChatWindowProps> = ({
 
       <form onSubmit={handleSubmit}>
         <div className="relative items-center flex gap-2">
-          {allowAttachments && (
-            <>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="grid h-11 w-11 absolute flex-shrink-0 z-30 place-items-center rounded-2xl text-button"
-                aria-label="Add attachment"
-                disabled={isComposerDisabled}
-              >
-                <FiPaperclip className="h-6 w-6" />
-              </button>
-              <input
-                ref={fileInputRef}  
-                type="file"
-                className="hidden"
-                onChange={handleAttachment}
-                aria-hidden="true"
-              />
-            </>
-          )}
-
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="grid h-11 w-11 absolute flex-shrink-0 z-30 place-items-center rounded-2xl text-button"
+            aria-label="Add attachment"
+            disabled={isComposerDisabled}
+          >
+            <FiPaperclip className="h-6 w-6" />
+          </button>
+          <input
+            ref={fileInputRef}  
+            type="file"
+            className="hidden"
+            onChange={handleAttachment}
+            aria-hidden="true"
+          />         
           <div className="flex flex-1 flex-row place-items-center">
             <textarea
               value={draft}
               onChange={(event) => {
                 setDraft(event.target.value)
-                onTyping?.(friendId)
+                onTyping?.(friendData.id)
               }}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder}
+              placeholder={`Write to ${friendData.nickname}...`}
               rows={1}
-              className={"w-full rounded-2xl rounded-t-none rounded-r-none resize-none border border-transparent bg-white/10 text-sm text-white outline-none transition focus:border-orange-400/60" + (allowAttachments && " px-10 py-4 pr-16" || " px-4 py-4")}
+              className={"w-full rounded-2xl rounded-t-none rounded-r-none resize-none border border-transparent bg-white/10 text-sm text-white outline-none transition focus:border-orange-400/60 px-10 py-4 pr-16"}
               disabled={isComposerDisabled}
             />
             <button

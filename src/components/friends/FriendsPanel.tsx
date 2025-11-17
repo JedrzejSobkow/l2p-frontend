@@ -8,8 +8,8 @@ import { usePopup } from '../PopupContext'
 import { useChat } from '../chat/ChatProvider'
 
 type FriendsPanelProps = {
-  onFriendSelect?: (friendId: string | number) => void
-  onFriendMessage?: (friendId: string | number) => void
+  onFriendSelect?: (friendId: string ) => void
+  onFriendMessage?: (friendId: string ) => void
   title?: string
   className?: string
   selectedFriendId?: string | number
