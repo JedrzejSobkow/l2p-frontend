@@ -217,7 +217,7 @@ const LobbyInGameScreen = () => {
             onProposeMove={handleProposeMove}
           />
         </div>
-        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 sm:p-4">
+        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 px-10 sm:p-4 my-10">
           <h3 className="text-base sm:text-lg font-bold text-white mb-2">Players</h3>
           <div className="flex flex-col gap-2">
             {members.map((member, index) => (
