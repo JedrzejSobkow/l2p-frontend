@@ -7,6 +7,7 @@ import { useLobby } from '../components/lobby/LobbyContext';
 import LobbyChat from '../components/LobbyChat';
 import InGameUserTile from '../components/InGameUserTile';
 import GameResultModal from '../components/GameResultModal';
+import KickPlayerModal from '../components/KickPlayerModal';
 import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, offGameEnded, onGameState, offGameState } from '../services/game';
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 
@@ -18,6 +19,8 @@ const LobbyInGameScreen = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [winnerName, setWinnerName] = useState<string | null>(null);
   const [result, setResult] = useState<"win" | "draw">("draw");
+  const [isKickModalOpen, setIsKickModalOpen] = useState(false);
+  const [kickTarget, setKickTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (error?.error_code === 'KICKED') {
@@ -152,8 +155,18 @@ const LobbyInGameScreen = () => {
     transferHost(userId);
   };
 
-  const handleKickOut = (userId: number | string) => {
-    kickMember(userId);
+  const handleKickOut = (username: string) => {
+    setKickTarget(username);
+    setIsKickModalOpen(true);
+  };
+
+  const confirmKickOut = () => {
+    const targetMember = members.find(m => m.nickname === kickTarget);
+    if (targetMember) {
+      kickMember(targetMember.user_id);
+    }
+    setIsKickModalOpen(false);
+    setKickTarget(null);
   };
 
   const module = TicTacToeModule;
@@ -191,7 +204,7 @@ const LobbyInGameScreen = () => {
                 isYou={String(user?.id) === String(member.user_id)}
                 isCurrentTurn={String(gameState?.current_turn_player_id) === String(member.user_id)}
                 onPassHost={() => handlePassHost(member.user_id)}
-                onKickOut={() => handleKickOut(member.user_id)}
+                onKickOut={() => handleKickOut(member.nickname)}
               />
             ))}
           </div>
@@ -208,6 +221,12 @@ const LobbyInGameScreen = () => {
         winnerName={winnerName}
         result={result}
         onReturnToLobby={() => navigate("/lobby-test")}
+      />
+      <KickPlayerModal
+        isOpen={isKickModalOpen}
+        username={kickTarget || ''}
+        onConfirm={confirmKickOut}
+        onCancel={() => setIsKickModalOpen(false)}
       />
     </div>
   );
