@@ -8,19 +8,22 @@ import LobbyChat from '../components/LobbyChat';
 import InGameUserTile from '../components/InGameUserTile';
 import GameResultModal from '../components/GameResultModal';
 import KickPlayerModal from '../components/KickPlayerModal';
+import LeaveModal from '../components/LeaveModal';
 import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, offGameEnded, onGameState, offGameState } from '../services/game';
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
+import { FaSignOutAlt } from 'react-icons/fa';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember, clearError, error } = useLobby();
+  const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember, leaveLobby, clearError, error } = useLobby();
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [winnerName, setWinnerName] = useState<string | null>(null);
   const [result, setResult] = useState<"win" | "draw">("draw");
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   useEffect(() => {
     if (error?.error_code === 'KICKED') {
@@ -169,6 +172,11 @@ const LobbyInGameScreen = () => {
     setKickTarget(null);
   };
 
+  const handleConfirmLeave = () => {
+    leaveLobby();
+    navigate('/');
+  };
+
   const module = TicTacToeModule;
 
   if (!gameState) {
@@ -177,6 +185,17 @@ const LobbyInGameScreen = () => {
 
   return (
     <div className="w-full">
+      {/* Top Bar with Leave Button */}
+      <div className="flex justify-start px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+        <button
+          onClick={() => setIsLeaveModalOpen(true)}
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-red-700 hover:scale-105 transition-transform focus:outline-none"
+        >
+          <FaSignOutAlt size={20} />
+          <span className="hidden sm:inline">Leave</span>
+        </button>
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="flex-1">
           <GameShell
@@ -227,6 +246,11 @@ const LobbyInGameScreen = () => {
         username={kickTarget || ''}
         onConfirm={confirmKickOut}
         onCancel={() => setIsKickModalOpen(false)}
+      />
+      <LeaveModal
+        isOpen={isLeaveModalOpen}
+        onConfirm={handleConfirmLeave}
+        onCancel={() => setIsLeaveModalOpen(false)}
       />
     </div>
   );
