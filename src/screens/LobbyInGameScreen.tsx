@@ -20,7 +20,7 @@ const LobbyInGameScreen = () => {
 
   useEffect(() => {
     // Emit get_game_state on page load
-    emitGetGameState();
+    // emitGetGameState();
 
     if (gameState) {
       const lm = gameState?.last_move;
@@ -61,9 +61,9 @@ const LobbyInGameScreen = () => {
 
   useEffect(() => {
     const handleGameState = (data: { game_state: any }) => {
-      console.log('Game state event received:', data);
+      console.log('Game state event received in GAME:', data);
       setGameState(data.game_state); // Update the game state in the context
-
+        console.log(gameState)
     //   if (data.game_state.result !== 'in_progress') {
     //     navigate('/lobby-test'); // Redirect to lobby-test if the game is not in progress
     //   }
@@ -73,7 +73,7 @@ const LobbyInGameScreen = () => {
     return () => {
       offGameState(handleGameState); // Clean up the listener
     };
-  }, [setGameState, navigate]);
+  }, [setGameState, navigate, gameState]);
 
   useEffect(() => {
     if (gameState?.result === "draw") {
@@ -138,13 +138,17 @@ const LobbyInGameScreen = () => {
 
   const module = TicTacToeModule;
 
+  if (!gameState) {
+    return <div>Loading game state...</div>; // Show a loading state until gameState is available
+  }
+
   return (
     <div className="w-full">
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="flex-1">
           <GameShell
             module={module}
-            state={gameState ?? { board: Array(9).fill(null), current_turn_player_id: user?.id ? String(user.id) : undefined }}
+            state={gameState} // Use the updated gameState directly
             players={players}
             localPlayerId={String(user?.id ?? '')}
             lastMove={lastMove}

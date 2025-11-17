@@ -185,12 +185,13 @@ export const CompleteLobbyScreen = () => {
 
   useEffect(() => {
     const handleGameState = (data: { game_state: any }) => {
-    if (data.game_state.result == 'in_progress') {
-      navigate('/lobby/ingame'); // Redirect to lobby/ingame if the game is not in progress
-    }
-
-      console.log('Game state event received:', data);
+      console.log('Game state event received in LOBBY:', data);
       setGameState(data.game_state); // Update the game state in the context
+      if (data.game_state.result == 'in_progress') {
+        navigate('/lobby/ingame'); // Redirect to lobby/ingame if the game is not in progress
+      }
+
+
     };
 
     onGameState(handleGameState); // Listen for the game_state event
