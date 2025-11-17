@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Application, extend } from "@pixi/react";
 import { Container, Graphics, Text, TextStyle, type Graphics as PixiGraphics } from "pixi.js";
 import type { GameClientModule } from "../GameClientModule";
@@ -23,8 +23,32 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   isMyTurn,
   onProposeMove,
 }) => {
+  const [remainingTime, setRemainingTime] = useState<number | null>(null);
+
   const board = useMemo(() => parseBoard((rawState as any)?.board), [rawState]);
   const dim = useMemo(() => Math.max(1, Math.floor(Math.sqrt(board.length))), [board.length]);
+
+  const timing = (rawState as any)?.timing;
+  const timeoutSeconds = timing?.timeout_seconds;
+  const turnStartTime = timing?.turn_start_time;
+
+  useEffect(() => {
+    if (timing?.timeout_type === "per_turn" && timeoutSeconds && turnStartTime) {
+      const calculateRemainingTime = () => {
+        const startTime = new Date(turnStartTime).getTime();
+        const elapsedTime = (Date.now() - startTime) / 1000; // elapsed time in seconds
+        const timeLeft = Math.max(0, timeoutSeconds - elapsedTime);
+        setRemainingTime(timeLeft);
+      };
+
+      calculateRemainingTime();
+      const interval = setInterval(calculateRemainingTime, 1000);
+
+      return () => clearInterval(interval);
+    } else {
+      setRemainingTime(null);
+    }
+  }, [timing, timeoutSeconds, turnStartTime]);
 
   const status = useMemo(() => {
     const gameState = rawState as any;
@@ -72,7 +96,15 @@ const TicTacToeView: GameClientModule["GameView"] = ({
 
   return (
     <div className="flex flex-col items-center gap-6">
-      <div className="text-lg font-semibold text-white">{status}</div>
+      <div className="text-center text-lg font-semibold text-white">
+        {status}
+        <br/>
+        {remainingTime !== null && (
+          <span className="text-sm text-gray-400">
+            {`Time left: ${Math.floor(remainingTime)}s`}
+          </span>
+        )}
+      </div>
       <div className="relative">
         <Application width={CELL_SIZE * dim} height={CELL_SIZE * dim} backgroundAlpha={0}>
           <pixiContainer>
