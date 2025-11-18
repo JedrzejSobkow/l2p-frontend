@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLobby } from './lobby/LobbyContext';
 import Popup from './Popup';
 import { useNavigate } from 'react-router-dom'; // Assuming react-router-dom is used for navigation
+import JoinCodeInput from "./JoinCodeInput";
 
 const JoinOrCreateGame: React.FC = () => {
-  const { createLobby, joinLobby, currentLobby, isLoading } = useLobby(); // Dodano currentLobby
+  const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby(); // Dodano currentLobby
   const navigate = useNavigate(); // Add navigation hook
   const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
   const [popup, setPopup] = useState<{ type: 'confirmation' | 'error' | 'informative'; message: string } | null>(null);
@@ -46,31 +47,26 @@ const JoinOrCreateGame: React.FC = () => {
     }
   }, [currentLobby, navigate]);
 
+  useEffect(() => {
+    if (error) {
+      setPopup({
+        type: 'error',
+        message: error.message,
+      });
+      clearError();
+    }
+  }, [error, clearError]);
+
   return (
     <div className="bg-background rounded-2xl shadow-lg text-center w-auto max-w-2xl mx-auto">
       <h2 className="text-headline text-xl font-bold mb-4 mt-2">Enter your lobby code</h2>
       <div className="mb-4">
         <div className="flex justify-center items-center gap-2 m-4">
-          {joinCodeParts.map((part, index) => (
-            <React.Fragment key={index}>
-              <input
-                type="text"
-                value={part}
-                onChange={(e) =>
-                  handlePartChange(
-                    index,
-                    e.target.value,
-                    e.currentTarget.parentElement!.querySelectorAll('input')
-                  )
-                }
-                onFocus={(e) => e.target.select()}
-                className="w-10 h-10 text-center border border-gray-300 rounded text-highlight bg-transparent font-bold"
-                maxLength={1}
-                disabled={isLoading}
-              />
-              {index === 2 && <span className="text-highlight font-bold">-</span>}
-            </React.Fragment>
-          ))}
+          <JoinCodeInput
+            joinCodeParts={joinCodeParts}
+            onPartChange={handlePartChange}
+            isDisabled={isLoading}
+          />
         </div>
         <div className="flex justify-center gap-4">
           <button
