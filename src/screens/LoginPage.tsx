@@ -3,12 +3,13 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
+import * as auth from '../services/auth'
 import { usePopup } from '../components/PopupContext'
 import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login, googleAuth } = useAuth()
+  const { login, revalidate,isAuthenticated } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -21,37 +22,42 @@ const LoginPage = () => {
     }
   }, []);
 
-  const handleGoogleSignIn = useCallback(() => {
-    if (typeof window === 'undefined') return
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-    if (!clientId) {
-      showPopup({ type: 'informative', message: 'Google sign-in is not configured yet.' })
-      return
-    }
-    const google = (window as typeof window & { google?: any }).google
-    if (!google?.accounts?.id) {
-      showPopup({ type: 'informative', message: 'Google SDK not loaded. Try again in a moment.' })
-      return
-    }
-    google.accounts.id.initialize({
-      client_id: clientId,
-      callback: async (response: { credential?: string }) => {
-        if (!response.credential) {
-          showPopup({ type: 'error', message: 'Google sign-in was cancelled.' })
-          return
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      const url = await auth.getGoogleAuthorizationUrl()
+      const w = window.open(url, 'google_oauth', 'width=500,height=650,location=center')
+      if (!w) {
+        // fallback to full redirect
+        window.location.href = url
+        return
+      }
+      const iv = setInterval(async () => {
+        if (w.closed) {
+          clearInterval(iv)
+          try {
+            await revalidate()
+            navigate('/', { replace: true })
+          } catch {
+            showPopup({ type: 'error', message: 'Google sign-in failed. Try again.' })
+          }
         }
-        try {
-          await googleAuth(response.credential)
-          navigate('/', { replace: true })
-        } catch (error) {
-          showPopup({ type: 'error', message: 'Google sign-in failed. Try again later.' })
-        } finally {
-          google.accounts.id.cancel?.()
+        else {
+          try {
+            await revalidate()
+            console.log(isAuthenticated)
+            if (isAuthenticated){
+              w.close()
+            }
+          }
+          catch {
+            
+          }
         }
-      },
-    })
-    google.accounts.id.prompt()
-  }, [googleAuth, navigate, showPopup])
+      }, 500)
+    } catch (e) {
+      showPopup({ type: 'error', message: 'Unable to start Google sign-in.' })
+    }
+  }, [navigate, revalidate, showPopup,isAuthenticated])
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -169,5 +175,3 @@ const LoginPage = () => {
 }
 
 export default LoginPage
-
-

@@ -37,10 +37,14 @@ export type ActivateUserPayload = {
 
 // /auth/ endpoints
 
-export async function googleAuth(token: string): Promise<User> {
-  const body = { token }
-  const data = await request<any>('/auth/google', { method: 'POST', body,  auth: false })
-  return (data?.user as User) ?? (await getMe().catch(() => null as unknown as User))
+export async function getGoogleAuthorizationUrl(scopes?: string[]): Promise<string> {
+  const qs = new URLSearchParams()
+  if (Array.isArray(scopes)) {
+    for (const s of scopes) qs.append('scopes', s)
+  }
+  const path = '/auth/google/authorize' + (qs.toString() ? `?${qs.toString()}` : '')
+  const data = await request<{ authorization_url: string }>(path, { method: 'GET', auth: false })
+  return data.authorization_url
 }
 
 
@@ -121,4 +125,3 @@ export async function patchMe(payload: Partial<User>): Promise<User> {
 export async function deleteMe(): Promise<void> {
   await request('/users/me', { method: 'DELETE' })
 }
-

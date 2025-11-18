@@ -3,13 +3,14 @@ import { useState, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
+import * as auth from '../services/auth'
 import { ApiError } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
 import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const RegistrationPage = () => {
   const navigate = useNavigate()
-  const { register, googleAuth } = useAuth()
+  const { register, revalidate } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -17,37 +18,29 @@ const RegistrationPage = () => {
 
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-  const handleGoogleSignIn = useCallback(() => {
-    if (typeof window === 'undefined') return
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-    if (!clientId) {
-      showPopup({ type: 'informative', message: 'Google sign-in is not configured yet.' })
-      return
-    }
-    const google = (window as typeof window & { google?: any }).google
-    if (!google?.accounts?.id) {
-      showPopup({ type: 'informative', message: 'Google SDK not loaded. Try again in a moment.' })
-      return
-    }
-    google.accounts.id.initialize({
-      client_id: clientId,
-      callback: async (response: { credential?: string }) => {
-        if (!response.credential) {
-          showPopup({ type: 'error', message: 'Google sign-in was cancelled.' })
-          return
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      const url = await auth.getGoogleAuthorizationUrl()
+      const w = window.open(url, 'google_oauth', 'width=500,height=650')
+      if (!w) {
+        window.location.href = url
+        return
+      }
+      const iv = setInterval(async () => {
+        if (w.closed) {
+          clearInterval(iv)
+          try {
+            await revalidate()
+            navigate('/', { replace: true })
+          } catch {
+            showPopup({ type: 'error', message: 'Google sign-in failed. Try again.' })
+          }
         }
-        try {
-          await googleAuth(response.credential)
-          navigate('/', { replace: true })
-        } catch (error) {
-          showPopup({ type: 'error', message: 'Google sign-in failed. Try again later.' })
-        } finally {
-          google.accounts.id.cancel?.()
-        }
-      },
-    })
-    google.accounts.id.prompt()
-  }, [googleAuth, navigate, showPopup])
+      }, 500)
+    } catch {
+      showPopup({ type: 'error', message: 'Unable to start Google sign-in.' })
+    }
+  }, [navigate, revalidate, showPopup])
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();

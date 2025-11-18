@@ -11,7 +11,7 @@ type AuthContextValue = {
   status: AuthStatus
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
-  googleAuth: (token: string) => Promise<void>
+  revalidate: () => Promise<void>
   logout: () => Promise<void>
   updateProfile: (payload: Partial<User>) => Promise<User>
   deleteAccount: () => Promise<void>
@@ -85,10 +85,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [status])
 
-  const googleAuth = async (token: string) => {
-    const me = await auth.googleAuth(token)
-    setUser(me)
-    setStatus('authenticated')
+  const revalidate = async () => {
+    try {
+      const me = await auth.getMe()
+      setUser(me)
+      setStatus('authenticated')
+    } catch {
+      setUser(null)
+      setStatus('unauthenticated')
+    }
   }
 
   const login = async (payload: LoginPayload) => {
@@ -126,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       status,
       login,
       register,
-      googleAuth,
+      revalidate,
       logout,
       updateProfile,
       deleteAccount
