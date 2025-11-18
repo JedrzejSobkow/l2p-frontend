@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLobby } from './lobby/LobbyContext';
 import Popup from './Popup';
+import { useNavigate } from 'react-router-dom'; // Assuming react-router-dom is used for navigation
 
 const JoinOrCreateGame: React.FC = () => {
-  const { createLobby, joinLobby, isLoading } = useLobby();
+  const { createLobby, joinLobby, currentLobby, isLoading } = useLobby(); // Dodano currentLobby
+  const navigate = useNavigate(); // Add navigation hook
   const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
-  const [newLobbyName, setNewLobbyName] = useState('');
   const [popup, setPopup] = useState<{ type: 'confirmation' | 'error' | 'informative'; message: string } | null>(null);
 
   const handlePartChange = (index: number, value: string, inputs: NodeListOf<HTMLInputElement>) => {
@@ -24,26 +25,26 @@ const JoinOrCreateGame: React.FC = () => {
 
   const handleConfirmJoin = async () => {
     const joinCode = joinCodeParts.join('');
-    try {
-      await joinLobby(joinCode);
-      setPopup({ type: 'confirmation', message: 'Successfully joined the lobby!' });
-    } catch (err: any) {
-      setPopup({ type: 'error', message: err.message });
-    }
+    joinLobby(joinCode);
     setJoinCodeParts(['', '', '', '', '', '']);
   };
 
   const handleCreateLobby = async () => {
     try {
-      await createLobby(2, false, newLobbyName || undefined);
-      setPopup({ type: 'confirmation', message: 'Lobby created successfully!' });
+      await createLobby(2, false, undefined);
+      navigate(`/lobby-test/`); // Navigate to the newly created lobby
     } catch (err: any) {
       setPopup({ type: 'error', message: err.message });
     }
-    setNewLobbyName('');
   };
 
   const isJoinCodeComplete = joinCodeParts.every((part) => part !== '');
+
+  useEffect(() => {
+    if (currentLobby) {
+      navigate(`/lobby-test`); // Przekierowanie do lobby, jeśli użytkownik już w nim jest
+    }
+  }, [currentLobby, navigate]);
 
   return (
     <div className="bg-background rounded-2xl shadow-lg text-center w-auto max-w-2xl mx-auto border border-highlight">
