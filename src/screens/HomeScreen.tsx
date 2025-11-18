@@ -7,6 +7,7 @@ import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
 import Popup from '../components/Popup';
 import { useLobby } from '../components/lobby/LobbyContext';
+import JoinOrCreateGame from '../components/JoinOrCreateGame';
 
 const HomeScreen: React.FC = () => {
   const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
@@ -112,6 +113,7 @@ const HomeScreen: React.FC = () => {
           onSuggestionClickRoute="/game"
         />
       </div>
+      <JoinOrCreateGame />
 
       <div className="flex flex-col md:flex-row justify-between gap-8">
         {/* Left Column: Top Picks and Featured Games */}
