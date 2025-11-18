@@ -47,10 +47,9 @@ const JoinOrCreateGame: React.FC = () => {
   }, [currentLobby, navigate]);
 
   return (
-    <div className="bg-background rounded-2xl shadow-lg text-center w-auto max-w-2xl mx-auto border border-highlight">
-      <h2 className="text-highlight text-xl font-bold mb-4 mt-2">Join or Create a lobby</h2>
+    <div className="bg-background rounded-2xl shadow-lg text-center w-auto max-w-2xl mx-auto">
+      <h2 className="text-headline text-xl font-bold mb-4 mt-2">Enter your lobby code</h2>
       <div className="mb-4">
-        {/* <h3 className="text-paragraph font-bold mb-2">Join a Game</h3> */}
         <div className="flex justify-center items-center gap-2 m-4">
           {joinCodeParts.map((part, index) => (
             <React.Fragment key={index}>
@@ -73,15 +72,13 @@ const JoinOrCreateGame: React.FC = () => {
             </React.Fragment>
           ))}
         </div>
-        <p className="text-xs text-gray-500 mb-4">Format: XXX-XXX (6 alphanumeric characters)</p>
-
         <div className="flex justify-center gap-4">
           <button
             onClick={handleConfirmJoin}
             className={`px-4 py-2 rounded transform transition-transform duration-200 ${
               isJoinCodeComplete && !isLoading
                 ? 'bg-highlight text-white cursor-pointer hover:scale-105'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-inactive-bg text-inactive-text cursor-not-allowed'
             }`}
             disabled={!isJoinCodeComplete || isLoading}
           >
