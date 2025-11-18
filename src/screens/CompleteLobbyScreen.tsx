@@ -49,6 +49,13 @@ export const CompleteLobbyScreen = () => {
     setGameState
   } = useLobby()
 
+  // Redirect user to home if they are not in a lobby
+  useEffect(() => {
+    if (!currentLobby) {
+      navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } })
+    }
+  }, [currentLobby, navigate])
+
   const [messageInput, setMessageInput] = useState('')
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const typingTimeoutRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())

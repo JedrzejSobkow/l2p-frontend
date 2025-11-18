@@ -17,6 +17,14 @@ const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember, leaveLobby, clearError, error } = useLobby();
+
+  // Redirect user to home if they are not in a lobby
+  useEffect(() => {
+    if (!currentLobby) {
+      navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } });
+    }
+  }, [currentLobby, navigate]);
+
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [winnerName, setWinnerName] = useState<string | null>(null);
