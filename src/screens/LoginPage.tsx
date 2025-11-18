@@ -1,15 +1,14 @@
 import type { FormEventHandler } from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
-import * as auth from '../services/auth'
 import { usePopup } from '../components/PopupContext'
 import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login, revalidate,isAuthenticated } = useAuth()
+  const { login, handleGoogleSignIn } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -22,42 +21,7 @@ const LoginPage = () => {
     }
   }, []);
 
-  const handleGoogleSignIn = useCallback(async () => {
-    try {
-      const url = await auth.getGoogleAuthorizationUrl()
-      const w = window.open(url, 'google_oauth', 'width=500,height=650,location=center')
-      if (!w) {
-        // fallback to full redirect
-        window.location.href = url
-        return
-      }
-      const iv = setInterval(async () => {
-        if (w.closed) {
-          clearInterval(iv)
-          try {
-            await revalidate()
-            navigate('/', { replace: true })
-          } catch {
-            showPopup({ type: 'error', message: 'Google sign-in failed. Try again.' })
-          }
-        }
-        else {
-          try {
-            await revalidate()
-            console.log(isAuthenticated)
-            if (isAuthenticated){
-              w.close()
-            }
-          }
-          catch {
-            
-          }
-        }
-      }, 500)
-    } catch (e) {
-      showPopup({ type: 'error', message: 'Unable to start Google sign-in.' })
-    }
-  }, [navigate, revalidate, showPopup,isAuthenticated])
+  
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()

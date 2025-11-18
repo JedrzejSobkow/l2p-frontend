@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { User, LoginPayload, RegisterPayload } from '../services/auth'
 import * as auth from '../services/auth'
 import { onUnauthorized } from '../lib/http'
-
+import { usePopup } from '../components/PopupContext'
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated'
 
 type AuthContextValue = {
@@ -11,10 +11,10 @@ type AuthContextValue = {
   status: AuthStatus
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
-  revalidate: () => Promise<void>
   logout: () => Promise<void>
   updateProfile: (payload: Partial<User>) => Promise<User>
   deleteAccount: () => Promise<void>
+  handleGoogleSignIn: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -22,6 +22,19 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>('checking')
+  const [googleWindow, setGoogleWindow] = useState<Window | null>(null)
+  const {showPopup} = usePopup()
+
+  const refreshUser = async () => {
+    try {
+      const me = await auth.getMe()
+      setUser(me)
+      setStatus('authenticated')
+    } catch {
+      setUser(null)
+      setStatus('unauthenticated')
+    }
+  }
 
   // Flip to unauthenticated immediately on global 401
   useEffect(() => {
@@ -33,6 +46,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       onUnauthorized(null)
     }
   }, [])
+
+  useEffect(() => {
+    if (user && googleWindow && !googleWindow.closed) {
+      googleWindow.close()
+      setGoogleWindow(null)
+    } 
+  }, [user, googleWindow])
+
+  useEffect(() => {
+    if (!googleWindow)return
+
+    const iv = setInterval(async () => {
+      if (googleWindow.closed){
+        clearInterval(iv)
+        try {
+          await refreshUser()
+        }
+        catch {
+          showPopup({type: 'error',message: 'Google sign-in failed. Try again.'})
+        }
+        return 
+      }
+      try {
+        await refreshUser()
+      }
+      catch {
+
+      }
+    },1000)
+    return () => clearInterval(iv)
+  },[googleWindow, showPopup,refreshUser])
+
+  const handleGoogleSignIn = useCallback(async () => {
+    try {
+      const url = await auth.getGoogleAuthorizationUrl()
+      const w = window.open(url, 'google_oauth', 'width=500,height=650')
+      if (!w) {
+        window.location.href = url
+        return
+      }
+      setGoogleWindow(w)
+    } catch (e) {
+      showPopup({ type: 'error', message: 'Unable to start Google sign-in.' })
+    }
+  }, [showPopup])
+
+  
 
   useEffect(() => {
     let cancelled = false;
@@ -64,14 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const now = Date.now()
       if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
       lastCheckRef.current = now
-      try {
-        const me = await auth.getMe()
-        setUser(me)
-        setStatus('authenticated')
-      } catch {
-        setUser(null)
-        setStatus('unauthenticated')
-      }
+      await refreshUser()
     }
     const onFocus = () => void revalidate()
     const onVisibility = () => {
@@ -83,18 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
       if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [status])
-
-  const revalidate = async () => {
-    try {
-      const me = await auth.getMe()
-      setUser(me)
-      setStatus('authenticated')
-    } catch {
-      setUser(null)
-      setStatus('unauthenticated')
-    }
-  }
+  }, [status,refreshUser])
 
   const login = async (payload: LoginPayload) => {
     const me = await auth.login(payload)
@@ -131,10 +173,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       status,
       login,
       register,
-      revalidate,
       logout,
       updateProfile,
-      deleteAccount
+      deleteAccount,
+      handleGoogleSignIn
     }),
     [user, status],
   )

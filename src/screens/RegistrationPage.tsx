@@ -1,16 +1,15 @@
 import type { FormEventHandler } from 'react'
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
-import * as auth from '../services/auth'
 import { ApiError } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
 import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const RegistrationPage = () => {
   const navigate = useNavigate()
-  const { register, revalidate } = useAuth()
+  const { register, handleGoogleSignIn } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -18,29 +17,6 @@ const RegistrationPage = () => {
 
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-  const handleGoogleSignIn = useCallback(async () => {
-    try {
-      const url = await auth.getGoogleAuthorizationUrl()
-      const w = window.open(url, 'google_oauth', 'width=500,height=650')
-      if (!w) {
-        window.location.href = url
-        return
-      }
-      const iv = setInterval(async () => {
-        if (w.closed) {
-          clearInterval(iv)
-          try {
-            await revalidate()
-            navigate('/', { replace: true })
-          } catch {
-            showPopup({ type: 'error', message: 'Google sign-in failed. Try again.' })
-          }
-        }
-      }, 500)
-    } catch {
-      showPopup({ type: 'error', message: 'Unable to start Google sign-in.' })
-    }
-  }, [navigate, revalidate, showPopup])
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
