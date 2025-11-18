@@ -99,7 +99,7 @@ const LobbyInGameScreen = () => {
       setGameState(data.game_state); // Update the game state in the context
         console.log(gameState)
     //   if (data.game_state.result !== 'in_progress') {
-    //     navigate('/lobby-test'); // Redirect to lobby-test if the game is not in progress
+    //     navigate('/lobby'); // Redirect to lobby if the game is not in progress
     //   }
     };
 
@@ -257,7 +257,7 @@ const LobbyInGameScreen = () => {
         isOpen={isModalOpen}
         winnerName={winnerName}
         result={result}
-        onReturnToLobby={() => navigate("/lobby-test")}
+        onReturnToLobby={() => navigate("/lobby")}
       />
       <KickPlayerModal
         isOpen={isKickModalOpen}

@@ -20,7 +20,7 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
 
   const handleNavigateToLobby = () => {
     joinLobby(lobbyCode);
-    navigate('/lobby-test');
+    navigate('/lobby');
   };
 
   return (

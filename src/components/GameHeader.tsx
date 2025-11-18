@@ -88,7 +88,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
 
     useEffect(() => {
         if (currentLobby) {
-            navigate(`/lobby-test`);
+            navigate(`/lobby`);
         }
     }, [currentLobby, navigate]);
 

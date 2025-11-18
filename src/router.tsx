@@ -14,7 +14,7 @@ import GameScreen from "./screens/GameScreen";
 // import LobbyGameScreen from "./screens/LobbyGameScreen";
 import FriendsScreen from "./screens/FriendsScreen";
 import VerifyEmailPage from './screens/VerifyEmailPage';
-import { CompleteLobbyScreen } from "./screens/CompleteLobbyScreen";
+import { LobbyScreen } from "./screens/LobbyScreen";
 // import { GamePlayScreen } from "./screens/GamePlayScreen";
 import LobbyInGameScreen from "./screens/LobbyInGameScreen";
 
@@ -60,8 +60,8 @@ export const router = createBrowserRouter([
             //     element: <RequireAuth> <LobbyScreen /> </RequireAuth>
             // },
             {
-                path: 'lobby-test/:lobbyCode?',
-                element: <RequireAuth> <CompleteLobbyScreen /> </RequireAuth>
+                path: 'lobby/:lobbyCode?',
+                element: <RequireAuth> <LobbyScreen /> </RequireAuth>
             },
             {
                 path: 'lobby/ingame',

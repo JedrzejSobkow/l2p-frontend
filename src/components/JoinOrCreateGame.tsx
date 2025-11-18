@@ -35,7 +35,7 @@ const JoinOrCreateGame: React.FC = () => {
   const handleCreateLobby = async () => {
     try {
       await createLobby(2, false, undefined);
-      navigate(`/lobby-test/`); // Navigate to the newly created lobby
+      navigate(`/lobby/`); // Navigate to the newly created lobby
     } catch (err: any) {
       setPopup({ type: 'error', message: err.message });
     }
@@ -45,7 +45,7 @@ const JoinOrCreateGame: React.FC = () => {
 
   useEffect(() => {
     if (currentLobby) {
-      navigate(`/lobby-test`); // Przekierowanie do lobby, jeśli użytkownik już w nim jest
+      navigate(`/lobby`); // Przekierowanie do lobby, jeśli użytkownik już w nim jest
     }
   }, [currentLobby, navigate]);
 

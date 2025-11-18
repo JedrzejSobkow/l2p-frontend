@@ -22,7 +22,7 @@ import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
 import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
 
-export const CompleteLobbyScreen = () => {
+export const LobbyScreen = () => {
   const { lobbyCode } = useParams<{ lobbyCode?: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -131,10 +131,10 @@ export const CompleteLobbyScreen = () => {
     if (currentLobby) {
       if (currentLobby.lobby_code === lobbyCode) {
         // User is already in the requested lobby
-        navigate('/lobby-test')
+        navigate('/lobby')
       } else {
         // User is in a different lobby
-        navigate('/lobby-test', {
+        navigate('/lobby', {
           state: { message: 'You are already a member of another lobby.', type: 'info' },
         })
       }
@@ -156,7 +156,7 @@ export const CompleteLobbyScreen = () => {
     // Listen for errors or success
     const handleLobbyError = (error: { error_code: string; message: string }) => {
       if (error.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
-        navigate('/lobby-test', {
+        navigate('/lobby', {
           state: { message: 'You are already a member of another lobby.', type: 'info' },
         })
       } else {
@@ -165,7 +165,7 @@ export const CompleteLobbyScreen = () => {
     }
 
     const handleLobbyJoined = () => {
-      navigate('/lobby-test')
+      navigate('/lobby')
     }
 
     onLobbyError(handleLobbyError)
@@ -258,7 +258,7 @@ export const CompleteLobbyScreen = () => {
 
   const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {
     if (!currentLobby) return
-    const lobbyUrl = `${window.location.origin}/lobby-test/${currentLobby.lobby_code}`
+    const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
     const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
 
     sendPrivateMessage({
