@@ -48,18 +48,10 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
         setNewLobbyName(value);
     };
 
-    const handlePartChange = (index: number, value: string, inputs: NodeListOf<HTMLInputElement>) => {
-        const sanitizedValue = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 1);
+    const handlePartChange = (index: number, value: string) => {
         const updatedParts = [...joinCodeParts];
-        updatedParts[index] = sanitizedValue;
+        updatedParts[index] = value;
         setJoinCodeParts(updatedParts);
-
-        const inputsArray = Array.from(inputs);
-        if (sanitizedValue && index < inputsArray.length - 1) {
-            const nextInput = inputsArray[index + 1];
-            nextInput.focus();
-            nextInput.select();
-        }
     };
 
     const handleConfirmJoin = () => {
