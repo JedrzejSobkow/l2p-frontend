@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import GameTile from '../components/GameTile';
+import { ticTacToeImage, clobberImage } from '@assets/images';
 import { useLobby } from '../components/lobby/LobbyContext';
+import { getImage } from '../utils/imageMap';
 
 const FindGamesScreen: React.FC = () => {
   const { searchPhrase } = useParams<{ searchPhrase?: string }>();
@@ -35,7 +37,7 @@ const FindGamesScreen: React.FC = () => {
             <GameTile
               key={index}
               gameName={game.display_name}
-              imageSrc={`/src/assets/images/games/${game.game_name || 'default'}.png`}
+              imageSrc={getImage('games', game.game_name) || ''}
               description={game.description}
               onClick={() => handleTileClick(game.game_name)}
             />

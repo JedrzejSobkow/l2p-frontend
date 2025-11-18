@@ -46,7 +46,7 @@ const ConfirmDialog: FC<ConfirmDialogProps> = ({
           <button
             type="button"
             onClick={onConfirm}
-            className="rounded-full bg-gradient-to-r from-orange-500 to-orange-400 px-5 py-2 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(255,149,0,0.35)] transition hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
+            className="rounded-full bg-button px-5 py-2 text-sm font-semibold text-white transition hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
             disabled={loading}
           >
             {loading ? 'Working...' : confirmLabel}

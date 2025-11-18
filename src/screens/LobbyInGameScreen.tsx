@@ -12,6 +12,7 @@ import LeaveModal from '../components/LeaveModal';
 import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, offGameEnded, onGameState, offGameState } from '../services/game';
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 import { FaSignOutAlt } from 'react-icons/fa';
+import { getImage } from '../utils/imageMap';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -231,7 +232,9 @@ const LobbyInGameScreen = () => {
             {members.map((member, index) => (
               <InGameUserTile
                 key={member.user_id}
-                avatar={`/src/assets${member.pfp_path}` || '/default-avatar.png'}
+                avatar={
+                  getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown'
+                }
                 username={member.nickname}
                 place={index + 1}
                 isHost={currentLobby?.host_id === member.user_id}

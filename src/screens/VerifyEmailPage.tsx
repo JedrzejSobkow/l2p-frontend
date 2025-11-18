@@ -1,13 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifyUser } from '../services/auth';
-import Popup from '../components/Popup';
+import { usePopup } from '../components/PopupContext';
 
 const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const { showPopup } = usePopup();
   const navigate = useNavigate();
   const hasVerified = useRef(false);
-  const [popup, setPopup] = useState<{ type: 'informative' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -18,15 +18,9 @@ const VerifyEmailPage: React.FC = () => {
 
       try {
         await verifyUser({ token });
-        localStorage.setItem(
-          'popupData',
-          JSON.stringify({ type: 'confirmation', message: 'Account activated. Please log in.' })
-        );
+        showPopup({ type: 'confirmation', message: 'Your email has been successfully verified! You can now log in.' });
       } catch (error) {
-        localStorage.setItem(
-            'popupData',
-            JSON.stringify({ type: 'error', message: 'Error verifying account. Please try again.' })
-          );
+        showPopup({ type: 'error', message: 'Email verification failed. The token may be invalid or expired.' });
       } finally {
         navigate('/login');
       }
@@ -38,13 +32,6 @@ const VerifyEmailPage: React.FC = () => {
   return (
     <div>
       Verifying your email...
-      {popup && (
-        <Popup
-          type={popup.type}
-          message={popup.message}
-          onClose={() => setPopup(null)}
-        />
-      )}
     </div>
   );
 };

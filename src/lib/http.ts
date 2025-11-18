@@ -83,10 +83,9 @@ async function parseError(res: Response): Promise<ApiError> {
     // ignore
   }
   // Map FastAPI validation detail to field errors
-  const code = payload?.code
   let message = payload?.message || payload?.detail || res.statusText || 'Request failed'
   let fields: Record<string, string> | undefined
-  const detail = payload?.detail
+  const detail = payload?.detail || payload?.details
   if (Array.isArray(detail)) {
     fields = {}
     for (const d of detail) {

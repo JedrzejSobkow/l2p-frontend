@@ -1,4 +1,5 @@
 import { type FC, type MouseEvent } from 'react'
+import { pfpImage } from '@assets/images'
 import { FiSend } from 'react-icons/fi'
 import type { Friendship } from '../../services/friends'
 
@@ -39,7 +40,7 @@ const FriendCard: FC<FriendCardProps> = ({
     >
       <div className="flex items-center gap-3 min-w-0">
         <img
-          src={avatarUrl || '/assets/images/pfp.png'}
+          src={avatarUrl || pfpImage}
           alt="Avatar"
           className="h-10 w-10 rounded-full object-cover"
         />

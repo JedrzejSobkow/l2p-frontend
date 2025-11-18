@@ -5,9 +5,23 @@ import LeaderboardCard from '../components/LeaderboardCard';
 import GameRecommendationWithImages from '../components/GameRecommendationWithImages';
 import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
+import {
+  ticTacToeImage,
+  clobberImage,
+  avatar1,
+  avatar2,
+  avatar3,
+  avatar4,
+  avatar5,
+  avatar6,
+  avatar7,
+  avatar8,
+  avatar9,
+} from '@assets/images';
 import Popup from '../components/Popup';
 import { useLobby } from '../components/lobby/LobbyContext';
 import JoinOrCreateGame from '../components/JoinOrCreateGame';
+import { getImage } from '../utils/imageMap';
 
 const HomeScreen: React.FC = () => {
   const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
@@ -33,11 +47,11 @@ const HomeScreen: React.FC = () => {
   }, [location]);
 
   const leaderboardData = [
-    { place: 1, pfp_path: '/src/assets/images/avatar/1.png', name: 'PlayerOne', rating: 1500 },
-    { place: 2, pfp_path: '/src/assets/images/avatar/2.png', name: 'PlayerTwo', rating: 1400 },
-    { place: 3, pfp_path: '/src/assets/images/avatar/3.png', name: 'cool_usersdfsfsdfsdf', rating: 1300 },
-    { place: 4, pfp_path: '/src/assets/images/avatar/4.png', name: 'Cipicipi', rating: 1200 },
-    { place: 5, pfp_path: '/src/assets/images/avatar/4.png', name: 'cidsof', rating: 1150 },
+    { place: 1, pfp_path: avatar1, name: 'PlayerOne', rating: 1500 },
+    { place: 2, pfp_path: avatar2, name: 'PlayerTwo', rating: 1400 },
+    { place: 3, pfp_path: avatar3, name: 'cool_usersdfsfsdfsdf', rating: 1300 },
+    { place: 4, pfp_path: avatar4, name: 'Cipicipi', rating: 1200 },
+    { place: 5, pfp_path: avatar4, name: 'cidsof', rating: 1150 },
   ];
 
   const topPlayers = leaderboardData.slice(0, 5);
@@ -45,7 +59,7 @@ const HomeScreen: React.FC = () => {
   // Generate top picks and featured games from available games
   const topPicksImages = availableGames.length > 0
     ? availableGames.slice(0, 2).map((game: any) => ({
-        src: `/src/assets/images/games/${game.game_name || 'default'}.png`,
+        src: getImage('games', game.game_name) || '/unknown',
         alt: game.display_name,
         gameName: game.game_name,
       }))
@@ -53,7 +67,7 @@ const HomeScreen: React.FC = () => {
 
   const featuredGamesImages = availableGames.length > 0
     ? [availableGames[2] || availableGames[0]].map((game: any) => ({
-        src: `/src/assets/images/games/${game.game_name || 'default'}.png`,
+        src: getImage('games', game.game_name) || '/unknown',
         alt: game.display_name,
         gameName: game.game_name,
       }))
@@ -65,10 +79,10 @@ const HomeScreen: React.FC = () => {
     .map((lobby) => ({
       gameName: lobby.selected_game_info?.display_name || 'Game not selected',
       lobbyName: lobby.name,
-      gameImage: `/src/assets/images/games/${lobby.selected_game || 'default'}.png`,
+      gameImage: getImage('games', lobby.selected_game || '') || '/unknown',
       players: lobby.members.slice(0, 2).map((member) => ({
         username: member.nickname,
-        avatar: `/src/assets${member.pfp_path}`,
+        avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',
       })),
       maxPlayers: lobby.max_players,
       duration: 'In progress',
@@ -107,7 +121,7 @@ const HomeScreen: React.FC = () => {
           suggestions={availableGames.map((game: any) => ({
             text: game.display_name,
             name: game.game_name,
-            image: `/src/assets/images/games/${game.game_name || 'default'}.png`,
+            image: getImage('games', game.game_name || '') || '/unknown',
           }))}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/game"

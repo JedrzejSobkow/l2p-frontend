@@ -24,7 +24,6 @@ import {
   type ConversationUpdatedEvent,
   type UserTypingEvent,
 } from '../../services/chat'
-import { withAssetsPrefix } from '../../services/auth'
 
 export type ConversationTarget = {
   id: string
@@ -61,11 +60,11 @@ const mapDtoToChatMessage = (dto: ChatMessageDTO): ChatMessage => ({
   avatarUrl: undefined,
   content: dto.content ?? '',
   createdAt: dto.created_at,
-  imageUrl: withAssetsPrefix(dto.image_url ?? undefined),
+  imageUrl: dto.image_url ?? undefined,
 })
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth()
+  const { user,isAuthenticated } = useAuth()
   const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {} })
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
@@ -346,12 +345,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (!user) return
+    if (!isAuthenticated) return
     void loadInitialConversations()
-  }, [loadInitialConversations, user])
+  }, [loadInitialConversations, isAuthenticated])
 
   useEffect(() => {
-    if (!user) {
+    if (!isAuthenticated) {
       disconnectChatSocket()
       return
     }
@@ -380,6 +379,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       disconnectChatSocket()
     }
   }, [handleConversationUpdated, handleIncomingMessage, handleTypingEvent, user])
+
+  useEffect(() => {
+    if (isAuthenticated) return
+    setState({ messagesById: {}, targets: {}, typingById: {} })
+    loadingConversationsRef.current.clear()
+    loadedConversationsRef.current.clear()
+    typingThrottleRef.current.clear()
+    typingTimeoutRef.current.forEach((timeout) => clearTimeout(timeout))
+    typingTimeoutRef.current.clear()
+  }, [isAuthenticated])
 
   const value = useMemo<ChatContextValue>(
     () => ({

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { searchIcon } from '@assets/icons';
 
 interface Suggestion {
   text: string;
@@ -84,7 +85,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         />
         <button className="ml-2">
           <img
-            src="/src/assets/icons/search.png"
+            src={searchIcon}
             alt="Search Icon"
             className={isSmall ? 'w-4 h-4' : 'w-5 h-5'}
           />

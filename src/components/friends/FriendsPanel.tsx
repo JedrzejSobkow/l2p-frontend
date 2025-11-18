@@ -4,7 +4,8 @@ import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
 import { useFriends } from './FriendsContext'
 import type { Friendship, FriendResult } from '../../services/friends'
-import Popup from '../Popup'
+import { usePopup } from '../PopupContext'
+import { pfpImage } from '@assets/images'
 
 type FriendsPanelProps = {
   onFriendSelect?: (friend: Friendship) => void
@@ -34,6 +35,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     isLoading,
   } = useFriends()
   const { openChat } = useChatDock()
+  const {showPopup} = usePopup();
 
   const [mode, setMode] = useState<'friends' | 'discover'>('friends')
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,8 +45,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const [showIncoming, setShowIncoming] = useState(true)
   const [showOutgoing, setShowOutgoing] = useState(false)
   const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({})
-  const [popup, setPopup] = useState<{type: 'error' | 'confirmation'|'informative', message: string} | null>(null);
-
+  
   const runSearch = useCallback(
     async (input: string) => {
       const query = input.trim()
@@ -92,10 +93,10 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     markProcessing(id, true)
     try {
       await acceptRequest(friend.friend_user_id)
-      setPopup({type: 'confirmation', message: `Friend request from ${friend.friend_nickname} accepted.`})
+      showPopup({type: 'confirmation', message: `Friend request from ${friend.friend_nickname} accepted.`})
     } catch (error) {
       console.error('Failed to accept friend request', error)
-      setPopup({type: 'error', message: 'Failed to accept friend request. Please try again later.'})
+      showPopup({type: 'error', message: 'Failed to accept friend request. Please try again later.'})
     } finally {
       markProcessing(id, false)
     }
@@ -120,11 +121,11 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     markProcessing(id, true)
     try {
       await sendRequest(user.user_id)
-      setPopup({type: 'confirmation', message: `Friend request sent to ${user.nickname}.`})
+      showPopup({type: 'confirmation', message: `Friend request sent to ${user.nickname}.`})
       setSearchResults((prev) => prev.filter((item) => normalizeId(item.user_id) !== id))
     } catch (error: any) {
       console.error('Failed to send friend request', error)
-      setPopup({type: 'error', message: error.message || 'Failed to send friend request. Please try again later.'})
+      showPopup({type: 'error', message: error.message || 'Failed to send friend request. Please try again later.'})
     } finally {
       markProcessing(id, false)
     }
@@ -224,7 +225,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={user.pfp_path || '/assets/images/pfp.png'}
+                          src={user.pfp_path || pfpImage}
                           alt="Avatar"
                           className="h-10 w-10 rounded-full object-cover"
                         />
@@ -306,7 +307,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <img
-                              src={request.friend_pfp_path || '/assets/images/pfp.png'}
+                              src={request.friend_pfp_path || pfpImage}
                               alt={request.friend_nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />
@@ -373,7 +374,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <img
-                              src={request.friend_pfp_path || '/assets/images/pfp.png'}
+                              src={request.friend_pfp_path || pfpImage}
                               alt={request.friend_nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />
@@ -407,14 +408,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
       </div>
       
     </div>
-    {/* Error Popup */}
-            {popup && (
-                <Popup
-                    type={popup.type}
-                    message={popup.message}
-                    onClose={() => setPopup(null)}
-                />
-            )}
     </>
   )
 }

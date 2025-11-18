@@ -21,6 +21,9 @@ import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
 import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
+import { getImage } from '../utils/imageMap';
+import { diceIcon } from '@assets/icons';
+
 
 export const LobbyScreen = () => {
   const { lobbyCode } = useParams<{ lobbyCode?: string }>()
@@ -362,7 +365,7 @@ export const LobbyScreen = () => {
   )
 
   const users = members.map((member, index) => ({
-    avatar: `/src/assets${member.pfp_path}`,
+    avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',
     username: member.nickname,
     place: index + 1,
     isReady: member.is_ready || false,
@@ -372,7 +375,7 @@ export const LobbyScreen = () => {
   const gameInfo = currentLobby?.selected_game_info ? {
     display_name: currentLobby.selected_game_info.display_name,
     name: currentLobby.selected_game_info.game_name,
-    img_path: `/src/assets/images/games/${currentLobby.selected_game}.png`,
+    img_path: getImage('games', currentLobby.selected_game || '') || '',
     rules: currentLobby.selected_game_info.description,
   } : {
     display_name: 'Game not selected',
@@ -583,7 +586,7 @@ export const LobbyScreen = () => {
               >
                 <span className="text-highlight font-bold text-m hidden sm:inline">CHANGE GAME</span>
                 <img 
-                  src="/src/assets/icons/dice.png" 
+                  src={diceIcon}
                   alt="Change game" 
                   className="w-6 h-6"
                   style={{
