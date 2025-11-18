@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useLobby } from './lobby/LobbyContext';
 import Popup from './Popup';
 import type { PopupProps } from './Popup';
+import JoinCodeInput from "./JoinCodeInput";
 
 interface GameHeaderProps {
     title: string;
@@ -138,26 +139,11 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         <h2 className="text-highlight text-xl font-bold mb-4">Enter Join Code</h2>
                         <p className="text-paragraph mb-4">Please enter the join code to proceed.</p>
                         <div className="flex justify-center items-center gap-2 mb-4">
-                            {joinCodeParts.map((part, index) => (
-                                <React.Fragment key={index}>
-                                    <input
-                                        type="text"
-                                        value={part}
-                                        onChange={(e) =>
-                                            handlePartChange(
-                                                index,
-                                                e.target.value,
-                                                e.currentTarget.parentElement!.querySelectorAll('input')
-                                            )
-                                        }
-                                        onFocus={(e) => e.target.select()}
-                                        className="w-10 h-10 text-center border border-gray-300 rounded text-highlight bg-transparent font-bold"
-                                        maxLength={1}
-                                        disabled={isLoading}
-                                    />
-                                    {index === 2 && <span className="text-highlight font-bold">-</span>}
-                                </React.Fragment>
-                            ))}
+                            <JoinCodeInput
+                                joinCodeParts={joinCodeParts}
+                                onPartChange={handlePartChange}
+                                isDisabled={isLoading}
+                            />
                         </div>
                         <p className="text-xs text-gray-500 mb-4">Format: XXX-XXX (6 alphanumeric characters)</p>
                         <div className="flex justify-center gap-4">
