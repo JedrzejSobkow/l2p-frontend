@@ -10,10 +10,20 @@ const JoinOrCreateGame: React.FC = () => {
   const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
   const [popup, setPopup] = useState<{ type: 'confirmation' | 'error' | 'informative'; message: string } | null>(null);
 
-  const handlePartChange = (index: number, value: string) => {
-    const updatedParts = [...joinCodeParts];
-    updatedParts[index] = value;
-    setJoinCodeParts(updatedParts);
+  const handlePartChange = (index: number, value: string | string[]) => {
+    if (index === -1 && Array.isArray(value)) {
+      const updatedParts = [...joinCodeParts];
+      value.forEach((char, i) => {
+        if (i < updatedParts.length) {
+          updatedParts[i] = char;
+        }
+      });
+      setJoinCodeParts(updatedParts);
+    } else if (typeof value === "string") {
+      const updatedParts = [...joinCodeParts];
+      updatedParts[index] = value;
+      setJoinCodeParts(updatedParts);
+    }
   };
 
   const handleConfirmJoin = async () => {

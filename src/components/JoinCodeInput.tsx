@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 
 interface JoinCodeInputProps {
   joinCodeParts: string[];
-  onPartChange: (index: number, value: string) => void;
+  onPartChange: (index: number, value: string | string[]) => void; // Zmieniono typ value
   isDisabled?: boolean;
 }
 
@@ -11,6 +11,11 @@ const JoinCodeInput: React.FC<JoinCodeInputProps> = ({ joinCodeParts, onPartChan
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
     if (isDisabled) return;
+
+    // Jeśli wciśnięto Ctrl + V, nie wykonuj żadnej akcji
+    if ((e.ctrlKey || e.metaKey) && e.key.toUpperCase() === "V") {
+      return;
+    }
 
     const key = e.key.toUpperCase();
     if (/^[A-Z0-9]$/.test(key)) {
@@ -30,6 +35,28 @@ const JoinCodeInput: React.FC<JoinCodeInputProps> = ({ joinCodeParts, onPartChan
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>, index: number) => {
+    if (isDisabled) return;
+
+    const pasteData = e.clipboardData.getData("Text").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!pasteData) return;
+
+
+    e.preventDefault();
+    const updatedParts = [...joinCodeParts];
+    pasteData.split("").forEach((char, i) => {
+      if (index + i < updatedParts.length) {
+        updatedParts[index + i] = char;
+      }
+    });
+    onPartChange(-1, updatedParts);
+
+    const nextEmptyIndex = updatedParts.findIndex((part, i) => i > index && part === "");
+    const focusIndex = nextEmptyIndex !== -1 ? nextEmptyIndex : Math.min(index + pasteData.length, updatedParts.length - 1);
+    const nextElement = containerRef.current?.querySelectorAll<HTMLDivElement>(".join-code-cell")[focusIndex];
+    nextElement?.focus();
+  };
+
   const handleClick = (index: number) => {
     const element = containerRef.current?.querySelectorAll<HTMLDivElement>(".join-code-cell")[index];
     element?.focus();
@@ -45,6 +72,7 @@ const JoinCodeInput: React.FC<JoinCodeInputProps> = ({ joinCodeParts, onPartChan
               isDisabled ? "cursor-not-allowed" : "cursor-pointer"
             }`}
             onKeyDown={(e) => handleKeyDown(e, index)}
+            onPaste={(e) => handlePaste(e, index)}
             onClick={() => handleClick(index)}
           >
             {part}
