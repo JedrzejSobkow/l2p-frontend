@@ -14,7 +14,7 @@ import InviteFriendsModal from '../components/InviteFriendsModal'
 import EditLobbyNameModal from '../components/EditLobbyNameModal'
 import { usePopup } from '../components/PopupContext';
 import { useGameSettings } from '../hooks/useGameSettings'
-import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined, emitToggleReady } from '../services/lobby'
+import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined, emitToggleReady, getLobbySocket } from '../services/lobby'
 import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
 import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
@@ -55,10 +55,19 @@ export const LobbyScreen = () => {
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
-    if (!currentLobby) {
-      navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } })
+    const lobbySocket = getLobbySocket();
+    if (!lobbySocket || !lobbySocket.connected) {
+        return;
     }
-  }, [currentLobby, navigate])
+
+    const delayCheck = setTimeout(() => {
+        if (!currentLobby) {
+            navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } });
+        }
+    }, 100);
+
+    return () => clearTimeout(delayCheck); // Cleanup timeout on unmount or dependency change
+}, [currentLobby, navigate])
 
   const [messageInput, setMessageInput] = useState('')
   const [typingUsers, setTypingUsers] = useState<string[]>([])
