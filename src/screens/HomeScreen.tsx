@@ -6,17 +6,11 @@ import GameRecommendationWithImages from '../components/GameRecommendationWithIm
 import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
 import {
-  ticTacToeImage,
-  clobberImage,
+  noGameImage,
   avatar1,
   avatar2,
   avatar3,
   avatar4,
-  avatar5,
-  avatar6,
-  avatar7,
-  avatar8,
-  avatar9,
 } from '@assets/images';
 import { usePopup } from '../components/PopupContext';
 import { useLobby } from '../components/lobby/LobbyContext';
@@ -79,7 +73,7 @@ const HomeScreen: React.FC = () => {
     .map((lobby) => ({
       gameName: lobby.selected_game_info?.display_name || 'Game not selected',
       lobbyName: lobby.name,
-      gameImage: getImage('games', lobby.selected_game || '') || '/unknown',
+      gameImage: getImage('games', lobby.selected_game || 'noGame') || '/unknown',
       players: lobby.members.slice(0, 2).map((member) => ({
         username: member.nickname,
         avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',

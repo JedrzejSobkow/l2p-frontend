@@ -1,4 +1,5 @@
 export { default as logoImage } from './logo.png'
+export { default as noGameImage } from './games/default.png'
 export { default as ticTacToeImage } from './games/tictactoe.png'
 export { default as clobberImage } from './games/clobber.png'
 export { default as moreGamesImage } from './more-games.png'
