@@ -5,16 +5,18 @@ import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
 import { ApiError } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
+import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const RegistrationPage = () => {
   const navigate = useNavigate()
-  const { register } = useAuth()
+  const { register, handleGoogleSignIn } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [passwordsMatch, setPasswordsMatch] = useState(true)
 
   const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
@@ -81,7 +83,6 @@ const RegistrationPage = () => {
             Start tracking your favourite games, join lobbies and challenge top rated players.
           </p>
         </div>
-
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">
             <span>Nickname</span>
@@ -184,10 +185,22 @@ const RegistrationPage = () => {
             Sign in instead
           </Link>
         </p>
+
+        <div className="mt-6 mb-3 flex items-center gap-3 text-xs uppercase tracking-wide text-white/40">
+          <span className="h-px flex-1 bg-white/10" />
+          <span>OR</span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+        <div className="mb-6 flex flex-col gap-3">
+          <AuthGoogleButton
+            label="Register with Google"
+            disabled={submitting}
+            onClick={handleGoogleSignIn}
+          />
+        </div>
       </div>
     </div>
   )
 }
 
 export default RegistrationPage
-

@@ -37,6 +37,16 @@ export type ActivateUserPayload = {
 
 // /auth/ endpoints
 
+export async function getGoogleAuthorizationUrl(scopes?: string[]): Promise<string> {
+  const qs = new URLSearchParams()
+  if (Array.isArray(scopes)) {
+    for (const s of scopes) qs.append('scopes', s)
+  }
+  const path = '/auth/google/authorize' + (qs.toString() ? `?${qs.toString()}` : '')
+  const data = await request<{ authorization_url: string }>(path, { method: 'GET', auth: false })
+  return data.authorization_url
+}
+
 
 export async function login(payload: LoginPayload): Promise<User> {
   const form = new URLSearchParams()
@@ -109,4 +119,3 @@ export async function patchMe(payload: Partial<User>): Promise<User> {
 export async function deleteMe(): Promise<void> {
   await request('/users/me', { method: 'DELETE' })
 }
-
