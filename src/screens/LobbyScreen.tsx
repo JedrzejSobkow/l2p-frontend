@@ -23,6 +23,7 @@ import { sendMessage as sendPrivateMessage } from '../services/chat'
 import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
 import { getImage } from '../utils/imageMap';
 import { diceIcon } from '@assets/icons';
+import { pfpImage } from '@assets/images';
 
 
 export const LobbyScreen = () => {
@@ -344,7 +345,7 @@ export const LobbyScreen = () => {
   )
 
   const users = members.map((member, index) => ({
-    avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',
+    avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || pfpImage,
     username: member.nickname,
     place: index + 1,
     isReady: member.is_ready || false,
