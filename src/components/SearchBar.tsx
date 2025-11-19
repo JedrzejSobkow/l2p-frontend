@@ -4,6 +4,7 @@ import { searchIcon } from '@assets/icons';
 
 interface Suggestion {
   text: string;
+  name: string;
   image?: string;
 }
 
@@ -101,7 +102,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               <li
                 key={index}
                 className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSuggestionClick(suggestion.text)}
+                onClick={() => handleSuggestionClick(suggestion.name)}
               >
                 {suggestion.image && (
                   <img

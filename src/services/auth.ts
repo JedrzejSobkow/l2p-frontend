@@ -57,7 +57,11 @@ export async function login(payload: LoginPayload): Promise<User> {
 
   await request<any>('/auth/login', { method: 'POST', body: form, auth: false })
 
-  return await getMe().catch(() => ({ nickname: payload.email} as User))
+  const user = await getMe().catch(() => ({ nickname: payload.email} as User))
+
+  window.location.reload()
+  
+  return user
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {
@@ -72,6 +76,7 @@ export async function register(payload: RegisterPayload): Promise<User> {
 
 export async function logout(): Promise<void> {
   await request('/auth/logout', { method: 'POST', auth: true })
+  window.location.reload()
 }
 
 export async function forgotPassword(payload: ForgotPasswordPayload): Promise<string | undefined> {

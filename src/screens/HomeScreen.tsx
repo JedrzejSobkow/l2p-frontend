@@ -1,24 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaAngleRight, FaAngleLeft } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
 import LeaderboardCard from '../components/LeaderboardCard';
 import GameRecommendationWithImages from '../components/GameRecommendationWithImages';
 import SearchBar from '../components/SearchBar';
 import GameLobbyCard from '../components/GameLobbyCard';
 import {
-  ticTacToeImage,
-  clobberImage,
+  noGameImage,
   avatar1,
   avatar2,
   avatar3,
   avatar4,
-  avatar5,
-  avatar6,
-  avatar7,
-  avatar8,
-  avatar9,
 } from '@assets/images';
+import { usePopup } from '../components/PopupContext';
+import { useLobby } from '../components/lobby/LobbyContext';
+import JoinOrCreateGame from '../components/JoinOrCreateGame';
+import { getImage } from '../utils/imageMap';
 
 const HomeScreen: React.FC = () => {
+  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
+  const location = useLocation();
+  const { showPopup } = usePopup();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
+
+  useEffect(() => {
+    getAvailableGames();
+    getPublicLobbies();
+  }, [getAvailableGames, getPublicLobbies]);
+
+  useEffect(() => {
+    if (location.state?.message) {
+      showPopup({
+        type: location.state.type || 'info',
+        message: location.state.message,
+      });
+      window.history.replaceState({}, document.title);
+    }
+  }, [location, showPopup]);
+
   const leaderboardData = [
     { place: 1, pfp_path: avatar1, name: 'PlayerOne', rating: 1500 },
     { place: 2, pfp_path: avatar2, name: 'PlayerTwo', rating: 1400 },
@@ -29,118 +50,46 @@ const HomeScreen: React.FC = () => {
 
   const topPlayers = leaderboardData.slice(0, 5);
 
-  const topPicksImages = [
-    { src: ticTacToeImage, alt: 'Tic Tac Toe', gameName: 'tic-tac-toe' },
-    { src: clobberImage, alt: 'Clobber', gameName: 'clobber' },
-  ];
+  // Generate top picks and featured games from available games
+  const topPicksImages = availableGames.length > 0
+    ? availableGames.slice(0, 2).map((game: any) => ({
+        src: getImage('games', game.game_name) || '/unknown',
+        alt: game.display_name,
+        gameName: game.game_name,
+      }))
+    : [];
 
-  const featuredGamesImages = [
-    { src: clobberImage, alt: 'Clobber', gameName: 'clobber' },
-  ];
+  const featuredGamesImages = availableGames.length > 0
+    ? [availableGames[2] || availableGames[0]].map((game: any) => ({
+        src: getImage('games', game.game_name) || '/unknown',
+        alt: game.display_name,
+        gameName: game.game_name,
+      }))
+    : [];
 
-  const paginatedLobbies = [
-    {
-      page: 1,
-      lobbies: [
-        {
-          gameName: 'Tic Tac Toe',
-          lobbyName: 'Beginner Lobby',
-          gameImage: ticTacToeImage,
-          players: [
-            { username: 'PlayerOne', avatar: avatar1 },
-            { username: 'PlayerTwo', avatar: avatar2 },
-          ],
-          maxPlayers: 5,
-          duration: '5-10 mins',
-        },
-        {
-          gameName: 'Clobber',
-          lobbyName: 'Advanced Lobby',
-          gameImage: clobberImage,
-          players: [
-            { username: 'PlayerThree', avatar: avatar3 },
-          ],
-          maxPlayers: 2,
-          duration: '10-15 mins',
-        },
-        {
-          gameName: 'Chess',
-          lobbyName: 'Strategy Lobby',
-          gameImage: clobberImage,
-          players: [
-            { username: 'PlayerFour', avatar: avatar4 },
-          ],
-          maxPlayers: 4,
-          duration: '15-20 mins',
-        },
-      ],
-    },
-    {
-      page: 2,
-      lobbies: [
-        {
-          gameName: 'Checkers',
-          lobbyName: 'Casual Checkers',
-          gameImage: clobberImage,
-          players: [
-            { username: 'PlayerFive', avatar: avatar5 },
-          ],
-          maxPlayers: 3,
-          duration: '10-15 mins',
-        },
-        {
-          gameName: 'Sudoku',
-          lobbyName: 'Puzzle Masters',
-          gameImage: clobberImage,
-          players: [
-            { username: 'PlayerSix', avatar: avatar6 },
-          ],
-          maxPlayers: 6,
-          duration: '20-30 mins',
-        },
-        {
-          gameName: 'Minesweeper',
-          lobbyName: 'Mine Hunters',
-          gameImage: clobberImage,
-          players: [
-            { username: 'PlayerSeven', avatar: avatar7 },
-          ],
-          maxPlayers: 4,
-          duration: '10-15 mins',
-        },
-      ],
-    },
-    {
-      page: 3,
-      lobbies: [
-        {
-          gameName: 'Tic Tac Toe',
-          lobbyName: 'Pro Lobby',
-          gameImage: ticTacToeImage,
-          players: [
-            { username: 'PlayerEight', avatar: avatar8 },
-          ],
-          maxPlayers: 2,
-          duration: '5-10 mins',
-        },
-        {
-          gameName: 'Clobber',
-          lobbyName: 'Clobber Champs',
-          gameImage: clobberImage,
-          players: [
-            { username: 'PlayerNine', avatar: avatar9 },
-          ],
-          maxPlayers: 6,
-          duration: '15-20 mins',
-        },
-      ],
-    },
-  ];
+  // Convert publicLobbies to GameLobbyCard format
+  const formattedLobbies = publicLobbies
+    .filter((lobby) => lobby.current_players < lobby.max_players)
+    .map((lobby) => ({
+      gameName: lobby.selected_game_info?.display_name || 'Game not selected',
+      lobbyName: lobby.name,
+      gameImage: getImage('games', lobby.selected_game || 'noGame') || '/unknown',
+      players: lobby.members.slice(0, 2).map((member) => ({
+        username: member.nickname,
+        avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',
+      })),
+      maxPlayers: lobby.max_players,
+      duration: 'In progress',
+      lobbyCode: lobby.lobby_code,
+    }));
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // Calculate pagination
+  const totalPages = Math.ceil(formattedLobbies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentLobbies = formattedLobbies.slice(startIndex, startIndex + itemsPerPage);
 
   const handleNextPage = () => {
-    if (currentPage < paginatedLobbies.length) {
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -151,7 +100,10 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  const currentLobbies = paginatedLobbies.find((page) => page.page === currentPage)?.lobbies || [];
+  // Reset to page 1 when lobbies change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [publicLobbies]);
 
   return (
     <main className="flex flex-col gap-8 px-10 lg:px-20 py-5 bg-background h-full">
@@ -160,24 +112,26 @@ const HomeScreen: React.FC = () => {
         <SearchBar
           size="normal"
           placeholder="Search for games..."
-          suggestions={[
-            { text: 'Tic Tac Toe', image: ticTacToeImage },
-            { text: 'Clobber', image: clobberImage },
-            { text: 'Chess', image: clobberImage },
-            { text: 'Checkers', image: clobberImage },
-            { text: 'Sudoku', image: clobberImage },
-            { text: 'Minesweeper', image: clobberImage },
-          ]}
+          suggestions={availableGames.map((game: any) => ({
+            text: game.display_name,
+            name: game.game_name,
+            image: getImage('games', game.game_name || '') || '/unknown',
+          }))}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/game"
         />
       </div>
+      <JoinOrCreateGame />
 
       <div className="flex flex-col md:flex-row justify-between gap-8">
         {/* Left Column: Top Picks and Featured Games */}
         <div className="w-full md:w-[70%] flex flex-col gap-8">
-          <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
-          <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
+          {topPicksImages.length > 0 && (
+            <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
+          )}
+          {featuredGamesImages.length > 0 && (
+            <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
+          )}
         </div>
 
         {/* Right Column: Leaderboard */}
@@ -200,36 +154,43 @@ const HomeScreen: React.FC = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
         </div>
-        {currentLobbies.map((lobby, index) => (
-          <GameLobbyCard
-            key={index}
-            gameName={lobby.gameName}
-            lobbyName={lobby.lobbyName}
-            gameImage={lobby.gameImage}
-            players={lobby.players}
-            maxPlayers={lobby.maxPlayers}
-            duration={lobby.duration}
-          />
-        ))}
-        <div className="flex justify-center items-center gap-6 mt-4">
-          <button
-            onClick={handlePreviousPage}
-            disabled={currentPage === 1}
-            className="text-highlight disabled:opacity-50"
-          >
-            <FaAngleLeft size={30} />
-          </button>
-          <span className="text-lg font-bold text-headline">
-            Page {currentPage} of {paginatedLobbies.length}
-          </span>
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage === paginatedLobbies.length}
-            className="text-highlight disabled:opacity-50"
-          >
-            <FaAngleRight size={30} />
-          </button>
-        </div>
+        {currentLobbies.length > 0 ? (
+          <>
+            {currentLobbies.map((lobby, index) => (
+              <GameLobbyCard
+                key={index}
+                gameName={lobby.gameName}
+                lobbyName={lobby.lobbyName}
+                gameImage={lobby.gameImage}
+                players={lobby.players}
+                maxPlayers={lobby.maxPlayers}
+                duration={lobby.duration}
+                lobbyCode={lobby.lobbyCode}
+              />
+            ))}
+            <div className="flex justify-center items-center gap-6 mt-4">
+              <button
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="text-highlight disabled:opacity-50"
+              >
+                <FaAngleLeft size={30} />
+              </button>
+              <span className="text-lg font-bold text-headline">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="text-highlight disabled:opacity-50"
+              >
+                <FaAngleRight size={30} />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="text-center text-headline py-8">No active lobbies available</div>
+        )}
       </div>
     </main>
   );

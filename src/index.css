@@ -23,6 +23,8 @@
   --color-second-place: #c0c0c0;
   --color-third-place: #cd7f32;
   --color-separator: #303030;
+  --color-inactive-bg: #6a7282;
+  --color-inactive-text: #d1d5dc;
 }
 
 @layer base{

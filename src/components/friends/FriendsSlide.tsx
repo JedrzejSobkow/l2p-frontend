@@ -1,13 +1,15 @@
-import { useEffect, type FC, type MouseEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { FiX } from 'react-icons/fi'
-import FriendsPanel from './FriendsPanel'
-import { useAuth } from '../AuthContext'
-import { FaUserFriends } from 'react-icons/fa'
-import { CgProfile } from 'react-icons/cg'
-import { AiFillHome } from 'react-icons/ai'
-import type { Friendship } from '../../services/friends'
-import { useFriends } from './FriendsContext'
+import { useEffect, useState, type FC, type MouseEvent } from 'react';
+import { Link } from 'react-router-dom';
+import { FiX } from 'react-icons/fi';
+import FriendsPanel from './FriendsPanel';
+import { useAuth } from '../AuthContext';
+import { useLobby } from '../lobby/LobbyContext';
+import { usePopup } from '../PopupContext';
+import { FaUserFriends } from 'react-icons/fa';
+import { CgProfile } from 'react-icons/cg';
+import { AiFillHome } from 'react-icons/ai';
+import type { Friendship } from '../../services/friends';
+import { useFriends } from './FriendsContext';
 import { pfpImage } from '@assets/images'
 
 type FriendsSlideProps = {
@@ -19,11 +21,24 @@ type FriendsSlideProps = {
 }
 
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, title, selectedFriendId }) => {
-  const { user } = useAuth()
-  const { refreshFriends } = useFriends()
+  const { user } = useAuth();
+  const { currentLobby } = useLobby();
+  const { refreshFriends } = useFriends();
+  const { showPopup } = usePopup();
+
   const handleContentClick = (event: MouseEvent) => {
-    event.stopPropagation()
-  }
+    event.stopPropagation();
+  };
+
+  const handleNavigation = (event: MouseEvent, path: string) => {
+    if (currentLobby) {
+      event.preventDefault();
+      showPopup({
+        type: 'informative',
+        message: 'Please leave the lobby before navigating to another page.',
+      });
+    }
+  };
 
   useEffect(() => {
     if (open) {
@@ -33,7 +48,9 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         onClick={onClose}
         aria-hidden={!open}
       />
@@ -65,29 +82,30 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
                 <FiX className="h-8 w-8" />
               </button>
             </div>
-            <div className='flex flex-row items-center justify-center gap-5'>
-              <Link 
-                to='/'
-                className='slider-link'
-                onClick={onClose}>
-                  <AiFillHome className='w-8 h-8'></AiFillHome>
-                  <span>Home</span>
+            <div className="flex flex-row items-center justify-center gap-5">
+              <Link
+                to="/"
+                className="slider-link"
+                onClick={(event) => handleNavigation(event, '/')}
+              >
+                <AiFillHome className="w-8 h-8" />
+                <span>Home</span>
               </Link>
-              <Link 
-                to='/profile'
-                className='slider-link'
-                onClick={onClose}
-                >
-                  <CgProfile className='w-8 h-8'></CgProfile>
-                  <span>Profile</span>
+              <Link
+                to="/profile"
+                className="slider-link"
+                onClick={(event) => handleNavigation(event, '/profile')}
+              >
+                <CgProfile className="w-8 h-8" />
+                <span>Profile</span>
               </Link>
-              <Link 
-                to='/friends' 
-                className='slider-link'
-                onClick={onClose}
-                >
-                  <FaUserFriends className='w-8 h-8'></FaUserFriends>
-                  <span>Friends</span>
+              <Link
+                to="/friends"
+                className="slider-link"
+                onClick={(event) => handleNavigation(event, '/friends')}
+              >
+                <FaUserFriends className="w-8 h-8" />
+                <span>Friends</span>
               </Link>
               
             </div>
