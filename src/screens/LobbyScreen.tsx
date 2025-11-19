@@ -12,7 +12,7 @@ import PassHostModal from '../components/PassHostModal'
 import LeaveModal from '../components/LeaveModal'
 import InviteFriendsModal from '../components/InviteFriendsModal'
 import EditLobbyNameModal from '../components/EditLobbyNameModal'
-import Popup from '../components/Popup'
+import { usePopup } from '../components/PopupContext';
 import { useGameSettings } from '../hooks/useGameSettings'
 import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined, emitToggleReady } from '../services/lobby'
 import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
@@ -28,6 +28,7 @@ import { diceIcon } from '@assets/icons';
 export const LobbyScreen = () => {
   const { lobbyCode } = useParams<{ lobbyCode?: string }>()
   const { user } = useAuth()
+  const { showPopup } = usePopup()
   const navigate = useNavigate()
   const {
     currentLobby,
@@ -76,8 +77,6 @@ export const LobbyScreen = () => {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isInviteFriendsModalOpen, setIsInviteFriendsModalOpen] = useState(false)
   const [isEditLobbyNameModalOpen, setIsEditLobbyNameModalOpen] = useState(false)
-  const [showErrorPopup, setShowErrorPopup] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
 
   // Get dynamic game settings
   const selectedGameFullInfo = availableGames.find(g => g.game_name === currentLobby?.selected_game)
@@ -110,22 +109,21 @@ export const LobbyScreen = () => {
       navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })
     } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'Lobby is full') {
       clearError()
-      navigate('/', { state: { message: error.message, type: 'error' } })
+      showPopup({ type: 'error', message: error.message })
     } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
       clearError()
-      navigate('/', { state: { message: error.message, type: 'error' } })
+      showPopup({ type: 'error', message: error.message })
     } else if (error?.error_code === 'NOT_FOUND') {
       clearError()
-      navigate('/', { state: { message: 'Lobby not found', type: 'error' } })
+      showPopup({ type: 'error', message: 'Lobby not found' })
     } else if (error) {
-      setErrorMessage(typeof error === 'string' ? error : error.message || 'An error occurred')
-      setShowErrorPopup(true)
+      showPopup({ type: 'error', message: error.message || 'An error occurred' })
       const timer = setTimeout(() => {
         clearError()
       }, 3500)
       return () => clearTimeout(timer)
     }
-  }, [error, navigate, clearError])
+  }, [error, navigate, clearError, showPopup])
 
   // Auto-join or redirect based on lobby status
   useEffect(() => {
@@ -269,48 +267,18 @@ export const LobbyScreen = () => {
       content: inviteMessage,
     })
 
-    //console(`Invitation sent to ${friendNickname}: ${inviteMessage}`)
+    showPopup({ type: 'confirmation', message: `Invitation sent to ${friendNickname}.` });
   }
 
   const handleSelectGame = (gameName: string) => {
     selectGame(gameName)
-    
-    // // Find the selected game
-    // const selectedGameData = availableGames.find(g => g.game_name === gameName)
-    // if (selectedGameData) {
-    //   // Get supported players range
-    //   const minPlayers = selectedGameData.min_players || 1
-    //   const maxPlayers = selectedGameData.max_players || 6
-      
-    //   // Find the smallest supported player count that is >= current player count
-    //   let newMaxPlayers = maxPlayers
-    //   if (currentPlayerCount > minPlayers) {
-    //     // Current player count is more than min, so set to current or next available
-    //     newMaxPlayers = Math.max(currentPlayerCount, minPlayers)
-    //   } else {
-    //     // Current player count is less than or equal to min
-    //     newMaxPlayers = minPlayers
-    //   }
-      
-    //   // Update lobby settings with new max players (but only if it changed)
-    //   if (newMaxPlayers !== selectedPlayerCount) {
-    //     updateSettings(newMaxPlayers, isPublic)
-    //     setSelectedPlayerCount(newMaxPlayers)
-    //   }
-    // }
-    
+    showPopup({ type: 'confirmation', message: `Game "${gameName}" selected.` });
     setIsShowingCatalogue(false)
   }
 
   const handleClearGameSelection = () => {
     clearGameSelection()
-    
-    // Reset max players to 6 when game selection is cleared
-    // if (selectedPlayerCount !== 6) {
-    //   updateSettings(6, isPublic)
-    //   setSelectedPlayerCount(6)
-    // }
-    
+    showPopup({ type: 'confirmation', message: 'Game selection cleared.' });
     setIsShowingCatalogue(false)
   }
 
@@ -344,12 +312,14 @@ export const LobbyScreen = () => {
     if (currentLobby) {
       updateSettings(selectedPlayerCount, isPublic, newName)
       setIsEditLobbyNameModalOpen(false)
+      showPopup({ type: 'confirmation', message: 'Lobby name updated successfully.' });
     }
   }
 
   const handleStartGame = () => {
     if (currentLobby?.selected_game) {
       emitCreateGame(currentLobby.selected_game, currentGameRules)
+      showPopup({ type: 'confirmation', message: 'Game started successfully.' });
     }
   }
 
@@ -719,15 +689,6 @@ export const LobbyScreen = () => {
         onSave={handleUpdateLobbyName}
         onCancel={() => setIsEditLobbyNameModalOpen(false)}
       />
-
-      {/* Error Popup */}
-      {showErrorPopup && (
-        <Popup
-          type="error"
-          message={errorMessage}
-          onClose={() => setShowErrorPopup(false)}
-        />
-      )}
     </main>
   )
 }

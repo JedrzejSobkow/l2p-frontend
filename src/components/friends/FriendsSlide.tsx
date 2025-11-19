@@ -4,7 +4,7 @@ import { FiX } from 'react-icons/fi';
 import FriendsPanel from './FriendsPanel';
 import { useAuth } from '../AuthContext';
 import { useLobby } from '../lobby/LobbyContext';
-import Popup from '../Popup';
+import { usePopup } from '../PopupContext';
 import { FaUserFriends } from 'react-icons/fa';
 import { CgProfile } from 'react-icons/cg';
 import { AiFillHome } from 'react-icons/ai';
@@ -22,9 +22,9 @@ type FriendsSlideProps = {
 
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, title, selectedFriendId }) => {
   const { user } = useAuth();
-  const { currentLobby } = useLobby(); // Dodano currentLobby
+  const { currentLobby } = useLobby();
   const { refreshFriends } = useFriends();
-  const [popup, setPopup] = useState<{ type: 'informative'; message: string } | null>(null);
+  const { showPopup } = usePopup();
 
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation();
@@ -33,7 +33,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
   const handleNavigation = (event: MouseEvent, path: string) => {
     if (currentLobby) {
       event.preventDefault();
-      setPopup({
+      showPopup({
         type: 'informative',
         message: 'Please leave the lobby before navigating to another page.',
       });
@@ -118,15 +118,6 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
           />
         </div>
       </aside>
-
-      {/* Popup */}
-      {popup && (
-        <Popup
-          type={popup.type}
-          message={popup.message}
-          onClose={() => setPopup(null)}
-        />
-      )}
     </>
   )
 }

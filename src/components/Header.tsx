@@ -4,18 +4,19 @@ import { useAuth } from './AuthContext';
 import { logoImage, pfpImage } from '@assets/images';
 import { wifiIcon, playIcon, globeIcon, peopleIcon, menuIcon } from '@assets/icons';
 import { useLobby } from './lobby/LobbyContext';
-import Popup from './Popup';
+import { usePopup } from './PopupContext';
+
 
 const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const { currentLobby } = useLobby(); // Dodano currentLobby
     const location = useLocation();
     const navigate = useNavigate();
-    const [popup, setPopup] = useState<{ type: 'informative'; message: string } | null>(null);
+    const { showPopup } = usePopup()
 
     const handleNavigation = (path: string) => {
         if (currentLobby) {
-            setPopup({
+            showPopup({
                 type: 'informative',
                 message: 'Please leave the lobby before navigating to another page.',
             });
@@ -136,15 +137,6 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                     className="w-9 h-9"
                 />
             </div>
-            )}
-
-            {/* Popup */}
-            {popup && (
-                <Popup
-                    type={popup.type}
-                    message={popup.message}
-                    onClose={() => setPopup(null)}
-                />
             )}
         </header>
     );

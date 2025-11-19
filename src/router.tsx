@@ -9,13 +9,10 @@ import RegistrationPage from "./screens/RegistrationPage";
 import ForgotPasswordPage from "./screens/ForgotPasswordPage";
 import ResetPasswordPage from "./screens/ResetPasswordPage";
 import FindGamesScreen from "./screens/FindGamesScreen";
-// import LobbyScreen from "./screens/LobbyScreen";
 import GameScreen from "./screens/GameScreen";
-// import LobbyGameScreen from "./screens/LobbyGameScreen";
 import FriendsScreen from "./screens/FriendsScreen";
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import { LobbyScreen } from "./screens/LobbyScreen";
-// import { GamePlayScreen } from "./screens/GamePlayScreen";
 import LobbyInGameScreen from "./screens/LobbyInGameScreen";
 
 export const router = createBrowserRouter([

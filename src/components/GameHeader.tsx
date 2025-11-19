@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLobby } from './lobby/LobbyContext';
-import Popup from './Popup';
-import type { PopupProps } from './Popup';
+import { usePopup } from './PopupContext';
 import JoinCodeInput from "./JoinCodeInput";
 
 interface GameHeaderProps {
@@ -17,12 +16,11 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     const navigate = useNavigate();
     const { gameName } = useParams<{ gameName: string }>();
     const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby();
-
+    const { showPopup } = usePopup();
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
     const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
     const [newLobbyName, setNewLobbyName] = useState('');
-    const [popup, setPopup] = useState<PopupProps | null>(null);
 
     const handleJoinClick = () => {
         setShowJoinModal(true);
@@ -75,16 +73,13 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
 
     useEffect(() => {
         if (error) {
-            setPopup({
+            showPopup({
                 type: 'error',
                 message: error.message,
-                onClose: () => {
-                    setPopup(null);
-                    clearError();
-                },
             });
+            clearError();
         }
-    }, [error, clearError]);
+    }, [error, clearError, showPopup]);
 
     useEffect(() => {
         if (currentLobby) {
@@ -219,10 +214,6 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                         </div>
                     </div>
                 </div>
-            )}
-
-            {popup && (
-                <Popup type={popup.type} message={popup.message} onClose={popup.onClose} />
             )}
         </div>
     );

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useLobby } from './lobby/LobbyContext';
-import Popup from './Popup';
+import { usePopup } from './PopupContext';
 import { useNavigate } from 'react-router-dom'; // Assuming react-router-dom is used for navigation
 import JoinCodeInput from "./JoinCodeInput";
 
 const JoinOrCreateGame: React.FC = () => {
   const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby(); // Dodano currentLobby
   const navigate = useNavigate(); // Add navigation hook
+  const { showPopup } = usePopup(); // Use the usePopup hook
   const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
-  const [popup, setPopup] = useState<{ type: 'confirmation' | 'error' | 'informative'; message: string } | null>(null);
 
   const handlePartChange = (index: number, value: string | string[]) => {
     if (index === -1 && Array.isArray(value)) {
@@ -36,8 +36,9 @@ const JoinOrCreateGame: React.FC = () => {
     try {
       await createLobby(2, false, undefined);
       navigate(`/lobby/`); // Navigate to the newly created lobby
+      showPopup({ type: 'confirmation', message: 'Lobby created successfully!' });
     } catch (err: any) {
-      setPopup({ type: 'error', message: err.message });
+      showPopup({ type: 'error', message: err.message || 'Failed to create lobby.' });
     }
   };
 
@@ -51,13 +52,10 @@ const JoinOrCreateGame: React.FC = () => {
 
   useEffect(() => {
     if (error) {
-      setPopup({
-        type: 'error',
-        message: error.message,
-      });
+      showPopup({ type: 'error', message: error.message || 'An error occurred.' });
       clearError();
     }
-  }, [error, clearError]);
+  }, [error, clearError, showPopup]);
 
   return (
     <div className="bg-background rounded-2xl shadow-lg text-center w-auto max-w-2xl mx-auto">
@@ -95,14 +93,6 @@ const JoinOrCreateGame: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {popup && (
-        <Popup
-          type={popup.type}
-          message={popup.message}
-          onClose={() => setPopup(null)}
-        />
-      )}
     </div>
   );
 };

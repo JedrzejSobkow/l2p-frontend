@@ -18,7 +18,7 @@ import {
   avatar8,
   avatar9,
 } from '@assets/images';
-import Popup from '../components/Popup';
+import { usePopup } from '../components/PopupContext';
 import { useLobby } from '../components/lobby/LobbyContext';
 import JoinOrCreateGame from '../components/JoinOrCreateGame';
 import { getImage } from '../utils/imageMap';
@@ -26,8 +26,8 @@ import { getImage } from '../utils/imageMap';
 const HomeScreen: React.FC = () => {
   const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
   const location = useLocation();
+  const { showPopup } = usePopup();
 
-  const [popup, setPopup] = useState<{ type: 'confirmation' | 'error'; message: string } | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
@@ -38,13 +38,13 @@ const HomeScreen: React.FC = () => {
 
   useEffect(() => {
     if (location.state?.message) {
-      setPopup({
+      showPopup({
         type: location.state.type || 'info',
         message: location.state.message,
       });
       window.history.replaceState({}, document.title);
     }
-  }, [location]);
+  }, [location, showPopup]);
 
   const leaderboardData = [
     { place: 1, pfp_path: avatar1, name: 'PlayerOne', rating: 1500 },
@@ -198,13 +198,6 @@ const HomeScreen: React.FC = () => {
           <div className="text-center text-headline py-8">No active lobbies available</div>
         )}
       </div>
-      {popup && (
-        <Popup
-          type={popup.type}
-          message={popup.message}
-          onClose={() => setPopup(null)}
-        />
-      )}
     </main>
   );
 };
