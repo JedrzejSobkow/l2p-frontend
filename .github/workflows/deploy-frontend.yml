@@ -3,7 +3,7 @@ name: Deploy Frontend
 on:
   push:
     branches:
-      - cd
+      - main
 
 jobs:
   deploy:
@@ -18,9 +18,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /home/github-runner/l2p-frontend
-            git fetch origin cd
-            git checkout -f cd
-            git reset --hard origin/cd
+            git fetch origin main
+            git checkout -f main
+            git reset --hard origin/main
             docker compose down
             docker compose pull
             docker compose up -d --build
