@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from './Modal';
 import { MdClear } from 'react-icons/md';
 import { getImage } from '../utils/imageMap';
+import { noGameImage } from '@/assets/images';
+
 
 interface Game {
     gameDisplayName: string;
@@ -100,7 +102,7 @@ const CatalogueModal: React.FC<CatalogueModalProps> = ({
                                 }`}
                             >
                                 <img
-                                    src={getImage('games', gameItem.gameName) || ''}
+                                    src={getImage('games', gameItem.gameName) || noGameImage}
                                     alt={gameItem.gameDisplayName}
                                     className="w-20 h-20 rounded-lg object-cover"
                                 />
