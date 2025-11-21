@@ -53,7 +53,7 @@ const HomeScreen: React.FC = () => {
   // Generate top picks and featured games from available games
   const topPicksImages = availableGames.length > 0
     ? availableGames.slice(0, 2).map((game: any) => ({
-        src: getImage('games', game.game_name) || '/unknown',
+        src: getImage('games', game.game_name) || 'noGame',
         alt: game.display_name,
         gameName: game.game_name,
       }))
@@ -61,7 +61,7 @@ const HomeScreen: React.FC = () => {
 
   const featuredGamesImages = availableGames.length > 0
     ? [availableGames[2] || availableGames[0]].map((game: any) => ({
-        src: getImage('games', game.game_name) || '/unknown',
+        src: getImage('games', game.game_name) || 'noGame',
         alt: game.display_name,
         gameName: game.game_name,
       }))
@@ -73,10 +73,10 @@ const HomeScreen: React.FC = () => {
     .map((lobby) => ({
       gameName: lobby.selected_game_info?.display_name || 'Game not selected',
       lobbyName: lobby.name,
-      gameImage: getImage('games', lobby.selected_game || 'noGame') || '/unknown',
+      gameImage: getImage('games', lobby.selected_game || 'noGame') || 'noGame',
       players: lobby.members.slice(0, 2).map((member) => ({
         username: member.nickname,
-        avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',
+        avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || 'avatar',
       })),
       maxPlayers: lobby.max_players,
       duration: 'In progress',
@@ -115,7 +115,7 @@ const HomeScreen: React.FC = () => {
           suggestions={availableGames.map((game: any) => ({
             text: game.display_name,
             name: game.game_name,
-            image: getImage('games', game.game_name || '') || '/unknown',
+            image: getImage('games', game.game_name || 'noGame') || 'noGame',
           }))}
           onEnterRoute="/find_games"
           onSuggestionClickRoute="/game"

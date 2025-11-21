@@ -99,7 +99,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={friend.friend_pfp_path || '/unknown'}
+                      src={friend.friend_pfp_path || 'avatar'}
                       alt={friend.friend_nickname}
                       className="h-10 w-10 rounded-full object-cover"
                     />
