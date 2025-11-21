@@ -4,6 +4,7 @@ import ChatWindow from './ChatWindow'
 import { useChatDock } from './ChatDockContext'
 import { useAuth } from '../AuthContext'
 import { useChat } from './ChatProvider'
+import { useLocation } from 'react-router'
 
 const getMaxVisibleWindows = () => {
   if (typeof window === 'undefined') return 1
@@ -19,6 +20,7 @@ const ChatDock = () => {
   const chat = useChat()
 
   const [maxVisible, setMaxVisible] = useState<number>(() => getMaxVisibleWindows())
+  const location = useLocation()
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,7 +45,7 @@ const ChatDock = () => {
   const minimized = [...baseMinimized, ...overflow]
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[30] flex-row-reverse items-end gap-1 hidden md:flex">
+    <div className={"pointer-events-none fixed inset-x-0 bottom-0 z-[30] flex-row-reverse items-end gap-1 hidden" + (location.pathname.startsWith('/friends') ? ' hidden' : 'md:flex')}>
       <div
         className={
           (minimized.length > 0 ? 'pointer-events-auto' : 'pointer-events-none') +

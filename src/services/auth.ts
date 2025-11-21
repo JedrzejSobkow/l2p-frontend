@@ -93,8 +93,8 @@ export async function verifyUser(payload: ActivateUserPayload): Promise<string |
 
 // /users/ endpoints
 
-export function withAssetsPrefix(p?: string): string | undefined {
-  if (!p) return undefined
+export function withAssetsPrefix(p?: string): string {
+  if (!p) return '/src/assets/images/profile-picture.png'
   if (/^https?:\/\//i.test(p)) return p
   if (p.startsWith('/src/assets')) return p
   if (p.startsWith('src/assets')) return '/' + p

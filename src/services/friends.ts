@@ -6,7 +6,7 @@ export type Friendship = {
   friendship_id: string
   friend_user_id: string
   friend_nickname: string
-  friend_pfp_path?: string
+  friend_pfp_path: string
   friend_description?: string
   status: FriendshipStatus
   created_at: string

@@ -34,7 +34,7 @@ const toSessionId = (id: string | number) => {
 const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefined)
 
 export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
-  const chat = useChat()
+  const {subscribeToIncomingMessages,sendMessage,clearUnread,ensureConversation,loadMessages} = useChat()
   const { isAuthenticated } = useAuth()
   const [state, setState] = useState<ChatDockState>({ sessions: {} })
 
@@ -48,12 +48,13 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
     (target: ChatTarget, options?: { minimized?: boolean; addOnly?: boolean }) => {
       const id = String(target.id)
       const key = toSessionId(id)
+      let shouldClear= false
       setState((prev) => {
         const existing = prev.sessions[key]
 
         if (existing) {
-          if (existing.minimized === false){
-            chat.clearUnread(id)
+          if (!existing.minimized){
+            shouldClear = true
           }
           const mergedTarget: ChatTarget = {
             id,
@@ -90,9 +91,13 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
             },
           },
         }
-      })
+      }
+    )
+    if(shouldClear){
+      clearUnread(target.id)
+    }
     },
-    [],
+    [clearUnread],
   )
   //         const updated: ChatSession = {
   //           ...existing,
@@ -130,13 +135,13 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const openChat = useCallback((target: ChatTarget) => {
     if (!isAuthenticated) return
     const id = String(target.id)
-    chat.ensureConversation(id, target.nickname, target.avatarUrl)
-    chat.clearUnread(id)
+    ensureConversation(id, target.nickname, target.avatarUrl)
+    clearUnread(id)
     upsertSession(target, { minimized: false })
     // schedule ensuring the conversation after render to avoid cross-render setState
 
-    chat.loadMessages(id)
-  }, [chat, isAuthenticated, upsertSession])
+    loadMessages(id)
+  }, [isAuthenticated, upsertSession,clearUnread,ensureConversation])
 
   const closeChat = useCallback((targetId: string) => {
     setState((prev) => {
@@ -148,7 +153,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
 
   const minimizeChat = useCallback((targetId: string, minimized: boolean = true) => {
     if (!minimized) {
-      chat.clearUnread(String(targetId))
+      clearUnread(String(targetId))
     }
     setState((prev) => {
       const id = toSessionId(targetId)
@@ -159,20 +164,11 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
       const { [id]: _removed, ...rest } = prev.sessions
       return { sessions: { ...rest, [id]: updated } }
     })
-  }, [chat])
-
-  const sendMessage = useCallback(
-    async (targetId: string, payload: { text?: string; attachment?: File }) => {
-      if (!isAuthenticated) return
-      await chat.sendMessage(targetId, payload)
-    },
-    [chat, isAuthenticated],
-  )
+  }, [clearUnread])
 
   useEffect(() => {
-    if (!isAuthenticated) return
-    if (!chat.subscribeToIncomingMessages) return
-    const unsubscribe = chat.subscribeToIncomingMessages(({target }) => {
+    if (!subscribeToIncomingMessages) return
+    const unsubscribe = subscribeToIncomingMessages(({target }) => {
       upsertSession(
         {
           id: target.id,
@@ -183,7 +179,7 @@ export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
       )
     })
     return unsubscribe
-  }, [chat, isAuthenticated, upsertSession])
+  }, [subscribeToIncomingMessages, upsertSession])
 
   const value = useMemo<ChatDockContextValue>(() => {
     const sessions = Object.values(state.sessions)
