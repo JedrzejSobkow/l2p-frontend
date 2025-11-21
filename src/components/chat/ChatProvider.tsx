@@ -457,7 +457,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const nickname = payload.nickname
 
     ensureConversation(conversationId, nickname)
-    console.log(conversationId)
     setState((prev) => {
       if (prev.typingById[conversationId]) return prev
 
