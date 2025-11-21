@@ -8,6 +8,9 @@ import { CgProfile } from 'react-icons/cg'
 import { AiFillHome } from 'react-icons/ai'
 import { useFriends } from './FriendsContext'
 import { useChatDock } from '../chat/ChatDockContext'
+import { pfpImage } from '@assets/images'
+import { useLobby } from '../lobby/LobbyContext'
+import { usePopup } from '../PopupContext'
 
 type FriendsSlideProps = {
   open: boolean
@@ -20,10 +23,22 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   const { user } = useAuth()
   const { openChat} = useChatDock()
   const { refreshFriends,friends } = useFriends()
+  const { currentLobby } = useLobby();
+  const { showPopup } = usePopup();
   const navigate = useNavigate()
   const handleContentClick = (event: MouseEvent) => {
-    event.stopPropagation()
-  }
+    event.stopPropagation();
+  };
+
+  const handleNavigation = (event: MouseEvent, path: string) => {
+    if (currentLobby) {
+      event.preventDefault();
+      showPopup({
+        type: 'informative',
+        message: 'Please leave the lobby before navigating to another page.',
+      });
+    }
+  };
 
   const friendSelect = (friendId: string | number) => {
     const normalizedId = String(friendId)
@@ -56,7 +71,9 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   return (
     <>
       <div
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+        className={`fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 ${
+          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
         onClick={onClose}
         aria-hidden={!open}
       />
@@ -72,7 +89,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
           <div className="flex flex-col border-b border-white/10">
             <div className="flex items-center gap-3 min-w-0 border-b-1 border-separator p-5">
               <img
-                src={(user?.pfp_path ?  user.pfp_path : '/assets/images/pfp.png')}
+                src={(user?.pfp_path ?  user.pfp_path : pfpImage)}
                 alt={user?.nickname || 'User Avatar'}
                 className="h-15 w-15 rounded-full border border-white/10 object-cover"
               />
@@ -88,29 +105,30 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
                 <FiX className="h-8 w-8" />
               </button>
             </div>
-            <div className='flex flex-row items-center justify-center gap-5'>
-              <Link 
-                to='/'
-                className='slider-link'
-                onClick={onClose}>
-                  <AiFillHome className='w-8 h-8'></AiFillHome>
-                  <span>Home</span>
+            <div className="flex flex-row items-center justify-center gap-5">
+              <Link
+                to="/"
+                className="slider-link"
+                onClick={(event) => handleNavigation(event, '/')}
+              >
+                <AiFillHome className="w-8 h-8" />
+                <span>Home</span>
               </Link>
-              <Link 
-                to='/profile'
-                className='slider-link'
-                onClick={onClose}
-                >
-                  <CgProfile className='w-8 h-8'></CgProfile>
-                  <span>Profile</span>
+              <Link
+                to="/profile"
+                className="slider-link"
+                onClick={(event) => handleNavigation(event, '/profile')}
+              >
+                <CgProfile className="w-8 h-8" />
+                <span>Profile</span>
               </Link>
-              <Link 
-                to='/friends' 
-                className='slider-link'
-                onClick={onClose}
-                >
-                  <FaUserFriends className='w-8 h-8'></FaUserFriends>
-                  <span>Friends</span>
+              <Link
+                to="/friends"
+                className="slider-link"
+                onClick={(event) => handleNavigation(event, '/friends')}
+              >
+                <FaUserFriends className="w-8 h-8" />
+                <span>Friends</span>
               </Link>
               
             </div>

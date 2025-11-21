@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { searchIcon } from '@assets/icons';
 
 interface Suggestion {
   text: string;
+  name: string;
   image?: string;
 }
 
@@ -83,7 +85,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         />
         <button className="ml-2">
           <img
-            src="/src/assets/icons/search.png"
+            src={searchIcon}
             alt="Search Icon"
             className={isSmall ? 'w-4 h-4' : 'w-5 h-5'}
           />
@@ -100,7 +102,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               <li
                 key={index}
                 className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSuggestionClick(suggestion.text)}
+                onClick={() => handleSuggestionClick(suggestion.name)}
               >
                 {suggestion.image && (
                   <img

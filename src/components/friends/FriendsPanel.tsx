@@ -6,6 +6,7 @@ import { useFriends } from './FriendsContext'
 import type { Friendship, FriendResult } from '../../services/friends'
 import { usePopup } from '../PopupContext'
 import { useChat } from '../chat/ChatProvider'
+import { pfpImage } from '@assets/images'
 
 type FriendsPanelProps = {
   onFriendSelect?: (friendId: string ) => void
@@ -223,7 +224,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <img
-                          src={user.pfp_path || '/assets/images/pfp.png'}
+                          src={user.pfp_path || pfpImage}
                           alt="Avatar"
                           className="h-10 w-10 rounded-full object-cover"
                         />
@@ -305,7 +306,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <img
-                              src={request.friend_pfp_path || '/assets/images/pfp.png'}
+                              src={request.friend_pfp_path || pfpImage}
                               alt={request.friend_nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />
@@ -372,7 +373,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <img
-                              src={request.friend_pfp_path || '/assets/images/pfp.png'}
+                              src={request.friend_pfp_path || pfpImage}
                               alt={request.friend_nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />

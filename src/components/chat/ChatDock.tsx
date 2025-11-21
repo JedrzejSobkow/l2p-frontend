@@ -13,6 +13,7 @@ const getMaxVisibleWindows = () => {
   if (width < 1300) return 2
   return 3
 }
+import { pfpImage } from '@assets/images'
 
 const ChatDock = () => {
   const { sessions, minimizeChat, closeChat } = useChatDock()
@@ -63,7 +64,7 @@ const ChatDock = () => {
             >
               <span className="relative inline-flex">
                 <img
-                  src={s.target.avatarUrl || '/src/assets/images/pfp.png'}
+                  src={s.target.avatarUrl || pfpImage}
                   alt={s.target.nickname}
                   className="h-15 w-15 rounded-full"
                 />

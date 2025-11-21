@@ -2,6 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../components/AuthContext'
 import type { User } from '../services/auth';
 import { usePopup } from '../components/PopupContext';
+import {
+    profilePictureImage,
+    avatar1, avatar2, avatar3, avatar4,
+    avatar5, avatar6, avatar7, avatar8,
+    avatar9, avatar10, avatar11, avatar12,
+    avatar13, avatar14, avatar15, avatar16,
+} from '@assets/images';
+import { userIcon, editIcon, eyeIcon, eyeOffIcon } from '@assets/icons';
 
 const ProfileScreen: React.FC = () => {
     const { user, updateProfile, deleteAccount } = useAuth()
@@ -24,7 +32,12 @@ const ProfileScreen: React.FC = () => {
     const maxChars = 64;
     const maxUsernameLength = 20;
 
-    const pictures = Array.from({ length: 16 }, (_, index) => `src/assets/images/avatar/${index + 1}.png`);
+    const pictures = [
+        avatar1, avatar2, avatar3, avatar4,
+        avatar5, avatar6, avatar7, avatar8,
+        avatar9, avatar10, avatar11, avatar12,
+        avatar13, avatar14, avatar15, avatar16,
+    ];
 
     const handlePasswordVisibility = (type: 'new' | 'confirm', isVisible: boolean) => {
         if (type === 'new') {
@@ -143,7 +156,7 @@ const ProfileScreen: React.FC = () => {
                 return pictures[id];
             }
         }
-        return 'src/assets/images/profile-picture.png'; 
+        return profilePictureImage; 
     };
 
     const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'new' | 'confirm') => {
@@ -257,7 +270,7 @@ const ProfileScreen: React.FC = () => {
                     {/* Username */}
                     <div className="flex items-center gap-4 text-lg font-normal">
                         <img
-                            src="src/assets/icons/user.png"
+                            src={userIcon}
                             alt="User Icon"
                             className="w-6 h-6"
                         />
@@ -289,7 +302,7 @@ const ProfileScreen: React.FC = () => {
                         )}
                         {!isEditingUsername && (
                             <img
-                                src="src/assets/icons/edit.png"
+                                src={editIcon}
                                 alt="Edit Icon"
                                 className="w-6 h-6 cursor-pointer"
                                 onClick={() => setIsEditingUsername(true)}
@@ -386,13 +399,13 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isNewPasswordVisible ? 'src/assets/icons/eye-off.png' : 'src/assets/icons/eye.png'} 
+                            src={isNewPasswordVisible ? eyeOffIcon : eyeIcon}
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
-                            style={handlePasswordIconStyle} 
-                            onMouseDown={() => handlePasswordVisibility('new', true)} 
-                            onMouseUp={() => handlePasswordVisibility('new', false)} 
-                            onMouseLeave={() => handlePasswordVisibility('new', false)} 
+                            style={handlePasswordIconStyle}
+                            onMouseDown={() => handlePasswordVisibility('new', true)}
+                            onMouseUp={() => handlePasswordVisibility('new', false)}
+                            onMouseLeave={() => handlePasswordVisibility('new', false)}
                         />
                     </div>
 
@@ -420,13 +433,13 @@ const ProfileScreen: React.FC = () => {
                             }}
                         />
                         <img
-                            src={isConfirmNewPasswordVisible ? 'src/assets/icons/eye-off.png' : 'src/assets/icons/eye.png'} 
+                            src={isConfirmNewPasswordVisible ? eyeOffIcon : eyeIcon}
                             alt="Toggle Password Visibility"
                             className="absolute right-4 top-11 transform -translate-y-1/2 w-6 h-6 cursor-pointer"
-                            style={handlePasswordIconStyle} 
-                            onMouseDown={() => handlePasswordVisibility('confirm', true)} 
-                            onMouseUp={() => handlePasswordVisibility('confirm', false)} 
-                            onMouseLeave={() => handlePasswordVisibility('confirm', false)} 
+                            style={handlePasswordIconStyle}
+                            onMouseDown={() => handlePasswordVisibility('confirm', true)}
+                            onMouseUp={() => handlePasswordVisibility('confirm', false)}
+                            onMouseLeave={() => handlePasswordVisibility('confirm', false)}
                         />
                     </div>
 

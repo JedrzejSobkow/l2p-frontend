@@ -4,10 +4,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import BackButton from '../components/BackButton'
 import { useAuth } from '../components/AuthContext'
 import { usePopup } from '../components/PopupContext'
+import AuthGoogleButton from '../components/auth/AuthGoogleButton'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, handleGoogleSignIn } = useAuth()
   const { showPopup} = usePopup()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,9 +17,11 @@ const LoginPage = () => {
     const popupData = localStorage.getItem('popupData');
     if (popupData) {
       showPopup(JSON.parse(popupData));
-      localStorage.removeItem('popupData'); // Clear popup data after displaying
+      localStorage.removeItem('popupData');
     }
   }, []);
+
+  
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -59,6 +62,7 @@ const LoginPage = () => {
             Track matches, join new lobbies, and stay on the leaderboard.
           </p>
         </div>
+
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label className="auth-label">
@@ -109,19 +113,29 @@ const LoginPage = () => {
           )}
         </form>
 
-        <p className="mt-6 auth-note">
+        <p className="mt-3 auth-note">
           Need an account?{' '}
           <Link to="/register" className="auth-link">
             Create one now
           </Link>
         </p>
+        <div className="mt-6 mb-3 flex items-center gap-3 text-xs uppercase tracking-wide text-white/40">
+          <span className="h-px flex-1 bg-white/10" />
+          <span>OR</span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+        <div className="mb-2 flex flex-col gap-3">
+          <AuthGoogleButton
+            label="Sign in with Google"
+            disabled={submitting}
+            onClick={handleGoogleSignIn}
+          />
+        </div>
+
+        
       </div>
     </div>
   )
 }
 
 export default LoginPage
-
-
-
-

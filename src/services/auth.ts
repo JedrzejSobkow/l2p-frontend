@@ -37,6 +37,16 @@ export type ActivateUserPayload = {
 
 // /auth/ endpoints
 
+export async function getGoogleAuthorizationUrl(scopes?: string[]): Promise<string> {
+  const qs = new URLSearchParams()
+  if (Array.isArray(scopes)) {
+    for (const s of scopes) qs.append('scopes', s)
+  }
+  const path = '/auth/google/authorize' + (qs.toString() ? `?${qs.toString()}` : '')
+  const data = await request<{ authorization_url: string }>(path, { method: 'GET', auth: false })
+  return data.authorization_url
+}
+
 
 export async function login(payload: LoginPayload): Promise<User> {
   const form = new URLSearchParams()
@@ -47,7 +57,11 @@ export async function login(payload: LoginPayload): Promise<User> {
 
   await request<any>('/auth/login', { method: 'POST', body: form, auth: false })
 
-  return await getMe().catch(() => ({ nickname: payload.email} as User))
+  const user = await getMe().catch(() => ({ nickname: payload.email} as User))
+
+  window.location.reload()
+  
+  return user
 }
 
 export async function register(payload: RegisterPayload): Promise<User> {
@@ -62,6 +76,7 @@ export async function register(payload: RegisterPayload): Promise<User> {
 
 export async function logout(): Promise<void> {
   await request('/auth/logout', { method: 'POST', auth: true })
+  window.location.reload()
 }
 
 export async function forgotPassword(payload: ForgotPasswordPayload): Promise<string | undefined> {
@@ -93,26 +108,14 @@ export async function verifyUser(payload: ActivateUserPayload): Promise<string |
 
 // /users/ endpoints
 
-export function withAssetsPrefix(p?: string): string {
-  if (!p) return '/src/assets/images/profile-picture.png'
-  if (/^https?:\/\//i.test(p)) return p
-  if (p.startsWith('/src/assets')) return p
-  if (p.startsWith('src/assets')) return '/' + p
-  const trimmed = p.replace(/^\/+/, '')
-  return `/src/assets/${trimmed}`
-}
-
 export async function getMe(): Promise<User> {
-  const user = await request<User>('/users/me', { method: 'GET' })
-  return { ...user, pfp_path: withAssetsPrefix(user.pfp_path) }
+  return await request<User>('/users/me', { method: 'GET' })
 }
 
 export async function patchMe(payload: Partial<User>): Promise<User> {
-  const user = await request<User>('/users/me', { method: 'PATCH', body: payload })
-  return { ...user, pfp_path: withAssetsPrefix(user.pfp_path) }
+  return  await request<User>('/users/me', { method: 'PATCH', body: payload })
 }
 
 export async function deleteMe(): Promise<void> {
   await request('/users/me', { method: 'DELETE' })
 }
-

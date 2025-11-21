@@ -14,6 +14,7 @@ import { usePopup } from '../PopupContext'
 import type { ChatMessage, ConversationTarget } from './ChatProvider'
 import { useAuth } from '../AuthContext'
 
+import { pfpImage } from '@assets/images'
 
 
 export interface ChatWindowProps {
@@ -151,7 +152,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
         <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
           <img
             className='w-12 h-12 rounded-full'
-            src={friendData.avatarUrl}></img>
+            src={friendData.avatarUrl || pfpImage}></img>
           <h2 className="text-s font-semibold text-headline">{friendData.nickname}</h2>
           
         </header>
@@ -179,7 +180,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
                 <img
-                  src={friendData.avatarUrl || 'src/assets/images/pfp.png'}
+                  src={friendData.avatarUrl || pfpImage}
                   alt={message.senderNickname}
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
@@ -208,7 +209,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               </div>
               {isOwn && (
                 <img
-                  src={user?.pfp_path || 'src/assets/images/pfp.png'}
+                  src={user?.pfp_path || pfpImage}
                   alt="You"
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />

@@ -1,5 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { userIcon, clockIcon, addPlayerIcon } from '@assets/icons';
+import { useLobby } from '../components/lobby/LobbyContext';
+
 
 interface GameLobbyCardProps {
   gameName: string;
@@ -8,13 +11,17 @@ interface GameLobbyCardProps {
   players: { username: string; avatar: string }[];
   maxPlayers: number;
   duration: string;
+  lobbyCode: string;
 }
 
-const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, gameImage, players, maxPlayers, duration }) => {
+const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, gameImage, players, maxPlayers, duration, lobbyCode }) => {
   const navigate = useNavigate();
+  const { joinLobby } = useLobby();
+  
 
   const handleNavigateToLobby = () => {
-    navigate(`/lobby/${lobbyName}`);
+    joinLobby(lobbyCode);
+    navigate('/lobby');
   };
 
   return (
@@ -36,11 +43,11 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
         </button>
         <div className="text-paragraph text-sm mt-2">
           <div className="flex items-center gap-2">
-            <img src="/src/assets/icons/user.png" alt="Players Icon" className="w-4 h-4" />
+            <img src={userIcon} alt="Players Icon" className="w-4 h-4" />
             <span>{players.length}/{maxPlayers} players</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <img src="/src/assets/icons/clock.png" alt="Clock Icon" className="w-4 h-4" />
+            <img src={clockIcon} alt="Clock Icon" className="w-4 h-4" />
             <span>{duration}</span>
           </div>
         </div>
@@ -49,30 +56,28 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
       {/* Player Slots */}
       <div className="flex justify-center w-full">
         <div
-          className={`grid gap-4 ${
-            maxPlayers === 1
+          className={`grid gap-4 ${maxPlayers === 1
               ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
               : maxPlayers === 2
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 3
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 4
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 5
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : maxPlayers === 6
-              ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
-              : ''
-          }`}
+                ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                : maxPlayers === 3
+                  ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                  : maxPlayers === 4
+                    ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                    : maxPlayers === 5
+                      ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                      : maxPlayers === 6
+                        ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3'
+                        : ''
+            }`}
         >
           {Array.from({ length: maxPlayers }).map((_, index) => (
             <div
               key={index}
-              className={`flex items-center gap-2 p-2 border rounded-lg transition-transform ${
-                players[index]
+              className={`flex items-center gap-2 p-2 border rounded-lg transition-transform ${players[index]
                   ? 'border-paragraph'
                   : 'border-paragraph hover:border-highlight hover:scale-105 cursor-pointer'
-              }`}
+                }`}
               onClick={() => {
                 if (!players[index]) {
                   handleNavigateToLobby();
@@ -102,7 +107,7 @@ const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, game
                 <>
                   <div className="h-10 content-center">
                     <img
-                      src="/src/assets/icons/add-player.png"
+                      src={addPlayerIcon}
                       alt="Add Player"
                       className="w-7"
                     />

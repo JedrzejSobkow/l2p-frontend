@@ -1,5 +1,4 @@
 import { request } from '../lib/http'
-import {withAssetsPrefix} from './auth'
 export type FriendshipStatus = 'pending' | 'accepted' | 'blocked'
 
 export type Friendship = {
@@ -72,6 +71,6 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
   const res = await request<Friendship[]>(path, { method: 'GET', auth: true })
   return res.map(friend => ({
     ...friend,
-    friend_pfp_path: withAssetsPrefix(friend.friend_pfp_path)
+    friend_pfp_path: friend.friend_pfp_path
   })) };
 
