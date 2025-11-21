@@ -33,28 +33,37 @@ export async function searchFriends(query: string, page: number = 1, pageSize: n
   params.set('page', page.toString())
   params.set('page_size', pageSize.toString())
 
-  const res =  await request<SearchFriendsPayload>(`/friends/search?${params.toString()}`, { method: 'GET', auth: true })
-  return res
+  const res = await request<SearchFriendsPayload>(`/friends/search?${params.toString()}`, { method: 'GET', auth: true })
+  return {
+    ...res,
+    users: res.users.map((user) => ({
+      ...user,
+      user_id: String(user.user_id),
+    })),
+  }
 }
 
 export async function sendFriendRequest(friend_user_id: string | number): Promise<{status: string, created_at: string}> {
+  const normalizedId = String(friend_user_id)
   return await request<{status: string, created_at: string}>(`/friends/request`, {
     method: 'POST',
-    body: { friend_user_id },
+    body: { friend_user_id: normalizedId },
     auth: true,
   })
 }
 
 export async function acceptFriendRequest(friend_user_id: string | number): Promise<{status: string, created_at: string}> {
+  const normalizedId = String(friend_user_id)
   return await request<{status: string, created_at: string}>(`/friends/accept`, {
     method: 'POST',
-    body: { friend_user_id },
+    body: { friend_user_id: normalizedId },
     auth: true,
   })
 }
 
 export async function declineFriendRequest(friend_user_id: string | number): Promise<void> {
-  await request<void>(`/friends/${friend_user_id.toString()}`, { method: 'DELETE', auth: true })
+  const normalizedId = String(friend_user_id)
+  await request<void>(`/friends/${normalizedId}`, { method: 'DELETE', auth: true })
 }
 
 export async function deleteFriend(friend_user_id: string | number): Promise<void> {
@@ -71,6 +80,8 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
   const res = await request<Friendship[]>(path, { method: 'GET', auth: true })
   return res.map(friend => ({
     ...friend,
+    friendship_id: String(friend.friendship_id),
+    friend_user_id: String(friend.friend_user_id),
     friend_pfp_path: friend.friend_pfp_path
-  })) };
-
+  }))
+}
