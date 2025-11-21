@@ -38,9 +38,26 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
         message: 'Please leave the lobby before navigating to another page.',
       });
     }
+    else{
+      onClose();
+    }
   };
 
-  const friendSelect = (friendId: string | number) => {
+  const handleFriendButtonClick = (friendId: string | number) => {
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+      if (currentLobby) {
+        showPopup({
+          type: 'informative',
+          message: 'Please leave the lobby before navigating to another page.',
+        });
+        return
+      }
+      navigate('/friends', { state: { friendId: String(friendId),tab: 'details' } })
+      onClose()
+    }
+
+  const handleFriendSelect = (friendId: string | number) => {
     const normalizedId = String(friendId)
     const friend = friends.find((val) => String(val.friend_user_id) === normalizedId)
     if (!friend) {
@@ -52,6 +69,13 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
       typeof window !== 'undefined' ? window.innerWidth < 768 : false
 
     if (isSmallScreen) {
+      if (currentLobby) {
+        showPopup({
+          type: 'informative',
+          message: 'Please leave the lobby before navigating to another page.',
+        });
+        return
+      }
       navigate('/friends', { state: { friendId: normalizedId } })
     } else {
       openChat({
@@ -134,7 +158,8 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
             </div>
           </div>
           <FriendsPanel
-            onFriendSelect={friendSelect}
+            onFriendSelect={handleFriendSelect}
+            onFriendMessage={handleFriendButtonClick}
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"

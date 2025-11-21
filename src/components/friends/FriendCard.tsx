@@ -1,6 +1,6 @@
 import { type FC, type MouseEvent } from 'react'
 import { pfpImage } from '@assets/images'
-import { FiSend } from 'react-icons/fi'
+import { FaUser } from 'react-icons/fa'
 import type { Friendship } from '../../services/friends'
 
 export type FriendCardProps = Friendship & {
@@ -23,10 +23,6 @@ const FriendCard: FC<FriendCardProps> = ({
   onMessage,
 }) => {
   const handleCardClick = () => onClick?.()
-  const handleMessage = (e: MouseEvent) => {
-    e.stopPropagation()
-    onMessage?.()
-  }
 
   return (
     <div
@@ -61,14 +57,16 @@ const FriendCard: FC<FriendCardProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-3">
+        { onMessage && (
         <button
-          onClick={handleMessage}
+          onClick={onMessage}
           className="grid h-8 w-8 place-items-center rounded-full border border-orange-400/40 text-orange-300 transition hover:border-orange-300 hover:text-orange-200"
           aria-label="Message"
           title="Message"
         >
-          <FiSend className="h-4 w-4" />
-        </button>
+          <FaUser className="h-4 w-4" />
+        </button>)
+}
       </div>
     </div>
   )

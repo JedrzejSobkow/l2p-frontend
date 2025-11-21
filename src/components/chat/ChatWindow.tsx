@@ -308,7 +308,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
               <div className={cn('flex max-w-[75%] flex-col gap-1', isOwn ? 'items-end text-right' : 'items-start text-left')}>
                 <div
                   className={cn(
-                    'inline-flex max-w-full flex-col gap-2 rounded-xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
+                    'inline-flex max-w-full flex-col gap-2 rounded-2xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
                     isOwn ? 'bg-gradient-to-r bg-button text-white' : 'bg-[rgba(35,34,49,0.95)]'
                   )}
                 >

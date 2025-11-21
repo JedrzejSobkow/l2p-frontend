@@ -146,7 +146,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         {...friend}
         isSelected={isSelected}
         onClick={() => onFriendSelect?.(friend.friend_user_id)}
-        onMessage={()=> onFriendMessage?.(friend.friend_user_id)}
+        onMessage={onFriendMessage ? () => onFriendMessage(friend.friend_user_id) : undefined}
       />
     )
   }

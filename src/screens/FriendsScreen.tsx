@@ -27,11 +27,13 @@ const FriendsScreen: FC = () => {
   }, [friends, selectedFriendId])
 
   useEffect(() => {
-    const friendIdFromState =
-      (location.state as { friendId?: string } | null)?.friendId
-    if (friendIdFromState) {
-      setSelectedFriendId(friendIdFromState)
-      setActiveMobileTab('chat')
+    const state =
+      (location.state as { friendId?: string, tab?: string } | null)
+    if (state?.friendId) {
+      setSelectedFriendId(state.friendId)
+    }
+    if (state?.tab && (state.tab === 'friends' || state.tab === 'chat' || state.tab === 'details')) {
+      setActiveMobileTab(state.tab)
     }
   }, [location.state])
 
@@ -94,36 +96,44 @@ const FriendsScreen: FC = () => {
   return (
     <div className="flex flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
       {/* Mobile tabs */}
-      <div className="mb-4 flex lg:hidden">
-        <button
-          type="button"
-          onClick={() => setActiveMobileTab('friends')}
-          className={`flex-1 rounded-l-2xl text-sm font-semibold transition ${
-            activeMobileTab === 'friends' ? 'bg-button text-headline' : 'bg-white/10 text-white/70'
-          }`}
-        >
-          Friends
-        </button>
-        <button
-          type="button"
-          onClick={() => selectedFriend && setActiveMobileTab('chat')}
-          disabled={!selectedFriend}
-          className={`flex-1 text-sm font-semibold transition ${
-            activeMobileTab === 'chat' ? 'bg-button text-headline' : 'bg-white/10 text-white/70'
-          } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
-        >
-          Chat
-        </button>
-        <button
-          type="button"
-          onClick={() => selectedFriend && setActiveMobileTab('details')}
-          disabled={!selectedFriend}
-          className={`flex-1 rounded-r-2xl py-2 text-sm font-semibold transition ${
-            activeMobileTab === 'details' ? 'bg-button text-headline' : 'bg-white/10 text-white/70'
-          } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
-        >
-          Details
-        </button>
+      <div className="mb-4 lg:hidden">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-white/15 bg-white/5 p-1">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeMobileTab === 'friends'}
+            onClick={() => setActiveMobileTab('friends')}
+            className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+              activeMobileTab === 'friends' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Friends
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeMobileTab === 'chat'}
+            onClick={() => selectedFriend && setActiveMobileTab('chat')}
+            disabled={!selectedFriend}
+            className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+              activeMobileTab === 'chat' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
+            } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
+          >
+            Chat
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeMobileTab === 'details'}
+            onClick={() => selectedFriend && setActiveMobileTab('details')}
+            disabled={!selectedFriend}
+            className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+              activeMobileTab === 'details' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
+            } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
+          >
+            Details
+          </button>
+        </div>
       </div>
 
       <div className={`order-1 h-full w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
