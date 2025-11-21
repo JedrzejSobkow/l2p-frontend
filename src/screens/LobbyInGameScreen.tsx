@@ -233,7 +233,7 @@ const LobbyInGameScreen = () => {
               <InGameUserTile
                 key={member.user_id}
                 avatar={
-                  getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown'
+                  getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || 'avatar'
                 }
                 username={member.nickname}
                 place={index + 1}

@@ -107,10 +107,10 @@ const GameScreen: React.FC = () => {
                                             title={lobby.name} 
                                             occupiedSlots={lobby.current_players} 
                                             totalSlots={lobby.max_players} 
-                                            creator={lobby.members[0]?.nickname || 'Unknown'} 
+                                            creator={lobby.members[0]?.nickname || 'avatar'} 
                                             timeAgo={new Date(lobby.created_at).toLocaleString()} 
                                             profileImagePath={
-                                                getImage('avatars', 'avatar'+lobby.members[0]?.pfp_path?.split('/').pop()?.split('.')[0] || 'default') || ''
+                                                getImage('avatars', 'avatar'+lobby.members[0]?.pfp_path?.split('/').pop()?.split('.')[0] || 'avatar') || 'avatar'
                                             }
                                         />
                                     </div>

@@ -8,6 +8,8 @@ const imageMap: Record<string, Record<string, string>> = {
         moreGames: images.moreGamesImage,
     },
     avatars: {
+        unknown: images.avatar1,
+        avatar: images.avatar1,
         avatar1: images.avatar1,
         avatar2: images.avatar2,
         avatar3: images.avatar3,
