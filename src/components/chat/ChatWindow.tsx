@@ -272,8 +272,8 @@ const ChatWindow: FC<ChatWindowProps> = ({
       )}
 
       <div
+        className="relative flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6 scrollbar-default"
         ref={scrollRef}
-        className="relative flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6"
         onScroll={handleScroll}
       >
         {initialLoaderVisible && messages.length === 0 && (
