@@ -20,7 +20,7 @@ const FriendsScreen: FC = () => {
   const [activeMobileTab, setActiveMobileTab] = useState<'friends' | 'chat' | 'details'>(
     initialFriendId ? 'chat' : 'friends',
   )
-  const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,sendTyping,loadMoreMessages,loadMessages} = useChat()
+  const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,getLoading,sendTyping,loadMoreMessages,loadMessages} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
     return friends.find((friend) => friend.friend_user_id === selectedFriendId) ?? null
@@ -149,6 +149,7 @@ const FriendsScreen: FC = () => {
                 avatarUrl: selectedFriend.friend_pfp_path || ''
               }}
               isTyping={getTyping(selectedFriend.friend_user_id)}
+              isLoadingMessages={getLoading(selectedFriend.friend_user_id)}
               onSend={handleSend}
               onTyping={sendTyping}
               onLoadMore={() => loadMoreMessages(selectedFriend.friend_user_id)}

@@ -39,6 +39,7 @@ type ConversationsState = {
   unreadById: Record<string, number>
   hasMoreById: Record<string,boolean>
   nextCursorById: Record<string,string | null>
+  loadingById: Record<string, boolean>
 }
 
 export type ChatMessage = {
@@ -70,6 +71,7 @@ type ChatContextValue = {
   getTarget: (friendId: string) => ConversationTarget | undefined
   getUnread: (friendId: string) => number
   getTyping: (friendId: string) => boolean
+  getLoading: (friendId: string) => boolean
 
   loadMessages: (friendId: string, beforeMessageId?: string) => Promise<void>
   loadMoreMessages: (friendId: string) => Promise<void>
@@ -87,7 +89,15 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { user,isAuthenticated } = useAuth()
   const {friends} = useFriends()
-  const [state, setState] = useState<ConversationsState>({ messagesById: {}, targets: {}, typingById: {},unreadById: {},hasMoreById: {},nextCursorById: {}})
+  const [state, setState] = useState<ConversationsState>({
+    messagesById: {},
+    targets: {},
+    typingById: {},
+    unreadById: {},
+    hasMoreById: {},
+    nextCursorById: {},
+    loadingById: {},
+  })
   const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
@@ -128,6 +138,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const getTyping = useCallback(
     (friendId: string) => !!state.typingById[friendId],
     [state.typingById],
+  )
+
+  const getLoading = useCallback(
+    (friendId: string) => !!state.loadingById[friendId],
+    [state.loadingById],
   )
 
   const getUnread = useCallback(
@@ -235,37 +250,58 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const loadMessages = useCallback(
     async (friendId: string,beforeMessageId?: string) => {
+      const loadingKey = `${friendId}:${beforeMessageId ?? 'initial'}`
+      if (loadingConversationsRef.current.has(loadingKey)) {
+        return
+      }
       if (!beforeMessageId && loadedConversationsRef.current.has(friendId)){
         return
       }
-      const res = await fetchMessages(friendId,beforeMessageId,10)
-      const newMessages: ChatMessage[] = res.messages.map((message) => (
-        mapDtoToChatMessage(message)
-      )).reverse()
-      setState((prev) => {
-        const prevMessages = prev.messagesById[friendId] ?? []
-        const existingIds = new Set(prevMessages.map((m)=> m.id))
-
-        const dedupedNew = newMessages.filter((msg) => !existingIds.has(msg.id))
-        const merged = beforeMessageId ? [...dedupedNew, ...prevMessages] : dedupedNew
-        return {
+      loadingConversationsRef.current.add(loadingKey)
+      if (!beforeMessageId) {
+        setState((prev) => ({
           ...prev,
-          messagesById: {
-            ...prev.messagesById,
-            [friendId]: merged
-          },
-          nextCursorById: {
-            ...prev.nextCursorById,
-            [friendId]: res.next_cursor
-          },
-          hasMoreById: {
-            ...prev.hasMoreById,
-            [friendId]: res.has_more
-          },
+          loadingById: { ...prev.loadingById, [friendId]: true },
+        }))
+      }
+      try {
+        const res = await fetchMessages(friendId,beforeMessageId,10)
+        const newMessages: ChatMessage[] = res.messages.map((message) => (
+          mapDtoToChatMessage(message)
+        )).reverse()
+        setState((prev) => {
+          const prevMessages = prev.messagesById[friendId] ?? []
+          const existingIds = new Set(prevMessages.map((m)=> m.id))
+
+          const dedupedNew = newMessages.filter((msg) => !existingIds.has(msg.id))
+          const merged = beforeMessageId ? [...dedupedNew, ...prevMessages] : [...prevMessages, ...dedupedNew]
+          return {
+            ...prev,
+            messagesById: {
+              ...prev.messagesById,
+              [friendId]: merged
+            },
+            nextCursorById: {
+              ...prev.nextCursorById,
+              [friendId]: res.next_cursor
+            },
+            hasMoreById: {
+              ...prev.hasMoreById,
+              [friendId]: res.has_more
+            },
+          }
+        })
+        if (!beforeMessageId){
+          loadedConversationsRef.current.add(friendId)
         }
-      })
-      if (!beforeMessageId){
-        loadedConversationsRef.current.add(friendId)
+      } finally {
+        loadingConversationsRef.current.delete(loadingKey)
+        if (!beforeMessageId) {
+          setState((prev) => ({
+            ...prev,
+            loadingById: { ...prev.loadingById, [friendId]: false },
+          }))
+        }
       }
     }
   ,[])
@@ -525,7 +561,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (isAuthenticated) return
-    setState({ messagesById: {}, targets: {}, typingById: {},unreadById: {},hasMoreById: {}, nextCursorById: {} })
+    setState({
+      messagesById: {},
+      targets: {},
+      typingById: {},
+      unreadById: {},
+      hasMoreById: {},
+      nextCursorById: {},
+      loadingById: {},
+    })
     loadingConversationsRef.current.clear()
     loadedConversationsRef.current.clear()
     typingThrottleRef.current.clear()
@@ -539,6 +583,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getUnread,
       getTyping,
+      getLoading,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
@@ -552,6 +597,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getUnread,
       getTyping,
+      getLoading,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
