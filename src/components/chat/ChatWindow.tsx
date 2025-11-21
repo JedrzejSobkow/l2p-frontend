@@ -257,7 +257,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl border border-separator bg-background-secondary max-h-[81vh]',
+        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl border border-separator bg-background-secondary',
         className
       )}
     >

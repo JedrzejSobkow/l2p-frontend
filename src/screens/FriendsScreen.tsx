@@ -92,7 +92,7 @@ const FriendsScreen: FC = () => {
   }
 
   return (
-    <div className="flex h-full flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)]">
+    <div className="flex flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
       {/* Mobile tabs */}
       <div className="mb-4 flex lg:hidden">
         <button
@@ -126,7 +126,7 @@ const FriendsScreen: FC = () => {
         </button>
       </div>
 
-      <div className={`order-1 w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
+      <div className={`order-1 h-full w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
         <FriendsPanel
           onFriendSelect={handleSelectFriend}
           title="Your Friends"
@@ -165,7 +165,7 @@ const FriendsScreen: FC = () => {
         )}
       </div>
       <div
-        className={`order-2 w-full ${
+        className={`order-2 w-full h-full ${
           activeMobileTab === 'details' ? 'block' : 'hidden'
         } lg:order-3 lg:block`}
       >
