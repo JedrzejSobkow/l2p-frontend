@@ -46,7 +46,7 @@ const ChatDock = () => {
   const minimized = [...baseMinimized, ...overflow]
 
   return (
-    <div className={"pointer-events-none fixed inset-x-0 bottom-0 z-[30] flex-row-reverse items-end gap-1 hidden" + (location.pathname.startsWith('/friends') ? ' hidden' : 'md:flex')}>
+    <div className={"pointer-events-none fixed inset-x-0 bottom-0 z-[30] flex-row-reverse items-end gap-1 hidden" + (location.pathname.startsWith('/friends') ? " hidden" : " md:flex")}>
       <div
         className={
           (minimized.length > 0 ? 'pointer-events-auto' : 'pointer-events-none') +
