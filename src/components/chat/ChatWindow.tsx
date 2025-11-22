@@ -86,6 +86,22 @@ const ChatWindow: FC<ChatWindowProps> = ({
   const prevMsgLenRef = useRef(0)
   const prevConversationIdRef = useRef<string | null>(null)
   const isAtBottomRef = useRef(true)
+  const [showTopLoader, setShowTopLoader] = useState(false)
+
+useEffect(() => {
+  if (!isLoadingMore) {
+    setShowTopLoader(false)
+    return
+  }
+
+  const t = setTimeout(() => {
+    if (isLoadingMoreRef.current) {
+      setShowTopLoader(true)
+    }
+  }, 200)
+
+  return () => clearTimeout(t)
+}, [isLoadingMore])
 
   useEffect(() => {
   isLoadingMoreRef.current = isLoadingMore
@@ -234,6 +250,14 @@ const ChatWindow: FC<ChatWindowProps> = ({
         ref={scrollRef}
         onScroll={handleScroll}
       >
+        {showTopLoader && (
+          <div className="flex justify-center mb-2 text-xs text-white/60">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
+              <span className="h-2 w-2 animate-spin rounded-full border border-white/50 border-t-transparent" />
+              Loading messages...
+            </span>
+          </div>
+        )}
         {messages.map((message,index) => {
           const isOwn = message.isMine
           const next = index > 0 ? messages[index + 1] : undefined
