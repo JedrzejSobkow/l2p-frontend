@@ -13,6 +13,7 @@ import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, o
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 import { FaSignOutAlt } from 'react-icons/fa';
 import { getImage } from '../utils/imageMap';
+import { pfpImage } from '@/assets/images';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -233,7 +234,7 @@ const LobbyInGameScreen = () => {
               <InGameUserTile
                 key={member.user_id}
                 avatar={
-                  getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown'
+                  getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || pfpImage
                 }
                 username={member.nickname}
                 place={index + 1}

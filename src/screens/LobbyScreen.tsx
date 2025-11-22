@@ -23,6 +23,7 @@ import { sendMessage as sendPrivateMessage } from '../services/chat'
 import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
 import { getImage } from '../utils/imageMap';
 import { diceIcon } from '@assets/icons';
+import { pfpImage, noGameImage } from '@assets/images';
 
 
 export const LobbyScreen = () => {
@@ -344,7 +345,7 @@ export const LobbyScreen = () => {
   )
 
   const users = members.map((member, index) => ({
-    avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || '/unknown',
+    avatar: getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || pfpImage,
     username: member.nickname,
     place: index + 1,
     isReady: member.is_ready || false,
@@ -354,7 +355,7 @@ export const LobbyScreen = () => {
   const gameInfo = currentLobby?.selected_game_info ? {
     display_name: currentLobby.selected_game_info.display_name,
     name: currentLobby.selected_game_info.game_name,
-    img_path: getImage('games', currentLobby.selected_game || '') || '',
+    img_path: getImage('games', currentLobby.selected_game || 'noGame') || noGameImage,
     rules: currentLobby.selected_game_info.description,
   } : {
     display_name: 'Game not selected',

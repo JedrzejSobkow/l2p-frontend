@@ -4,7 +4,7 @@ import SectionButton from '../components/SectionButton';
 import LobbyShortTile from '../components/LobbyShortTile';
 import RangeSlider from '../components/RangeSlider';
 import { FaUsers } from 'react-icons/fa';
-import { ticTacToeImage, avatar1, avatar2, avatar3, avatar4, avatar7, avatar12, avatar15 } from '@assets/images';
+import { ticTacToeImage, avatar1, avatar2, avatar3, avatar4, avatar7, avatar12, avatar15, noGameImage, pfpImage } from '@assets/images';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLobby } from '../components/lobby/LobbyContext';
 import { getImage } from '../utils/imageMap';
@@ -71,7 +71,7 @@ const GameScreen: React.FC = () => {
                 title={currentGame.display_name} 
                 minPlayers={currentGame.min_players} 
                 maxPlayers={currentGame.max_players} 
-                path={getImage('games', currentGame.game_name) || ''}
+                path={getImage('games', currentGame.game_name) || noGameImage}
             />
             <div className="mt-4">
                 <SectionButton
@@ -107,10 +107,10 @@ const GameScreen: React.FC = () => {
                                             title={lobby.name} 
                                             occupiedSlots={lobby.current_players} 
                                             totalSlots={lobby.max_players} 
-                                            creator={lobby.members[0]?.nickname || 'Unknown'} 
+                                            creator={lobby.members[0]?.nickname || 'avatar'} 
                                             timeAgo={new Date(lobby.created_at).toLocaleString()} 
                                             profileImagePath={
-                                                getImage('avatars', 'avatar'+lobby.members[0]?.pfp_path?.split('/').pop()?.split('.')[0] || 'default') || ''
+                                                getImage('avatars', 'avatar'+lobby.members[0]?.pfp_path?.split('/').pop()?.split('.')[0] || 'avatar') || pfpImage
                                             }
                                         />
                                     </div>
