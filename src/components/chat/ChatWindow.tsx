@@ -279,18 +279,18 @@ useEffect(() => {
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
               )}
-              <div className={cn('flex max-w-[75%] flex-col gap-1', isOwn ? 'items-end text-right' : 'items-start text-left')}>
-                <div
-                  className={cn(
-                    'inline-flex max-w-full flex-col gap-2 rounded-2xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
-                    isOwn ? 'bg-gradient-to-r bg-button text-white' : 'bg-[rgba(35,34,49,0.95)]'
-                  )}
-                >
-                  {/* {!isOwn && <span className="text-xs font-semibold text-white/70">{message.senderNickname}</span>} */}
-                  {message.content && (
+               <div className={cn('flex max-w-[75%] flex-col gap-1', isOwn ? 'items-end text-left' : 'items-start text-left')}>
+                {message.content && 
+                  <div
+                    className={cn(
+                      'inline-flex max-w-full flex-col gap-2 rounded-2xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
+                      isOwn ? 'bg-gradient-to-r bg-button text-white' : 'bg-[rgba(35,34,49,0.95)]'
+                    )}
+                  >
                     <span className="whitespace-pre-wrap break-words leading-relaxed text-sm text-white">{message.content}</span>
-                  )}
-                  {message.imageUrl && (
+                  </div>
+                }
+                {message.imageUrl && (
                     <img
                       src={message.imageUrl}
                       onClick={() => setSelectedImage(message.imageUrl || null)}
@@ -298,7 +298,6 @@ useEffect(() => {
                       className="max-h-56 w-full rounded-2xl object-cover"
                     />
                   )}
-                </div>
                 {showTimestamp && <span className="block text-xs font-medium text-white/40">{formatTime(message.createdAt)}</span>}
               </div>
               {/* {isOwn && (
