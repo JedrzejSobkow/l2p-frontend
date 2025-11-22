@@ -1,7 +1,7 @@
 import { request } from '../lib/http'
 
 export type User = {
-  id?: string | number
+  id?: string
   nickname: string
   email?: string,
   is_active: boolean,

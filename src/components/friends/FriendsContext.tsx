@@ -35,8 +35,6 @@ type FriendsContextValue = {
 
 const FriendsContext = createContext<FriendsContextValue | undefined>(undefined)
 
-const normalizeId = (value: number | string) => String(value)
-
 export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const {isAuthenticated} = useAuth()
   const [friendships, setFriendships] = useState<Friendship[]>([])
@@ -51,11 +49,13 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         : Array.isArray((data as any)?.friendships)
         ? ((data as any).friendships as Friendship[])
         : []
-      setFriendships(normalized)
+      if (normalized.length !== friendships.length){
+        setFriendships(normalized)
+      }
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [friendships.length])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -64,13 +64,18 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       return
     }
     void refreshFriends()
+    const interval = window.setInterval(()=>{
+      void refreshFriends()
+    },2_000)
+    return () => window.clearInterval(interval)
   }, [isAuthenticated, refreshFriends])
+
 
   const upsertFriendship = useCallback((entry: Friendship) => {
     setFriendships((prev) => {
-      const key = normalizeId(entry.friendship_id ?? entry.friend_user_id)
+      const key = entry.friendship_id ?? entry.friend_user_id
       const idx = prev.findIndex(
-        (item) => normalizeId(item.friendship_id ?? item.friend_user_id) === key,
+        (item) => item.friendship_id ?? item.friend_user_id === key,
       )
       if (idx === -1) {
         return [...prev, entry]
@@ -83,9 +88,9 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const removeFriendship = useCallback((friend_user_id: number | string) => {
-    const key = normalizeId(friend_user_id)
+    const key = friend_user_id
     setFriendships((prev) =>
-      prev.filter((item) => normalizeId(item.friend_user_id) !== key),
+      prev.filter((item) => item.friend_user_id !== key),
     )
   }, [])
 
@@ -131,8 +136,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     })
-
-    console.log({ accepted, incoming, outgoing })
     return {
       friends: accepted,
       incomingRequests: incoming,
