@@ -109,6 +109,7 @@ const ChatDock = () => {
                 nickname: s.target.nickname,
                 avatarUrl: s.target.avatarUrl || ''
               }}
+              hasMore={chat.getHasMore(s.target.id) ?? true}
               isTyping={chat.getTyping(s.target.id)}
               onSend={async ({ text, attachment }) => chat.sendMessage(s.target.id, { text, attachment })}
               onTyping={chat.sendTyping}

@@ -70,6 +70,7 @@ type ChatContextValue = {
   getTarget: (friendId: string) => ConversationTarget | undefined
   getUnread: (friendId: string) => number
   getTyping: (friendId: string) => boolean
+  getHasMore: (friendId: string) => boolean
 
   loadMessages: (friendId: string, beforeMessageId?: string) => Promise<void>
   loadMoreMessages: (friendId: string) => Promise<void>
@@ -134,6 +135,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const getTyping = useCallback(
     (friendId: string) => !!state.typingById[friendId],
     [state.typingById],
+  )
+  const getHasMore = useCallback(
+    (friendId: string) => {
+      return state.hasMoreById[friendId]
+    },
+    [state.hasMoreById]
   )
 
 
@@ -559,6 +566,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getUnread,
       getTyping,
+      getHasMore,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
@@ -572,6 +580,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getUnread,
       getTyping,
+      getHasMore,
       loadMessages,
       loadMoreMessages,
       ensureConversation,

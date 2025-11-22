@@ -22,6 +22,7 @@ export interface ChatWindowProps {
   friendData: ConversationTarget
   messages: ChatMessage[]
   isTyping: boolean
+  hasMore: boolean
   onSend: (payload: { text: string; attachment?: File }) => Promise<void> | void
   onTyping?: (friend_user_id: string) => void
   onLoadMore: () => Promise<void>
@@ -66,6 +67,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
   messages,
   className,
   isTyping,
+  hasMore,
   onSend,
   onTyping,
   onLoadMore
@@ -174,7 +176,7 @@ useEffect(() => {
   }
 
   const handleScroll = () => {
-    if (!onLoadMore) return
+    if (!onLoadMore || !hasMore) return
     const el = scrollRef.current
     if (!el || isLoadingMoreRef.current) return
 
@@ -250,12 +252,17 @@ useEffect(() => {
         ref={scrollRef}
         onScroll={handleScroll}
       >
-        {showTopLoader && (
+        {showTopLoader && hasMore && (
           <div className="flex justify-center mb-2 text-xs text-white/60">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
               <span className="h-2 w-2 animate-spin rounded-full border border-white/50 border-t-transparent" />
               Loading messages...
             </span>
+          </div>
+        )}
+        {!hasMore && messages.length > 0 && (
+          <div className="flex justify-center mb-2 text-[11px] uppercase tracking-wide text-white/40">
+            No more messages
           </div>
         )}
         {messages.map((message,index) => {
