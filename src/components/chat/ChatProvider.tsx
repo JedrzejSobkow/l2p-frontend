@@ -39,7 +39,6 @@ type ConversationsState = {
   unreadById: Record<string, number>
   hasMoreById: Record<string,boolean>
   nextCursorById: Record<string,string | null>
-  loadingById: Record<string, boolean>
 }
 
 export type ChatMessage = {
@@ -71,7 +70,6 @@ type ChatContextValue = {
   getTarget: (friendId: string) => ConversationTarget | undefined
   getUnread: (friendId: string) => number
   getTyping: (friendId: string) => boolean
-  getLoading: (friendId: string) => boolean
 
   loadMessages: (friendId: string, beforeMessageId?: string) => Promise<void>
   loadMoreMessages: (friendId: string) => Promise<void>
@@ -96,9 +94,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     unreadById: {},
     hasMoreById: {},
     nextCursorById: {},
-    loadingById: {},
   })
-  const loadingConversationsRef = useRef<Set<string>>(new Set())
   const loadedConversationsRef = useRef<Set<string>>(new Set())
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const typingThrottleRef = useRef<Map<string, number>>(new Map())
@@ -140,10 +136,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     [state.typingById],
   )
 
-  const getLoading = useCallback(
-    (friendId: string) => !!state.loadingById[friendId],
-    [state.loadingById],
-  )
 
   const getUnread = useCallback(
     (friendId: string) => state.unreadById[friendId] ?? 0,
@@ -251,18 +243,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const loadMessages = useCallback(
     async (friendId: string,beforeMessageId?: string) => {
       const loadingKey = `${friendId}:${beforeMessageId ?? 'initial'}`
-      if (loadingConversationsRef.current.has(loadingKey)) {
-        return
-      }
+
       if (!beforeMessageId && loadedConversationsRef.current.has(friendId)){
         return
-      }
-      loadingConversationsRef.current.add(loadingKey)
-      if (!beforeMessageId) {
-        setState((prev) => ({
-          ...prev,
-          loadingById: { ...prev.loadingById, [friendId]: true },
-        }))
       }
       try {
         const res = await fetchMessages(friendId,beforeMessageId,10)
@@ -294,14 +277,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         if (!beforeMessageId){
           loadedConversationsRef.current.add(friendId)
         }
-      } finally {
-        loadingConversationsRef.current.delete(loadingKey)
-        if (!beforeMessageId) {
-          setState((prev) => ({
-            ...prev,
-            loadingById: { ...prev.loadingById, [friendId]: false },
-          }))
-        }
+      } 
+      catch{
+
       }
     }
   ,[])
@@ -568,9 +546,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       unreadById: {},
       hasMoreById: {},
       nextCursorById: {},
-      loadingById: {},
     })
-    loadingConversationsRef.current.clear()
     loadedConversationsRef.current.clear()
     typingThrottleRef.current.clear()
     typingTimeoutRef.current.forEach((timeout) => clearTimeout(timeout))
@@ -583,7 +559,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getUnread,
       getTyping,
-      getLoading,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
@@ -597,7 +572,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getTarget,
       getUnread,
       getTyping,
-      getLoading,
       loadMessages,
       loadMoreMessages,
       ensureConversation,

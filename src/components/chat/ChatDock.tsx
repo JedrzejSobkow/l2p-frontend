@@ -110,7 +110,6 @@ const ChatDock = () => {
                 avatarUrl: s.target.avatarUrl || ''
               }}
               isTyping={chat.getTyping(s.target.id)}
-              isLoadingMessages={chat.getLoading(s.target.id)}
               onSend={async ({ text, attachment }) => chat.sendMessage(s.target.id, { text, attachment })}
               onTyping={chat.sendTyping}
               onLoadMore={() => chat.loadMoreMessages(s.target.id)}

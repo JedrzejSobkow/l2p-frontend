@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -21,10 +22,9 @@ export interface ChatWindowProps {
   friendData: ConversationTarget
   messages: ChatMessage[]
   isTyping: boolean
-  isLoadingMessages?: boolean
   onSend: (payload: { text: string; attachment?: File }) => Promise<void> | void
   onTyping?: (friend_user_id: string) => void
-  onLoadMore: () => void
+  onLoadMore: () => Promise<void>
   className?: string
 }
 
@@ -66,7 +66,6 @@ const ChatWindow: FC<ChatWindowProps> = ({
   messages,
   className,
   isTyping,
-  isLoadingMessages = false,
   onSend,
   onTyping,
   onLoadMore
@@ -76,111 +75,55 @@ const ChatWindow: FC<ChatWindowProps> = ({
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File>()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
   const [sending, setSending] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const lastMessageIdRef = useRef<string | null>(null)
-  const pendingFriendScrollRef = useRef<boolean>(true)
-  const loadingMoreRef = useRef<boolean>(false)
-  const prevScrollHeightRef = useRef<number>(0)
-  const prevScrollTopRef = useRef<number>(0)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [initialLoaderVisible, setInitialLoaderVisible] = useState(false)
-  const [loadMoreVisible, setLoadMoreVisible] = useState(false)
-  const initialLoaderStartRef = useRef<number | null>(null)
-  const loadMoreStartRef = useRef<number | null>(null)
-  const initialLoaderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const loadMoreTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const MIN_LOADER_MS = 500
+
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const isLoadingMoreRef = useRef(false)
+  const prevScrollHeightRef = useRef(0)
+  const prevScrollTopRef = useRef(0)
+  const prevMsgLenRef = useRef(0)
+  const prevConversationIdRef = useRef<string | null>(null)
+  const isAtBottomRef = useRef(true)
 
   useEffect(() => {
-    const container = scrollRef.current
-    if (!container) return
-    if (pendingFriendScrollRef.current) {
-      lastMessageIdRef.current = null
-    }
-    if (isLoadingMessages) {
-      return
-    }
+  isLoadingMoreRef.current = isLoadingMore
+}, [isLoadingMore])
 
-    const lastMessageId = messages[messages.length - 1]?.id ?? null
-    const hasNewTailMessage =
-      lastMessageId !== null && lastMessageId !== lastMessageIdRef.current
+  useLayoutEffect(() => {
+  const el = scrollRef.current
+  if (!el) return
 
-    if (pendingFriendScrollRef.current) {
-      pendingFriendScrollRef.current = false
-      requestAnimationFrame(() => {
-        container.scrollTo({ top: container.scrollHeight, behavior: 'auto' })
-      })
-    } else if (loadingMoreRef.current) {
-      const delta = container.scrollHeight - prevScrollHeightRef.current
-      container.scrollTop = prevScrollTopRef.current + delta
-      loadingMoreRef.current = false
-      setLoadingMore(false)
-    } else if (hasNewTailMessage) {
-      requestAnimationFrame(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth',
-        })
-      })
-    }
+  const prevConv = prevConversationIdRef.current
+  const prevLen = prevMsgLenRef.current
+  const newLen = messages.length
 
-    lastMessageIdRef.current = lastMessageId
-  }, [messages, isLoadingMessages])
+  const isNewConversation = prevConv !== friendData.id
+  const firstLoadForThisConv = prevLen === 0 && newLen > 0
+  const hasMoreMessages = newLen > prevLen
 
-  useEffect(() => {
-    pendingFriendScrollRef.current = true
-  }, [friendData.id])
+  if (isNewConversation || firstLoadForThisConv) {
+    el.scrollTop = el.scrollHeight
 
-  useEffect(() => {
-    if (isLoadingMessages && messages.length === 0) {
-      initialLoaderStartRef.current = performance.now()
-      setInitialLoaderVisible(true)
-      if (initialLoaderTimeoutRef.current) {
-        clearTimeout(initialLoaderTimeoutRef.current)
-        initialLoaderTimeoutRef.current = null
-      }
-      return
-    }
-    if (!initialLoaderVisible) return
-    const started = initialLoaderStartRef.current ?? performance.now()
-    const elapsed = performance.now() - started
-    const delay = Math.max(0, MIN_LOADER_MS - elapsed)
-    initialLoaderTimeoutRef.current = setTimeout(() => {
-      setInitialLoaderVisible(false)
-      initialLoaderTimeoutRef.current = null
-      initialLoaderStartRef.current = null
-    }, delay)
-  }, [isLoadingMessages, messages.length, initialLoaderVisible])
+    prevScrollHeightRef.current = 0
+    prevScrollTopRef.current = 0
+  } else if (prevScrollHeightRef.current && hasMoreMessages) {
+    const newScrollHeight = el.scrollHeight
+    const diff = newScrollHeight - prevScrollHeightRef.current
+    el.scrollTop = prevScrollTopRef.current + diff
 
-  useEffect(() => {
-    if (loadingMore) {
-      loadMoreStartRef.current = performance.now()
-      setLoadMoreVisible(true)
-      if (loadMoreTimeoutRef.current) {
-        clearTimeout(loadMoreTimeoutRef.current)
-        loadMoreTimeoutRef.current = null
-      }
-      return
-    }
-    if (!loadMoreVisible) return
-    const started = loadMoreStartRef.current ?? performance.now()
-    const elapsed = performance.now() - started
-    const delay = Math.max(0, MIN_LOADER_MS - elapsed)
-    loadMoreTimeoutRef.current = setTimeout(() => {
-      setLoadMoreVisible(false)
-      loadMoreTimeoutRef.current = null
-      loadMoreStartRef.current = null
-    }, delay)
-  }, [loadingMore, loadMoreVisible])
+    prevScrollHeightRef.current = 0
+    prevScrollTopRef.current = 0
+  }
+  else if (hasMoreMessages && isAtBottomRef.current){
+    el.scrollTop = el.scrollHeight
+  }
 
-  useEffect(() => {
-    return () => {
-      if (initialLoaderTimeoutRef.current) clearTimeout(initialLoaderTimeoutRef.current)
-      if (loadMoreTimeoutRef.current) clearTimeout(loadMoreTimeoutRef.current)
-    }
-  }, [])
+  prevConversationIdRef.current = friendData.id
+  prevMsgLenRef.current = newLen
+}, [friendData.id, messages.length])
+
 
   const isComposerDisabled = sending
 
@@ -215,14 +158,29 @@ const ChatWindow: FC<ChatWindowProps> = ({
   }
 
   const handleScroll = () => {
+    if (!onLoadMore) return
     const el = scrollRef.current
-    if(!el || !onLoadMore) return
-    if (el.scrollTop <= 50) {
-      loadingMoreRef.current = true
-      setLoadingMore(true)
+    if (!el || isLoadingMoreRef.current) return
+
+    const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight)
+    isAtBottomRef.current = distanceFromBottom < 500
+
+    if (el.scrollTop <= 100) {
       prevScrollHeightRef.current = el.scrollHeight
       prevScrollTopRef.current = el.scrollTop
-      onLoadMore()
+      setIsLoadingMore(true)
+      isLoadingMoreRef.current = true
+
+      const maybePromise = onLoadMore()
+      if (maybePromise && typeof (maybePromise as any).then === 'function') {
+        ;(maybePromise as Promise<void>).finally(() => {
+          setIsLoadingMore(false)
+          isLoadingMoreRef.current = false
+        })
+      } else {
+        setIsLoadingMore(false)
+        isLoadingMoreRef.current = false
+      }
     }
   }
 
@@ -276,26 +234,11 @@ const ChatWindow: FC<ChatWindowProps> = ({
         ref={scrollRef}
         onScroll={handleScroll}
       >
-        {initialLoaderVisible && messages.length === 0 && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-background-secondary/60 backdrop-blur-sm">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white/80">
-              <span className="h-2 w-2 animate-ping rounded-full bg-orange-300" />
-              Loading messages...
-            </div>
-          </div>
-        )}
-        {loadMoreVisible && (
-          <div className="flex justify-center text-xs text-white/60">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-              <span className="h-2 w-2 animate-bounce rounded-full bg-white/80" />
-              Loading previous messages...
-            </div>
-          </div>
-        )}
         {messages.map((message,index) => {
           const isOwn = message.isMine
           const next = index > 0 ? messages[index + 1] : undefined
           const showTimestamp = !next || next.isMine !== message.isMine || !isSameMinute(message.createdAt, next.createdAt)
+          // const showAvatar = !next || (next.isMine === false && message.isMine === false)
           return (
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
