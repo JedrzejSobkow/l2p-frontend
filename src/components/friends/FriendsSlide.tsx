@@ -44,8 +44,6 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   };
 
   const handleFriendButtonClick = (friendId: string | number) => {
-    const isSmallScreen =
-      typeof window !== 'undefined' ? window.innerWidth < 768 : false
       if (currentLobby) {
         showPopup({
           type: 'informative',

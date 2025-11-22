@@ -59,8 +59,9 @@ const FriendCard: FC<FriendCardProps> = ({
       <div className="flex items-center gap-3">
         { onMessage && (
         <button
-          onClick={onMessage}
-          className="grid h-8 w-8 place-items-center rounded-full border border-orange-400/40 text-orange-300 transition hover:border-orange-300 hover:text-orange-200"
+          onClick={(e) => {e.stopPropagation()
+            onMessage()}}
+          className="grid h-8 w-8 place-items-center z-[20] rounded-full border border-orange-400/40 text-orange-300 transition hover:border-orange-300 hover:text-orange-200"
           aria-label="Message"
           title="Message"
         >
