@@ -1,26 +1,26 @@
 @layer components {
   .auth-screen {
-    @apply grid min-h-[calc(100vh-12rem)] place-items-center sm:py-5;
+    @apply grid sm:min-h-[calc(100vh-18rem)] place-items-center sm:py-5;
   }
 
   .auth-card {
-    @apply w-full max-w-md rounded-none border sm:rounded-2xl border-white/10 bg-[rgba(12,11,24,0.9)] p-8;
+    @apply w-full max-w-md rounded-none border sm:rounded-2xl border-white/10 bg-background p-8;
   }
 
   .auth-card-wide {
-    @apply w-full max-w-xl rounded-none border sm:rounded-2xl border-white/10 bg-[rgba(12,11,24,0.9)] p-8;
-  }
+    @apply w-full max-w-xl rounded-none border sm:rounded-2xl border-white/10 bg-background p-8;
 
+  }
   .auth-badge {
-    @apply inline-flex rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-orange-300;
+    @apply inline-flex rounded-full bg-button/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-orange-300;
   }
 
   .auth-title {
-    @apply text-3xl font-semibold text-white;
+    @apply text-3xl font-semibold text-headline;
   }
 
   .auth-desc {
-    @apply text-sm text-white/60;
+    @apply text-sm text-paragraph;
   }
 
   .auth-form {
@@ -28,11 +28,11 @@
   }
 
   .auth-label {
-    @apply space-y-2 text-sm text-white/70;
+    @apply space-y-2 text-sm text-paragraph;
   }
 
   .auth-input {
-    @apply w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white placeholder:text-white/50 focus:border-orange-400/70 focus:outline-none focus:ring-2 focus:ring-orange-400/40;
+    @apply w-full rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-headline placeholder:text-paragraph focus:border-orange-400/70 focus:outline-none focus:ring-2 focus:ring-orange-400/40;
   }
 
   .auth-checkbox {
