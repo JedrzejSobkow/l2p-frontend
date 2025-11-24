@@ -99,23 +99,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
-        const me = await auth.getMe()
+        const me = await auth.getMe();
         if (!cancelled) {
-          setUser(me)
-          setStatus('authenticated')
+          setUser(me);
+          setStatus('authenticated');
         }
-      } 
-      catch {
+      } catch {
         if (!cancelled) {
-          setUser(null)
-          setStatus('unauthenticated')
+          console.log("User is unauthenticated. Creating guest session...");
+          try {
+            // Wywołaj funkcję createGuestSession, aby utworzyć sesję gościa
+            const guest = await auth.createGuestSession();
+            console.log("Guest session created:", guest);
+  
+            // Ustaw dane gościa w stanie aplikacji
+            setUser(guest);
+            setStatus('authenticated');
+          } catch (error) {
+            console.error("Failed to create guest session:", error);
+            setUser(null);
+            setStatus('unauthenticated');
+          }
         }
       }
-    })()
+    })();
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
   // Revalidate session on tab focus/visibility change (throttled)
   const lastCheckRef = useRef(0)
