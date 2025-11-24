@@ -321,7 +321,7 @@ useEffect(() => {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-background-secondary/70 px-2 py-1">
-        <div className="flex items-end gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.2)] focus-within:border-orange-400/60">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.2)] focus-within:border-button/60">
           <input
             ref={fileInputRef}
             type="file"
