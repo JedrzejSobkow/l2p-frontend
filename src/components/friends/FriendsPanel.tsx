@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type FC, type ChangeEvent } from 'react'
+import { useCallback, useMemo, useState, type FC, type ChangeEvent, useEffect } from 'react'
 import { FiChevronDown, FiSearch, FiUserPlus } from 'react-icons/fi'
 import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
@@ -54,13 +54,20 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
       const query = input.trim()
       if (query.length < 3) {
         setSearchResults([])
+        setSearching(false)
         return
       }
       setSearching(true)
       try {
-        const res = await searchUsers(query)
+        const minDelay = new Promise((resolve) => setTimeout(resolve, 400))
+        const [res] = await Promise.all([
+          searchUsers(query),
+          minDelay
+        ])
+
         if(searchResults !== res.users)
           setSearchResults(res.users ?? [])
+
       } catch (error) {
         console.error('Failed to search users', error)
       } finally {
@@ -70,13 +77,24 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     [searchUsers],
   )
 
-  const handleSearchChange = async (event: ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value
     setSearchTerm(value)
-    if (mode === 'discover') {
-      void runSearch(value)
-    }
   }
+
+  useEffect(() => {
+    if (mode === 'discover' && searchTerm.trim().length >= 3) {
+      const timeoutId = setTimeout(() => {
+        void runSearch(searchTerm)
+      }, 300)
+      return () => clearTimeout(timeoutId)
+    }
+
+    if (searchTerm.trim().length < 3) {
+      setSearchResults([])
+      setSearching(false)
+    }
+  }, [searchTerm, mode, runSearch])
 
   const filteredFriends = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
@@ -136,7 +154,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
 
 
   const renderFriend = (friend: Friendship) => {
-    // console.log('Rendering friend:', friend)
     const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
     const isSelected = selectedKey ? key === selectedKey : false
     return (
@@ -178,9 +195,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
               onClick={() => {
                 if (mode === 'friends') {
                   setMode('discover')
-                  if (searchTerm.trim().length >= 3) {
-                    void runSearch(searchTerm)
-                  }
                 } else {
                   setMode('friends')
                 }
