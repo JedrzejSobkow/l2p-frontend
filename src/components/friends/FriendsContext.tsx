@@ -32,6 +32,29 @@ type FriendsContextValue = {
   removeFriend: (friend_user_id: number | string) => Promise<void>
   searchUsers: (query: string, page?: number, pageSize?: number) => Promise<SearchFriendsPayload>
 }
+const hasFriendListChanged = (currentList: Friendship[], newList: Friendship[]) => {
+  if (currentList.length !== newList.length) return true
+
+  const currentMap = new Map(currentList.map(f => [f.friendship_id, f]))
+
+  for (const newFriend of newList) {
+    const currentFriend = currentMap.get(newFriend.friendship_id)
+
+    if (!currentFriend) return true
+
+    if (
+      currentFriend.status !== newFriend.status || 
+      currentFriend.friend_nickname !== newFriend.friend_nickname ||
+      currentFriend.friend_pfp_path !== newFriend.friend_pfp_path || 
+      currentFriend.friend_description !== newFriend.friend_description
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 
 const FriendsContext = createContext<FriendsContextValue | undefined>(undefined)
 
@@ -48,7 +71,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         : Array.isArray((data as any)?.friendships)
         ? ((data as any).friendships as Friendship[])
         : []
-      if (normalized.length !== friendships.length){
+      if (hasFriendListChanged(friendships, normalized)) {
         setFriendships(normalized)
       }
     } catch (error) {
