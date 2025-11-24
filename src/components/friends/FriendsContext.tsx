@@ -41,7 +41,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const refreshFriends = useCallback(async () => {
-    setIsLoading(true)
     try {
       const data = await getFriendsList()
       const normalized = Array.isArray(data)
@@ -52,8 +51,8 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       if (normalized.length !== friendships.length){
         setFriendships(normalized)
       }
-    } finally {
-      setIsLoading(false)
+    } catch (error) {
+      console.error('Error fetching friends list:', error)
     }
   }, [friendships.length])
 
