@@ -71,8 +71,13 @@ export const connectGameSocket = (): Socket => {
     reconnectionAttempts: 5,
     forceNew: false,
   })
+
   gameSocket.on('connect_error', (err: any) => {
     console.error('Game socket connect_error:', err)
+  })
+
+  gameSocket.on('connect', () => {
+    console.log("Game socket connected ")
   })
   return gameSocket
 }
@@ -84,6 +89,10 @@ export const disconnectGameSocket = () => {
     gameSocket.disconnect()
     gameSocket = null
   }
+}
+
+export const isGameSocketConnected = (): boolean => {
+  return gameSocket?.connected || false;
 }
 
 // Emitters

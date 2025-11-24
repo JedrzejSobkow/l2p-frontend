@@ -69,12 +69,14 @@ import {
   onGameRulesUpdated,
   offGameRulesUpdated,
   emitGetPublicLobbiesByGame,
+  isLobbySocketConnected,
 } from '../../services/lobby'
 
 import {
     emitCreateGame,
     offGameState,
     onGameState,
+    isGameSocketConnected,
 } from '../../services/game'
 
 type LobbyContextValue = {
@@ -105,6 +107,8 @@ type LobbyContextValue = {
   selectGame: (gameName: string) => void
   clearGameSelection: () => void
   setGameState: (state: any) => void
+  isLobbySocketConnected: boolean
+  isGameSocketConnected: boolean
 }
 
 const LobbyContext = createContext<LobbyContextValue | undefined>(undefined)
@@ -463,6 +467,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       selectGame: selectGameHandler,
       clearGameSelection: clearGameSelectionHandler,
       setGameState: setGameStateHandler,
+      isLobbySocketConnected: isLobbySocketConnected(),
+      isGameSocketConnected: isGameSocketConnected(),
     }),
     [
       isLoading,
@@ -492,6 +498,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       selectGameHandler,
       clearGameSelectionHandler,
       setGameStateHandler,
+      isLobbySocketConnected(),
+      isGameSocketConnected(),
     ],
   )
 
