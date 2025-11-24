@@ -58,7 +58,7 @@ const GameScreen: React.FC = () => {
 
     const handleJoinLobby = (lobbyCode: string) => {
         joinLobby(lobbyCode);
-        navigate('/lobby');
+        // navigate('/lobby');
     };
 
     if (!currentGame) {
