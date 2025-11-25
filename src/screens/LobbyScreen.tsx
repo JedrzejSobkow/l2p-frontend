@@ -56,6 +56,7 @@ export const LobbyScreen = () => {
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
     const lobbySocket = getLobbySocket();
+    console.log("HALOOOOOO")
     if (!lobbySocket || !lobbySocket.connected) {
         return;
     }
@@ -169,7 +170,8 @@ export const LobbyScreen = () => {
         navigate('/lobby', {
           state: { message: 'You are already a member of another lobby.', type: 'info' },
         })
-      } else {
+      } 
+      else {
         navigate('/', { state: { message: error.message || 'Failed to join the lobby.', type: 'error' } })
       }
     }
@@ -233,7 +235,7 @@ export const LobbyScreen = () => {
 
   const handleConfirmLeave = () => {
     leaveLobby()
-    navigate('/')
+    // navigate('/')
   }
 
   const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {

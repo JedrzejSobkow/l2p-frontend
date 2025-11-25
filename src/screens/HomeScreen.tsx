@@ -17,6 +17,8 @@ import { usePopup } from '../components/PopupContext';
 import { useLobby } from '../components/lobby/LobbyContext';
 import JoinOrCreateGame from '../components/JoinOrCreateGame';
 import { getImage } from '../utils/imageMap';
+import { isLobbySocketConnected } from '../services/lobby';
+import { isGameSocketConnected } from '../services/game';
 
 const HomeScreen: React.FC = () => {
   const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
@@ -27,8 +29,16 @@ const HomeScreen: React.FC = () => {
   const itemsPerPage = 3;
 
   useEffect(() => {
-    getAvailableGames();
-    getPublicLobbies();
+    const fetchData = async () => {
+      if (isLobbySocketConnected() && isGameSocketConnected()) {
+        await getAvailableGames();
+        await getPublicLobbies();
+      } else {
+        setTimeout(fetchData, 200); // Retry after 200ms
+      }
+    };
+
+    fetchData();
   }, [getAvailableGames, getPublicLobbies]);
 
   useEffect(() => {

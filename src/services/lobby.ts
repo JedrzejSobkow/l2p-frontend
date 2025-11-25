@@ -84,6 +84,10 @@ export const disconnectLobbySocket = () => {
   console.error("ODŁąCZAM OD WEBSOCKETA GRE")
 }
 
+export const isLobbySocketConnected = (): boolean => {
+  return lobbySocket?.connected || false;
+}
+
 // Emitters
 export const emitCreateLobby = (maxPlayers: number = 6, isPublic: boolean = false, name?: string, gameName?: string) => {
   const payload: any = { max_players: maxPlayers, is_public: isPublic }

@@ -69,6 +69,7 @@ import {
   onGameRulesUpdated,
   offGameRulesUpdated,
   emitGetPublicLobbiesByGame,
+  isLobbySocketConnected,
 } from '../../services/lobby'
 
 import {
@@ -80,6 +81,7 @@ import {
     onGameEnded,
     onMoveMade,
     onGameState,
+    isGameSocketConnected,
     onGameStarted,
 } from '../../services/game'
 
@@ -111,6 +113,8 @@ type LobbyContextValue = {
   selectGame: (gameName: string) => void
   clearGameSelection: () => void
   setGameState: (state: any) => void
+  isLobbySocketConnected: boolean
+  isGameSocketConnected: boolean
 }
 
 const LobbyContext = createContext<LobbyContextValue | undefined>(undefined)
@@ -167,8 +171,18 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
 
     const handleMemberJoined = (data: { member: LobbyMember; current_players: number }) => {
       //console('Member joined:', data)
-      setMembers(prev => [...prev, data.member])
-      setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
+      setMembers(prev => {
+        // Sprawdź, czy użytkownik już istnieje w tablicy `members`
+        const exists = prev.some(m => m.user_id === data.member.user_id);
+      
+        // Jeśli użytkownik już istnieje, zwróć niezmienioną tablicę
+        if (exists) {
+          return prev;
+        }
+      
+        // Jeśli użytkownika nie ma, dodaj go do tablicy
+        return [...prev, data.member];
+      });      setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
     const handleMemberLeft = (data: { user_id: number | string; nickname: string; current_players: number }) => {
@@ -490,6 +504,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       selectGame: selectGameHandler,
       clearGameSelection: clearGameSelectionHandler,
       setGameState: setGameStateHandler,
+      isLobbySocketConnected: isLobbySocketConnected(),
+      isGameSocketConnected: isGameSocketConnected(),
     }),
     [
       isLoading,
@@ -519,6 +535,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       selectGameHandler,
       clearGameSelectionHandler,
       setGameStateHandler,
+      isLobbySocketConnected(),
+      isGameSocketConnected(),
     ],
   )
 
