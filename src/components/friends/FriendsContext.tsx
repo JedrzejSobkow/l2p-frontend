@@ -32,10 +32,30 @@ type FriendsContextValue = {
   removeFriend: (friend_user_id: number | string) => Promise<void>
   searchUsers: (query: string, page?: number, pageSize?: number) => Promise<SearchFriendsPayload>
 }
+const hasFriendListChanged = (currentList: Friendship[], newList: Friendship[]) => {
+  if (currentList.length !== newList.length) return true
+
+  const currentMap = new Map(currentList.map(f => [f.friend_user_id, f]))
+
+  for (const newFriend of newList) {
+    const currentFriend = currentMap.get(newFriend.friend_user_id)
+
+    if (!currentFriend) return true
+    if (
+      currentFriend.status !== newFriend.status || 
+      currentFriend.friend_nickname !== newFriend.friend_nickname ||
+      currentFriend.friend_pfp_path !== newFriend.friend_pfp_path || 
+      currentFriend.friend_description !== newFriend.friend_description
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 
 const FriendsContext = createContext<FriendsContextValue | undefined>(undefined)
-
-const normalizeId = (value: number | string) => String(value)
 
 export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const {isAuthenticated} = useAuth()
@@ -43,7 +63,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   const refreshFriends = useCallback(async () => {
-    setIsLoading(true)
     try {
       const data = await getFriendsList()
       const normalized = Array.isArray(data)
@@ -51,11 +70,13 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         : Array.isArray((data as any)?.friendships)
         ? ((data as any).friendships as Friendship[])
         : []
-      setFriendships(normalized)
-    } finally {
-      setIsLoading(false)
+      if (hasFriendListChanged(friendships, normalized)) {
+        setFriendships(normalized)
+      }
+    } catch (error) {
+      console.error('Error fetching friends list:', error)
     }
-  }, [])
+  }, [friendships.length])
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -64,13 +85,18 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       return
     }
     void refreshFriends()
+    const interval = window.setInterval(()=>{
+      void refreshFriends()
+    },2_000)
+    return () => window.clearInterval(interval)
   }, [isAuthenticated, refreshFriends])
+
 
   const upsertFriendship = useCallback((entry: Friendship) => {
     setFriendships((prev) => {
-      const key = normalizeId(entry.friendship_id ?? entry.friend_user_id)
+      const key = entry.friendship_id ?? entry.friend_user_id
       const idx = prev.findIndex(
-        (item) => normalizeId(item.friendship_id ?? item.friend_user_id) === key,
+        (item) => item.friendship_id ?? item.friend_user_id === key,
       )
       if (idx === -1) {
         return [...prev, entry]
@@ -83,9 +109,9 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const removeFriendship = useCallback((friend_user_id: number | string) => {
-    const key = normalizeId(friend_user_id)
+    const key = friend_user_id
     setFriendships((prev) =>
-      prev.filter((item) => normalizeId(item.friend_user_id) !== key),
+      prev.filter((item) => item.friend_user_id !== key),
     )
   }, [])
 
@@ -131,8 +157,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     })
-
-    console.log({ accepted, incoming, outgoing })
     return {
       friends: accepted,
       incomingRequests: incoming,

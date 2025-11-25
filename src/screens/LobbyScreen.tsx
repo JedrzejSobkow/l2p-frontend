@@ -20,10 +20,10 @@ import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
-import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
+import { emitCreateGame, emitGetGameState } from '../services/game'
 import { getImage } from '../utils/imageMap';
 import { diceIcon } from '@assets/icons';
-import { pfpImage } from '@assets/images';
+import { pfpImage, noGameImage } from '@assets/images';
 
 
 export const LobbyScreen = () => {
@@ -51,7 +51,6 @@ export const LobbyScreen = () => {
     getAvailableGames,
     selectGame,
     clearGameSelection,
-    setGameState
   } = useLobby()
 
   // Redirect user to home if they are not in a lobby
@@ -190,36 +189,6 @@ export const LobbyScreen = () => {
     }
   }, [lobbyCode, currentLobby, joinLobby, navigate])
 
-  useEffect(() => {
-    const handleGameStarted = (data: { game_state: any }) => {
-      setGameState(data.game_state); // Set game state here
-      navigate('/lobby/ingame');
-      emitToggleReady(currentLobby?.lobby_code ?? ''); // Emit status change to "inactive"
-    };
-
-    onGameStarted(handleGameStarted);
-    return () => {
-      offGameStarted(handleGameStarted);
-    };
-  }, [navigate, setGameState, currentLobby?.lobby_code]);
-
-  useEffect(() => {
-    const handleGameState = (data: { game_state: any }) => {
-      console.log('Game state event received in LOBBY:', data);
-      setGameState(data.game_state); // Update the game state in the context
-      if (data.game_state.result == 'in_progress') {
-        navigate('/lobby/ingame'); // Redirect to lobby/ingame if the game is not in progress
-      }
-
-
-    };
-
-    onGameState(handleGameState); // Listen for the game_state event
-    return () => {
-      offGameState(handleGameState); // Clean up the listener
-    };
-  }, [setGameState, navigate]);
-
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
       sendMessage(message)
@@ -357,7 +326,7 @@ export const LobbyScreen = () => {
   const gameInfo = currentLobby?.selected_game_info ? {
     display_name: currentLobby.selected_game_info.display_name,
     name: currentLobby.selected_game_info.game_name,
-    img_path: getImage('games', currentLobby.selected_game || '') || '',
+    img_path: getImage('games', currentLobby.selected_game || 'noGame') || noGameImage,
     rules: currentLobby.selected_game_info.description,
   } : {
     display_name: 'Game not selected',
