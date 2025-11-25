@@ -532,6 +532,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     const handleConnect = () => {
       // refresh state on reconnect to ensure latest data
+      console.log('Chat socket connected')
       loadedConversationsRef.current.clear()
     }
     const handleDisconnect = () => {
@@ -550,9 +551,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       socket.off('message', handleIncomingMessage)
       socket.off('conversation_updated', handleConversationUpdated)
       socket.off('user_typing', handleTypingEvent)
-      disconnectChatSocket()
     }
-  }, [handleTypingEvent,isAuthenticated,handleIncomingMessage,])
+  }, [handleTypingEvent,isAuthenticated,handleIncomingMessage,handleConversationUpdated])
 
   useEffect(() => {
     if (isAuthenticated) return
