@@ -74,7 +74,13 @@ import {
 import {
     emitCreateGame,
     offGameState,
+    offGameEnded,
+    offMoveMade,
+    offGameStarted,
+    onGameEnded,
+    onMoveMade,
     onGameState,
+    onGameStarted,
 } from '../../services/game'
 
 type LobbyContextValue = {
@@ -277,6 +283,21 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setGameState(data.game_state)
     }
 
+    const handleGameStarted = (data: { game_state: any }) => {
+      setGameState(data.game_state)
+      if (currentLobby?.lobby_code) {
+        emitToggleReady(currentLobby.lobby_code)
+      }
+    }
+
+    const handleMoveMade = (data: { game_state: any }) => {
+      setGameState(data.game_state)
+    }
+
+    const handleGameEnded = (data: { game_state: any }) => {
+      setGameState(data.game_state)
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -298,6 +319,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onGameSelectionCleared(handleGameSelectionCleared)
     onGameRulesUpdated(handleGameRulesUpdated)
     onGameState(handleGameState)
+    onGameStarted(handleGameStarted)
+    onMoveMade(handleMoveMade)
+    onGameEnded(handleGameEnded)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -321,8 +345,11 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offGameSelectionCleared(handleGameSelectionCleared)
       offGameRulesUpdated(handleGameRulesUpdated)
       offGameState(handleGameState)
+      offGameStarted(handleGameStarted)
+      offMoveMade(handleMoveMade)
+      offGameEnded(handleGameEnded)
     }
-  }, [])
+  }, [currentLobby?.lobby_code])
 
   const createLobbyHandler = useCallback((maxPlayers: number = 6, isPublic: boolean = false, name?: string, gameName?: string) => {
     setIsLoading(true)
