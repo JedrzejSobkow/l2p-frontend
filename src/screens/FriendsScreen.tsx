@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type FC } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ChatWindow from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import { useChat } from '../components/chat/ChatProvider'
@@ -7,10 +7,13 @@ import { useFriends } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { pfpImage } from '@assets/images'
+import { useLobby } from '../components/lobby/LobbyContext'
 
 const FriendsScreen: FC = () => {
   const { friends, removeFriend } = useFriends()
   const location = useLocation()
+  const navigate = useNavigate()
+  const { currentLobby, gameState } = useLobby()
   const initialFriendId =
     (location.state as { friendId?: string } | null)?.friendId ?? null
 
@@ -52,6 +55,7 @@ const FriendsScreen: FC = () => {
       selectedFriend.friend_nickname,
       selectedFriend.friend_pfp_path,
     )
+    console.log('Loading messages for friend', id)
     loadMessages(id)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
@@ -100,7 +104,18 @@ const FriendsScreen: FC = () => {
   }
 
   return (
-    <div className="flex flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
+    <div className="flex flex-col gap-4 bg-background px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
+      {currentLobby && (
+        <div className="flex items-center justify-end md:hidden">
+          <button
+            type="button"
+            onClick={() => navigate(gameState?.result === 'in_progress' ? '/lobby/ingame' : '/lobby')}
+            className="flex items-center gap-2 rounded-full border border-white/20 bg-background-secondary px-4 py-2 text-sm font-semibold text-headline transition hover:border-white/40 hover:bg-white/10"
+          >
+            {gameState?.result === 'in_progress' ? 'Back to game' : 'Return to lobby'}
+          </button>
+        </div>
+      )}
       {/* Mobile tabs */}
       <div className="mb-4 lg:hidden">
         <div className="grid grid-cols-3 gap-1 rounded-2xl border border-white/15 bg-white/5 p-1">

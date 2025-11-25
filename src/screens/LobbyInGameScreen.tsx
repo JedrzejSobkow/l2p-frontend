@@ -9,7 +9,7 @@ import InGameUserTile from '../components/InGameUserTile';
 import GameResultModal from '../components/GameResultModal';
 import KickPlayerModal from '../components/KickPlayerModal';
 import LeaveModal from '../components/LeaveModal';
-import { emitMakeMove, emitGetGameState, onMoveMade, offMoveMade, onGameEnded, offGameEnded, onGameState, offGameState } from '../services/game';
+import { emitMakeMove } from '../services/game';
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 import { FaSignOutAlt } from 'react-icons/fa';
 import { getImage } from '../utils/imageMap';
@@ -18,7 +18,7 @@ import { pfpImage } from '@/assets/images';
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { gameState, members, currentLobby, setGameState, messages, sendMessage, transferHost, kickMember, leaveLobby, clearError, error } = useLobby();
+  const { gameState, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby, clearError, error } = useLobby();
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
@@ -55,9 +55,6 @@ const LobbyInGameScreen = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Emit get_game_state on page load
-    // emitGetGameState();
-
     if (gameState) {
       const lm = gameState?.last_move;
       if (lm && typeof lm.row === 'number' && typeof lm.col === 'number' && Array.isArray(gameState?.board)) {
@@ -70,46 +67,6 @@ const LobbyInGameScreen = () => {
       }
     }
   }, [gameState]);
-
-  useEffect(() => {
-    const handleMoveMade = (data: { game_state: any }) => {
-      console.log('Move made event received:', data);
-      setGameState(data.game_state); // Update game state when a move is made
-    };
-
-    onMoveMade(handleMoveMade);
-    return () => {
-      offMoveMade(handleMoveMade);
-    };
-  }, [setGameState]);
-
-  useEffect(() => {
-    const handleGameEnded = (data: { result: string; winner_id: number | null; game_state: any }) => {
-      console.log('Game ended event received:', data);
-      setGameState(data.game_state); // Update the final game state
-    };
-
-    onGameEnded(handleGameEnded);
-    return () => {
-      offGameEnded(handleGameEnded);
-    };
-  }, [setGameState]);
-
-  useEffect(() => {
-    const handleGameState = (data: { game_state: any }) => {
-      console.log('Game state event received in GAME:', data);
-      setGameState(data.game_state); // Update the game state in the context
-        console.log(gameState)
-    //   if (data.game_state.result !== 'in_progress') {
-    //     navigate('/lobby'); // Redirect to lobby if the game is not in progress
-    //   }
-    };
-
-    onGameState(handleGameState); // Listen for the game_state event
-    return () => {
-      offGameState(handleGameState); // Clean up the listener
-    };
-  }, [setGameState, navigate, gameState]);
 
   useEffect(() => {
     if (gameState?.result === "draw") {

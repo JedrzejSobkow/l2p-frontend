@@ -22,7 +22,7 @@ type FriendsSlideProps = {
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFriendId }) => {
   const { user } = useAuth()
   const { openChat} = useChatDock()
-  const { refreshFriends,friends } = useFriends()
+  const {friends } = useFriends()
   const { currentLobby } = useLobby();
   const { showPopup } = usePopup();
   const navigate = useNavigate()
@@ -31,7 +31,9 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   };
 
   const handleNavigation = (event: MouseEvent, path: string) => {
-    if (currentLobby) {
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    if ((currentLobby && !isSmallScreen) || (currentLobby && isSmallScreen && path !== '/friends')) {
       event.preventDefault();
       showPopup({
         type: 'informative',
@@ -44,7 +46,9 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   };
 
   const handleFriendButtonClick = (friendId: string | number) => {
-      if (currentLobby) {
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+      if (currentLobby && !isSmallScreen) {
         showPopup({
           type: 'informative',
           message: 'Please leave the lobby before navigating to another page.',
@@ -67,13 +71,6 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
       typeof window !== 'undefined' ? window.innerWidth < 768 : false
 
     if (isSmallScreen) {
-      if (currentLobby) {
-        showPopup({
-          type: 'informative',
-          message: 'Please leave the lobby before navigating to another page.',
-        });
-        return
-      }
       navigate('/friends', { state: { friendId: normalizedId } })
     } else {
       openChat({
@@ -84,12 +81,6 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
     }
     onClose()
   }
-
-  useEffect(() => {
-    if (open) {
-      void refreshFriends()
-    }
-  }, [open, refreshFriends])
   return (
     <>
       <div
