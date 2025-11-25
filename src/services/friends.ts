@@ -79,7 +79,11 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
   const path = query ? `/friends?${query}` : '/friends'
   const res = await request<Friendship[]>(path, { method: 'GET', auth: true })
   return res.map(friend => ({
-    ...friend,
+    is_requester: Boolean(friend.is_requester),
+    created_at: String(friend.created_at),
+    friend_description: String(friend.friend_description),
+    friend_nickname: String(friend.friend_nickname),
+    status: friend.status as FriendshipStatus,
     friendship_id: String(friend.friendship_id),
     friend_user_id: String(friend.friend_user_id),
     friend_pfp_path: friend.friend_pfp_path

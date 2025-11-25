@@ -41,7 +41,6 @@ const hasFriendListChanged = (currentList: Friendship[], newList: Friendship[]) 
     const currentFriend = currentMap.get(newFriend.friend_user_id)
 
     if (!currentFriend) return true
-
     if (
       currentFriend.status !== newFriend.status || 
       currentFriend.friend_nickname !== newFriend.friend_nickname ||
