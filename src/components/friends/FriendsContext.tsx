@@ -35,10 +35,10 @@ type FriendsContextValue = {
 const hasFriendListChanged = (currentList: Friendship[], newList: Friendship[]) => {
   if (currentList.length !== newList.length) return true
 
-  const currentMap = new Map(currentList.map(f => [f.friendship_id, f]))
+  const currentMap = new Map(currentList.map(f => [f.friend_user_id, f]))
 
   for (const newFriend of newList) {
-    const currentFriend = currentMap.get(newFriend.friendship_id)
+    const currentFriend = currentMap.get(newFriend.friend_user_id)
 
     if (!currentFriend) return true
 

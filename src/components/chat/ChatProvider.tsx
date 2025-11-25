@@ -51,6 +51,16 @@ export type ChatMessage = {
   isMine: boolean
 }
 
+const normalizeTimestamp = (timestamp: string) => {
+  if (!timestamp) return timestamp
+  // If the backend sends a timestamp without timezone info, assume UTC to avoid local parsing drift
+  const hasTimezone = /([zZ]|[+-]\d{2}:?\d{2})$/.test(timestamp)
+  const candidate = hasTimezone ? timestamp : `${timestamp}Z`
+  const date = new Date(candidate)
+  if (Number.isNaN(date.getTime())) return timestamp
+  return date.toISOString()
+}
+
 const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
   return {
     id: String(message.id),
@@ -58,7 +68,7 @@ const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
     senderNickname: message.sender_nickname,
     content: message.content,
     imageUrl: message.image_url,
-    createdAt: message.created_at,
+    createdAt: normalizeTimestamp(message.created_at),
     isMine: message.is_mine
   }
 }
