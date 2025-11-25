@@ -99,27 +99,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
-        const me = await auth.getMe();
-        if (!cancelled) {
-          setUser(me);
-          setStatus('authenticated');
-        }
-      } catch {
-        if (!cancelled) {
-          console.log("User is unauthenticated. Creating guest session...");
-          try {
-            // Wywołaj funkcję createGuestSession, aby utworzyć sesję gościa
-            const guest = await auth.createGuestSession();
-            console.log("Guest session created:", guest);
-  
-            // Ustaw dane gościa w stanie aplikacji
+        const storedGuest = localStorage.getItem('guestUser');
+        if (storedGuest) {
+          const guest = JSON.parse(storedGuest);
+          if (!cancelled) {
             setUser(guest);
             setStatus('authenticated');
-          } catch (error) {
-            console.error("Failed to create guest session:", error);
-            setUser(null);
-            setStatus('unauthenticated');
+            console.log("Guest restored");
           }
+        } else {
+          console.log("Creating guest session...");
+          const guest = await auth.createGuestSession();
+          console.log("Guest session created:", guest);
+  
+          localStorage.setItem('guestUser', JSON.stringify(guest));
+  
+          if (!cancelled) {
+            setUser(guest);
+            setStatus('authenticated');
+          }
+          window.location.reload(); 
+        }
+  
+        try {
+          const me = await auth.getMe();
+          if (!cancelled && me) {
+            console.log("Logged-in user detected, overriding guest session.");
+            setUser(me); 
+            setStatus('authenticated');
+          }
+        } catch (error) {
+          console.log("No logged-in user detected, keeping guest session.");
+        }
+      } catch (error) {
+        console.error("Error during session initialization:", error);
+        if (!cancelled) {
+          setUser(null);
+          setStatus('unauthenticated');
         }
       }
     })();
