@@ -20,7 +20,7 @@ import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
 import { sendMessage as sendPrivateMessage } from '../services/chat'
-import { emitCreateGame, emitGetGameState, onGameStarted, offGameStarted, onGameState, offGameState } from '../services/game'
+import { emitCreateGame, emitGetGameState } from '../services/game'
 import { getImage } from '../utils/imageMap';
 import { diceIcon } from '@assets/icons';
 import { pfpImage, noGameImage } from '@assets/images';
@@ -51,12 +51,12 @@ export const LobbyScreen = () => {
     getAvailableGames,
     selectGame,
     clearGameSelection,
-    setGameState
   } = useLobby()
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
     const lobbySocket = getLobbySocket();
+    console.log("HALOOOOOO")
     if (!lobbySocket || !lobbySocket.connected) {
         return;
     }
@@ -170,7 +170,8 @@ export const LobbyScreen = () => {
         navigate('/lobby', {
           state: { message: 'You are already a member of another lobby.', type: 'info' },
         })
-      } else {
+      } 
+      else {
         navigate('/', { state: { message: error.message || 'Failed to join the lobby.', type: 'error' } })
       }
     }
@@ -187,36 +188,6 @@ export const LobbyScreen = () => {
       offLobbyJoined(handleLobbyJoined)
     }
   }, [lobbyCode, currentLobby, joinLobby, navigate])
-
-  useEffect(() => {
-    const handleGameStarted = (data: { game_state: any }) => {
-      setGameState(data.game_state); // Set game state here
-      navigate('/lobby/ingame');
-      emitToggleReady(currentLobby?.lobby_code ?? ''); // Emit status change to "inactive"
-    };
-
-    onGameStarted(handleGameStarted);
-    return () => {
-      offGameStarted(handleGameStarted);
-    };
-  }, [navigate, setGameState, currentLobby?.lobby_code]);
-
-  useEffect(() => {
-    const handleGameState = (data: { game_state: any }) => {
-      console.log('Game state event received in LOBBY:', data);
-      setGameState(data.game_state); // Update the game state in the context
-      if (data.game_state.result == 'in_progress') {
-        navigate('/lobby/ingame'); // Redirect to lobby/ingame if the game is not in progress
-      }
-
-
-    };
-
-    onGameState(handleGameState); // Listen for the game_state event
-    return () => {
-      offGameState(handleGameState); // Clean up the listener
-    };
-  }, [setGameState, navigate]);
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
@@ -264,7 +235,7 @@ export const LobbyScreen = () => {
 
   const handleConfirmLeave = () => {
     leaveLobby()
-    navigate('/')
+    // navigate('/')
   }
 
   const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {

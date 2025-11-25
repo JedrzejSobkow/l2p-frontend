@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLobby } from './lobby/LobbyContext';
+
 
 interface LobbyShortTileProps {
     title: string;
@@ -12,15 +14,17 @@ interface LobbyShortTileProps {
 
 const LobbyTile: React.FC<LobbyShortTileProps> = ({ title, occupiedSlots, totalSlots, creator, timeAgo, profileImagePath }) => {
     const navigate = useNavigate();
+    const {joinLobby} = useLobby(); // Dodano currentLobby
 
     const handleClick = () => {
-        navigate(`/lobby/${title}`);
+        // navigate(`/lobby/${title}`);
+        // joinLobby(title);
     };
 
     return (
         <div
             className="bg-background-tertiary p-4 rounded-lg shadow-md text-white flex items-center transform transition-transform duration-200 hover:scale-105 cursor-pointer"
-            onClick={handleClick}
+            // onClick={handleClick}
         >
             <img 
                 src={profileImagePath} 

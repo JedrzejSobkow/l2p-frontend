@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -9,41 +10,30 @@ import {
   type KeyboardEvent
 } from 'react'
 import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
-import { useAuth } from '../AuthContext'
 import Lightbox from '../Lightbox'
 import { usePopup } from '../PopupContext'
+import type { ChatMessage, ConversationTarget } from './ChatProvider'
+import { useAuth } from '../AuthContext'
+
 import { pfpImage } from '@assets/images'
 
-export type ChatMessage = {
-  id: string
-  senderId: string
-  senderName: string
-  avatarUrl?: string
-  content: string
-  createdAt: string | number | Date
-  imageUrl?: string
-  isSystem?: boolean
-}
 
 export interface ChatWindowProps {
-  title?: string
+  friendData: ConversationTarget
   messages: ChatMessage[]
-  currentUserId: string
-  friendId: string
-  allowAttachments?: boolean
-  placeholder?: string
-  className?: string
-  isSending?: boolean
-  typingUsers?: string[]
-  onSend: (payload: { text: string; attachment?: File | null }) => Promise<void> | void
+  isTyping: boolean
+  hasMore: boolean
+  onSend: (payload: { text: string; attachment?: File }) => Promise<void> | void
   onTyping?: (friend_user_id: string) => void
+  onLoadMore: () => Promise<void>
+  className?: string
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
 
 const formatTime = (timestamp: ChatMessage['createdAt']) => {
   try {
-    const date = timestamp instanceof Date ? timestamp : new Date(timestamp)
+    const date = new Date(timestamp)
     return new Intl.DateTimeFormat('en', {
       day: 'numeric',
       month: 'short',
@@ -56,53 +46,110 @@ const formatTime = (timestamp: ChatMessage['createdAt']) => {
   }
 }
 
+const isSameMinute = (a: ChatMessage['createdAt'], b: ChatMessage['createdAt']) => {
+  try {
+    const first = new Date(a)
+    const second = new Date(b)
+    return (
+      first.getFullYear() === second.getFullYear() &&
+      first.getMonth() === second.getMonth() &&
+      first.getDate() === second.getDate() &&
+      first.getHours() === second.getHours() &&
+      first.getMinutes() === second.getMinutes()
+    )
+  } catch {
+    return false
+  }
+}
+
 const ChatWindow: FC<ChatWindowProps> = ({
-  title,
+  friendData,
   messages,
-  currentUserId,
-  friendId,
-  allowAttachments = false,
-  placeholder = 'Write a message...',
   className,
-  isSending,
-  typingUsers,
+  isTyping,
+  hasMore,
   onSend,
   onTyping,
+  onLoadMore
 }) => {
-  const {user} = useAuth()
   const { showPopup} = usePopup()
+  const {user} = useAuth()
   const [draft, setDraft] = useState('')
-  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachment, setAttachment] = useState<File>()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const scrollRef = useRef<HTMLDivElement>(null)
   const [sending, setSending] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  useEffect(() => {
-    const container = scrollRef.current
-    if (!container) {
-      return
-    }
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: 'smooth'
-    })
-  }, [messages])
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const isLoadingMoreRef = useRef(false)
+  const prevScrollHeightRef = useRef(0)
+  const prevScrollTopRef = useRef(0)
+  const prevMsgLenRef = useRef(0)
+  const prevConversationIdRef = useRef<string | null>(null)
+  const isAtBottomRef = useRef(true)
+  const [showTopLoader, setShowTopLoader] = useState(false)
 
-  const isComposerDisabled = sending || isSending
+useEffect(() => {
+  if (!isLoadingMore) {
+    setShowTopLoader(false)
+    return
+  }
+
+  const t = setTimeout(() => {
+    if (isLoadingMoreRef.current) {
+      setShowTopLoader(true)
+    }
+  }, 200)
+
+  return () => clearTimeout(t)
+}, [isLoadingMore])
+
+  useEffect(() => {
+  isLoadingMoreRef.current = isLoadingMore
+}, [isLoadingMore])
+
+  useLayoutEffect(() => {
+  const el = scrollRef.current
+  if (!el) return
+
+  const prevConv = prevConversationIdRef.current
+  const prevLen = prevMsgLenRef.current
+  const newLen = messages.length
+
+  const isNewConversation = prevConv !== friendData.id
+  const firstLoadForThisConv = prevLen === 0 && newLen > 0
+  const hasMoreMessages = newLen > prevLen
+
+  if (isNewConversation || firstLoadForThisConv) {
+    el.scrollTop = el.scrollHeight
+
+    prevScrollHeightRef.current = 0
+    prevScrollTopRef.current = 0
+  } else if (prevScrollHeightRef.current && hasMoreMessages) {
+    const newScrollHeight = el.scrollHeight
+    const diff = newScrollHeight - prevScrollHeightRef.current
+    el.scrollTop = prevScrollTopRef.current + diff
+
+    prevScrollHeightRef.current = 0
+    prevScrollTopRef.current = 0
+  }
+  else if (hasMoreMessages && isAtBottomRef.current){
+    el.scrollTop = el.scrollHeight
+  }
+
+  prevConversationIdRef.current = friendData.id
+  prevMsgLenRef.current = newLen
+}, [friendData.id, messages.length])
+
+
+  const isComposerDisabled = sending
 
   const displayedTyping = useMemo(() => {
-    if (!typingUsers || typingUsers.length === 0) {
-      return ''
+    if (isTyping) {
+      return `${friendData.nickname} is typing...`
     }
-    if (typingUsers.length === 1) {
-      return `${typingUsers[0]} is typing...`
-    }
-    if (typingUsers.length === 2) {
-      return `${typingUsers[0]} and ${typingUsers[1]} are typing...`
-    }
-    return 'Several users are typing...'
-  }, [typingUsers])
+  }, [isTyping])
 
   const handleSend = async () => {
     if (!draft.trim() && !attachment) {
@@ -112,7 +159,7 @@ const ChatWindow: FC<ChatWindowProps> = ({
       setSending(true)
       await onSend({ text: draft.trim(), attachment })
       setDraft('')
-      setAttachment(null)
+      setAttachment(undefined)
       fileInputRef.current?.form?.reset()
     } 
     catch (error: any) {
@@ -125,6 +172,33 @@ const ChatWindow: FC<ChatWindowProps> = ({
     }
     finally {
       setSending(false)
+    }
+  }
+
+  const handleScroll = () => {
+    if (!onLoadMore || !hasMore) return
+    const el = scrollRef.current
+    if (!el || isLoadingMoreRef.current) return
+
+    const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight)
+    isAtBottomRef.current = distanceFromBottom < 500
+
+    if (el.scrollTop <= 100) {
+      prevScrollHeightRef.current = el.scrollHeight
+      prevScrollTopRef.current = el.scrollTop
+      setIsLoadingMore(true)
+      isLoadingMoreRef.current = true
+
+      const maybePromise = onLoadMore()
+      if (maybePromise && typeof (maybePromise as any).then === 'function') {
+        ;(maybePromise as Promise<void>).finally(() => {
+          setIsLoadingMore(false)
+          isLoadingMoreRef.current = false
+        })
+      } else {
+        setIsLoadingMore(false)
+        isLoadingMoreRef.current = false
+      }
     }
   }
 
@@ -145,12 +219,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
     if (file) {
       setAttachment(file)
     } else {
-      setAttachment(null)
+      setAttachment(undefined)
     }
   }
 
   const removeAttachment = () => {
-    setAttachment(null)
+    setAttachment(undefined)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -159,72 +233,80 @@ const ChatWindow: FC<ChatWindowProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl rounded-b-none border border-separator bg-background-secondary max-h-[77vh]',
+        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl border border-separator bg-background-secondary',
         className
       )}
     >
-      {title && (
+      {friendData.nickname && (
         <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
           <img
             className='w-12 h-12 rounded-full'
-            src={pfpImage}></img>
-          <h2 className="text-s font-semibold text-headline">{title}</h2>
+            src={friendData.avatarUrl || pfpImage}></img>
+          <h2 className="text-s font-semibold text-headline">{friendData.nickname}</h2>
           
         </header>
       )}
 
-      <div ref={scrollRef} className="flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6">
-        {messages.map((message ) => {
-          const isOwn = message.senderId === currentUserId
-          if (message.isSystem) {
-            return (
-              <div
-                key={message.id}
-                className="flex justify-center text-xs font-medium uppercase tracking-wide text-white/50"
-              >
-                <span className="rounded-full bg-white/5 px-3 py-1">{message.content}</span>
-              </div>
-            )
-          }
-
+      <div
+        className="relative flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6 scrollbar-default"
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
+        {showTopLoader && hasMore && (
+          <div className="flex justify-center mb-2 text-xs text-white/60">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
+              <span className="h-2 w-2 animate-spin rounded-full border border-white/50 border-t-transparent" />
+              Loading messages...
+            </span>
+          </div>
+        )}
+        {!hasMore && messages.length > 0 && (
+          <div className="flex justify-center mb-2 text-[11px] uppercase tracking-wide text-white/40">
+            No more messages
+          </div>
+        )}
+        {messages.map((message,index) => {
+          const isOwn = message.isMine
+          const next = index > 0 ? messages[index + 1] : undefined
+          const showTimestamp = !next || next.isMine !== message.isMine || !isSameMinute(message.createdAt, next.createdAt)
+          // const showAvatar = !next || (next.isMine === false && message.isMine === false)
           return (
             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
               {!isOwn && (
                 <img
-                  src={message.avatarUrl || pfpImage}
-                  alt={message.senderName}
+                  src={friendData.avatarUrl || pfpImage}
+                  alt={message.senderNickname}
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
                 />
               )}
-              <div className={cn('max-w-[75%] space-y-1', isOwn ? 'text-right' : 'text-left')}>
-                <div
-                  className={cn(
-                    'inline-flex min-h-[48px] w-full flex-col rounded-3xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
-                    isOwn ? 'bg-gradient-to-r from-orange-500 to-orange-400 text-white' : 'bg-[rgba(35,34,49,0.95)]'
-                  )}
-                >
-                  {!isOwn && <span className="mb-1 text-xs font-semibold text-white/70">{message.senderName}</span>}
-                  {message.content && (
-                    <span className="whitespace-pre-wrap break-words leading-relaxed text-sm">{message.content}</span>
-                  )}
-                  {message.imageUrl && (
+               <div className={cn('flex max-w-[75%] flex-col gap-1', isOwn ? 'items-end text-left' : 'items-start text-left')}>
+                {message.content && 
+                  <div
+                    className={cn(
+                      'inline-flex max-w-full flex-col gap-2 rounded-2xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
+                      isOwn ? 'bg-gradient-to-r bg-button text-white' : 'bg-[rgba(35,34,49,0.95)]'
+                    )}
+                  >
+                    <span className="whitespace-pre-wrap break-words leading-relaxed text-sm text-white">{message.content}</span>
+                  </div>
+                }
+                {message.imageUrl && (
                     <img
                       src={message.imageUrl}
                       onClick={() => setSelectedImage(message.imageUrl || null)}
                       alt="Attachment"
-                      className="mt-2 max-h-56 w-full rounded-2xl object-cover"
+                      className="max-h-56 w-full rounded-2xl object-cover"
                     />
                   )}
-                </div>
-                <span className="block text-xs font-medium text-white/40">{formatTime(message.createdAt)}</span>
+                {showTimestamp && <span className="block text-xs font-medium text-white/40">{formatTime(message.createdAt)}</span>}
               </div>
-              {isOwn && (
+              {/* {isOwn && (
                 <img
                   src={user?.pfp_path || pfpImage}
                   alt="You"
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />
-              )}
+              )} */}
             </div>
           )
         })}
@@ -238,51 +320,44 @@ const ChatWindow: FC<ChatWindowProps> = ({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t-1 border-separator">
-        <div className="relative items-center flex gap-2">
-          {allowAttachments && (
-            <>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="grid h-11 w-11 absolute flex-shrink-0 z-30 place-items-center rounded-2xl text-button"
-                aria-label="Add attachment"
-                disabled={isComposerDisabled}
-              >
-                <FiPaperclip className="h-6 w-6" />
-              </button>
-              <input
-                ref={fileInputRef}  
-                type="file"
-                className="hidden"
-                onChange={handleAttachment}
-                aria-hidden="true"
-              />
-            </>
-          )}
-
-          <div className="flex flex-1 flex-row place-items-center">
-            <textarea
-              value={draft}
-              onChange={(event) => {
-                setDraft(event.target.value)
-                onTyping?.(friendId)
-              }}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              rows={1}
-              className={"w-full rounded-2xl resize-none border border-transparent bg-white/10 text-sm text-white outline-none transition focus:border-orange-400/60" + (allowAttachments && " px-10 py-4 pr-16" || " px-4 py-4")}
-              disabled={isComposerDisabled}
-            />
-            <button
-              type="submit"
-              className=" grid h-10 w-10 place-items-center rounded-2xl bg-gradient-to-r from-orange-500 to-orange-400 text-white  transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:opacity-60 disabled:hover:scale-100"
-              disabled={isComposerDisabled || (!draft.trim() && !attachment)}
-              aria-label="Send message"
-            >
-              <FiSend className="h-5 w-5" />
-            </button>
-          </div>
+      <form onSubmit={handleSubmit} className="bg-background-secondary/70 px-2 py-1">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.2)] focus-within:border-button/60">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleAttachment}
+            aria-hidden="true"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl text-white/70 transition hover:bg-white/10 disabled:opacity-50"
+            aria-label="Add attachment"
+            disabled={isComposerDisabled}
+          >
+            <FiPaperclip className="h-5 w-5" />
+          </button>
+          <textarea
+            value={draft}
+            onChange={(event) => {
+              setDraft(event.target.value)
+              onTyping?.(friendData.id)
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={`Write to ${friendData.nickname}...`}
+            rows={1}
+            className="w-full resize-none bg-transparent text-sm text-white outline-none placeholder:text-white/40 focus:outline-none"
+            disabled={isComposerDisabled}
+          />
+          <button
+            type="submit"
+            className="grid h-11 w-11 flex-shrink-0 place-items-center rounded-xl bg-gradient-to-r from-orange-500 to-orange-400 text-white transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300 disabled:scale-100 disabled:opacity-60"
+            disabled={isComposerDisabled || (!draft.trim() && !attachment)}
+            aria-label="Send message"
+          >
+            <FiSend className="h-5 w-5" />
+          </button>
         </div>
         {attachment && (
           <div className="mt-3 flex items-center justify-between rounded-2xl border border-orange-400/20 bg-orange-400/10 px-4 py-2 text-xs text-white/80">

@@ -1,58 +1,82 @@
-import { useEffect, useMemo, useState, type FC } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState, type FC } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import ChatWindow from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
-import { useAuth } from '../components/AuthContext'
 import { useChat } from '../components/chat/ChatProvider'
-import BackButton from '../components/BackButton'
 import { useFriends } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { pfpImage } from '@assets/images'
-
-const currentUserIdFallback = 'current-user'
-const normalizeId = (value: string | number) => String(value)
+import { useLobby } from '../components/lobby/LobbyContext'
 
 const FriendsScreen: FC = () => {
   const { friends, removeFriend } = useFriends()
-  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { currentLobby, gameState } = useLobby()
+  const initialFriendId =
+    (location.state as { friendId?: string } | null)?.friendId ?? null
+
+  const [selectedFriendId, setSelectedFriendId] = useState<string | null>(initialFriendId)
   const [removing, setRemoving] = useState(false)
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
-
-  const { user } = useAuth()
-  const chat = useChat()
+  const [activeMobileTab, setActiveMobileTab] = useState<'friends' | 'chat' | 'details'>(
+    initialFriendId ? 'chat' : 'friends',
+  )
+  const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,sendTyping,loadMoreMessages,loadMessages,getHasMore} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
-    return friends.find((friend) => normalizeId(friend.friend_user_id) === selectedFriendId) ?? null
+    return friends.find((friend) => friend.friend_user_id === selectedFriendId) ?? null
   }, [friends, selectedFriendId])
 
   useEffect(() => {
-    if (!selectedFriend && friends.length > 0) {
-      setSelectedFriendId(normalizeId(friends[0].friend_user_id))
+    const state =
+      (location.state as { friendId?: string, tab?: string } | null)
+    if (state?.friendId) {
+      setSelectedFriendId(state.friendId)
     }
-  }, [friends, selectedFriend])
+    if (state?.tab && (state.tab === 'friends' || state.tab === 'chat' || state.tab === 'details')) {
+      setActiveMobileTab(state.tab)
+    }
+  }, [location.state])
+
+  useEffect(() => {
+    if (!selectedFriendId && friends.length > 0) {
+      setSelectedFriendId(friends[0].friend_user_id)
+    }
+  }, [friends, selectedFriendId])
 
   useEffect(() => {
     if (!selectedFriend) return
-    const id = normalizeId(selectedFriend.friend_user_id)
-    chat.ensureConversation({
+    const id = selectedFriend.friend_user_id
+    clearUnread(id)
+    ensureConversation(
       id,
-      nickname: selectedFriend.friend_nickname,
-      avatarUrl: selectedFriend.friend_pfp_path,
-    })
-  }, [chat, selectedFriend])
+      selectedFriend.friend_nickname,
+      selectedFriend.friend_pfp_path,
+    )
+    console.log('Loading messages for friend', id)
+    loadMessages(id)
+  }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
-  const activeMessages = useMemo(() => {
-    if (!selectedFriend) return []
-    return chat.getMessages(normalizeId(selectedFriend.friend_user_id))
-  }, [chat, selectedFriend])
+  const activeMessages = selectedFriend
+  ? getMessages(selectedFriend.friend_user_id)
+  : []
 
-  const handleSend = async ({ text, attachment }: { text: string; attachment?: File | null }) => {
+  useLayoutEffect(() => {
     if (!selectedFriend) return
-    await chat.sendMessage(normalizeId(selectedFriend.friend_user_id), { text, attachment })
+    if (activeMessages.length === 0) return
+    clearUnread(selectedFriend.friend_user_id)
+  },[selectedFriend,activeMessages.length,clearUnread])
+
+  const handleSend = async ({ text, attachment }: { text: string; attachment?: File }) => {
+    if (!selectedFriend) return
+    await sendMessage(selectedFriend.friend_user_id, { text, attachment })
   }
 
-  const handleSelectFriend = (friend: Friendship) => {
-    setSelectedFriendId(normalizeId(friend.friend_user_id))
+  const handleSelectFriend = (friendId: string ) => {
+    setSelectedFriendId(friendId)
+    setActiveMobileTab('chat')
   }
 
   const handleRemoveRequest = () => {
@@ -80,8 +104,60 @@ const FriendsScreen: FC = () => {
   }
 
   return (
-    <div className="flex h-full min-h-[calc(100vh-6rem)] flex-col gap-6 bg-[#0f0e17] px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)]">
-      <div className="order-1 w-full">
+    <div className="flex flex-col gap-4 bg-background px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
+      {currentLobby && (
+        <div className="flex items-center justify-end md:hidden">
+          <button
+            type="button"
+            onClick={() => navigate(gameState?.result === 'in_progress' ? '/lobby/ingame' : '/lobby')}
+            className="flex items-center gap-2 rounded-full border border-white/20 bg-background-secondary px-4 py-2 text-sm font-semibold text-headline transition hover:border-white/40 hover:bg-white/10"
+          >
+            {gameState?.result === 'in_progress' ? 'Back to game' : 'Return to lobby'}
+          </button>
+        </div>
+      )}
+      {/* Mobile tabs */}
+      <div className="mb-4 lg:hidden">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-white/15 bg-white/5 p-1">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeMobileTab === 'friends'}
+            onClick={() => setActiveMobileTab('friends')}
+            className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+              activeMobileTab === 'friends' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
+            }`}
+          >
+            Friends
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeMobileTab === 'chat'}
+            onClick={() => selectedFriend && setActiveMobileTab('chat')}
+            disabled={!selectedFriend}
+            className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+              activeMobileTab === 'chat' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
+            } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
+          >
+            Chat
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeMobileTab === 'details'}
+            onClick={() => selectedFriend && setActiveMobileTab('details')}
+            disabled={!selectedFriend}
+            className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+              activeMobileTab === 'details' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
+            } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
+          >
+            Details
+          </button>
+        </div>
+      </div>
+
+      <div className={`order-1 h-full w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
         <FriendsPanel
           onFriendSelect={handleSelectFriend}
           title="Your Friends"
@@ -89,27 +165,25 @@ const FriendsScreen: FC = () => {
           selectedFriendId={selectedFriend?.friend_user_id}
         />
       </div>
-      <div className="order-3 flex w-full h-full flex-1 flex-col min-h-0 gap-4 lg:order-2">
+      <div
+        className={`order-3 flex flex-col w-full h-full flex-1 min-h-0 ${
+          activeMobileTab === 'chat' ? 'flex' : 'hidden'
+        } lg:order-2 lg:flex`}
+      >
         {selectedFriend ? (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
-              </div>
-              <BackButton label='Go back'>
-              </BackButton>
-            </div>
-
             <ChatWindow
-              title={selectedFriend.friend_nickname}
               messages={activeMessages}
-              currentUserId={user?.id != null ? String(user.id) : currentUserIdFallback}
-              friendId={normalizeId(selectedFriend.friend_user_id)}
-              allowAttachments
-              typingUsers={chat.getTypingUsers(normalizeId(selectedFriend.friend_user_id))}
+              friendData={{
+                id: selectedFriend.friend_user_id,
+                nickname: selectedFriend.friend_nickname,
+                avatarUrl: selectedFriend.friend_pfp_path || ''
+              }}
+              hasMore={getHasMore(selectedFriend.friend_user_id) ?? true}
+              isTyping={getTyping(selectedFriend.friend_user_id)}
               onSend={handleSend}
-              placeholder="Send a direct message..."
-              onTyping={chat.sendTyping}
+              onTyping={sendTyping}
+              onLoadMore={() => loadMoreMessages(selectedFriend.friend_user_id)}
             />
           </>
         ) : (
@@ -121,7 +195,11 @@ const FriendsScreen: FC = () => {
           </div>
         )}
       </div>
-      <div className="order-2 w-full lg:order-3">
+      <div
+        className={`order-2 w-full h-full ${
+          activeMobileTab === 'details' ? 'block' : 'hidden'
+        } lg:order-3 lg:block`}
+      >
         {selectedFriend ? (
           <FriendDetailsPanel friend={selectedFriend} onRemove={handleRemoveRequest} removing={removing} />
         ) : (

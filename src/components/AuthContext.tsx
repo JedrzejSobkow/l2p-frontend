@@ -51,6 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user && googleWindow && !googleWindow.closed) {
       googleWindow.close()
       setGoogleWindow(null)
+      window.location.reload(); //REFRESH SOCKETS AFTER GOOGLE AUTH
     } 
   }, [user, googleWindow])
 

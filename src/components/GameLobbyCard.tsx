@@ -15,13 +15,13 @@ interface GameLobbyCardProps {
 }
 
 const GameLobbyCard: React.FC<GameLobbyCardProps> = ({ gameName, lobbyName, gameImage, players, maxPlayers, duration, lobbyCode }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { joinLobby } = useLobby();
   
 
   const handleNavigateToLobby = () => {
     joinLobby(lobbyCode);
-    navigate('/lobby');
+    // navigate('/lobby');
   };
 
   return (

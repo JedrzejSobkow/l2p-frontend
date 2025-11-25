@@ -1,50 +1,86 @@
-import { useEffect, useState, type FC, type MouseEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { FiX } from 'react-icons/fi';
-import FriendsPanel from './FriendsPanel';
-import { useAuth } from '../AuthContext';
-import { useLobby } from '../lobby/LobbyContext';
-import { usePopup } from '../PopupContext';
-import { FaUserFriends } from 'react-icons/fa';
-import { CgProfile } from 'react-icons/cg';
-import { AiFillHome } from 'react-icons/ai';
-import type { Friendship } from '../../services/friends';
-import { useFriends } from './FriendsContext';
+import { useEffect, type FC, type MouseEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { FiX } from 'react-icons/fi'
+import FriendsPanel from './FriendsPanel'
+import { useAuth } from '../AuthContext'
+import { FaUserFriends } from 'react-icons/fa'
+import { CgProfile } from 'react-icons/cg'
+import { AiFillHome } from 'react-icons/ai'
+import { useFriends } from './FriendsContext'
+import { useChatDock } from '../chat/ChatDockContext'
 import { pfpImage } from '@assets/images'
+import { useLobby } from '../lobby/LobbyContext'
+import { usePopup } from '../PopupContext'
 
 type FriendsSlideProps = {
   open: boolean
   onClose: () => void
-  onFriendSelect?: (friend: Friendship) => void
   title?: string
   selectedFriendId?: string | number
 }
 
-const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, title, selectedFriendId }) => {
-  const { user } = useAuth();
+const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFriendId }) => {
+  const { user } = useAuth()
+  const { openChat} = useChatDock()
+  const {friends } = useFriends()
   const { currentLobby } = useLobby();
-  const { refreshFriends } = useFriends();
   const { showPopup } = usePopup();
-
+  const navigate = useNavigate()
   const handleContentClick = (event: MouseEvent) => {
     event.stopPropagation();
   };
 
   const handleNavigation = (event: MouseEvent, path: string) => {
-    if (currentLobby) {
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    if ((currentLobby && !isSmallScreen) || (currentLobby && isSmallScreen && path !== '/friends')) {
       event.preventDefault();
       showPopup({
         type: 'informative',
         message: 'Please leave the lobby before navigating to another page.',
       });
     }
+    else{
+      onClose();
+    }
   };
 
-  useEffect(() => {
-    if (open) {
-      void refreshFriends()
+  const handleFriendButtonClick = (friendId: string | number) => {
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+      if (currentLobby && !isSmallScreen) {
+        showPopup({
+          type: 'informative',
+          message: 'Please leave the lobby before navigating to another page.',
+        });
+        return
+      }
+      navigate('/friends', { state: { friendId: String(friendId),tab: 'details' } })
+      onClose()
     }
-  }, [open, refreshFriends])
+
+  const handleFriendSelect = (friendId: string | number) => {
+    const normalizedId = String(friendId)
+    const friend = friends.find((val) => String(val.friend_user_id) === normalizedId)
+    if (!friend) {
+      onClose()
+      return
+    }
+
+    const isSmallScreen =
+      typeof window !== 'undefined' ? window.innerWidth < 768 : false
+
+    if (isSmallScreen) {
+      navigate('/friends', { state: { friendId: normalizedId } })
+    } else {
+      openChat({
+        id: normalizedId,
+        nickname: friend.friend_nickname,
+        avatarUrl: friend.friend_pfp_path,
+      })
+    }
+    onClose()
+  }
   return (
     <>
       <div
@@ -111,7 +147,8 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, onFriendSelect, ti
             </div>
           </div>
           <FriendsPanel
-            onFriendSelect={onFriendSelect}
+            onFriendSelect={handleFriendSelect}
+            onFriendMessage={handleFriendButtonClick}
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"

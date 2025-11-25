@@ -35,7 +35,7 @@ const JoinOrCreateGame: React.FC = () => {
   const handleCreateLobby = async () => {
     try {
       await createLobby(2, false, undefined);
-      navigate(`/lobby/`); // Navigate to the newly created lobby
+      // navigate(`/lobby/`); // Navigate to the newly created lobby
       showPopup({ type: 'confirmation', message: 'Lobby created successfully!' });
     } catch (err: any) {
       showPopup({ type: 'error', message: err.message || 'Failed to create lobby.' });
