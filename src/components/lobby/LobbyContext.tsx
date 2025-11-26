@@ -188,9 +188,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
-    const handleHostTransferred = (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => {
+    const handleHostTransferred = (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => {
       //console('Host transferred:', data)
-      setCurrentLobby(prev => prev ? { ...prev, host_id: data.new_host_id } : null)
+      setCurrentLobby(prev => prev ? { ...prev, host_identifier: data.new_host_identifier } : null)
     }
 
     const handleSettingsUpdated = (data: { max_players: number; is_public: boolean; name?: string }) => {

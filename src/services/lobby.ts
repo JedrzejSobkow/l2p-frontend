@@ -118,7 +118,7 @@ export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number, isPubl
 }
 
 export const emitTransferHost = (newHostId: number | string) => {
-  lobbySocket?.emit('transfer_host', { new_host_id: newHostId })
+  lobbySocket?.emit('transfer_host', { new_host_identifier: newHostId })
 }
 
 export const emitGetLobby = () => {
@@ -212,9 +212,9 @@ export const offMemberLeft = (cb?: (data: { user_id: number | string; nickname: 
   cb ? lobbySocket.off('member_left', cb) : lobbySocket.off('member_left')
 }
 
-export const onHostTransferred = (cb: (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => void) => 
+export const onHostTransferred = (cb: (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => void) => 
   lobbySocket?.on('host_transferred', cb)
-export const offHostTransferred = (cb?: (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => void) => {
+export const offHostTransferred = (cb?: (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('host_transferred', cb) : lobbySocket.off('host_transferred')
 }
