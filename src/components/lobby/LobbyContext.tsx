@@ -208,9 +208,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setMembers(prev => prev.filter(m => m.identifier !== data.user_id))
     }
 
-    const handleMemberReadyChanged = (data: { user_id: number | string; nickname: string; is_ready: boolean }) => {
+    const handleMemberReadyChanged = (data: { identifier: number | string; nickname: string; is_ready: boolean }) => {
       //console('Member ready changed:', data)
-      setMembers(prev => prev.map(m => m.identifier === data.user_id ? { ...m, is_ready: data.is_ready } : m))
+      setMembers(prev => prev.map(m => m.identifier === data.identifier ? { ...m, is_ready: data.is_ready } : m))
     }
 
     const handlePublicLobbies = (data: { lobbies: LobbyState[]; total: number }) => {

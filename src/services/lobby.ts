@@ -233,9 +233,9 @@ export const offMemberKicked = (cb?: (data: { user_id: number | string; nickname
   cb ? lobbySocket.off('member_kicked', cb) : lobbySocket.off('member_kicked')
 }
 
-export const onMemberReadyChanged = (cb: (data: { user_id: number | string; nickname: string; is_ready: boolean }) => void) => 
+export const onMemberReadyChanged = (cb: (data: { identifier: number | string; nickname: string; is_ready: boolean }) => void) => 
   lobbySocket?.on('member_ready_changed', cb)
-export const offMemberReadyChanged = (cb?: (data: { user_id: number | string; nickname: string; is_ready: boolean }) => void) => {
+export const offMemberReadyChanged = (cb?: (data: { identifier: number | string; nickname: string; is_ready: boolean }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('member_ready_changed', cb) : lobbySocket.off('member_ready_changed')
 }
