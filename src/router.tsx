@@ -58,11 +58,11 @@ export const router = createBrowserRouter([
             // },
             {
                 path: 'lobby/:lobbyCode?',
-                element: <RequireAuth> <LobbyScreen /> </RequireAuth>
+                element: <LobbyScreen />
             },
             {
                 path: 'lobby/ingame',
-                element: <RequireAuth> <LobbyInGameScreen /> </RequireAuth>
+                element:<LobbyInGameScreen /> 
             },
             // {
             //     path: 'gameplay',

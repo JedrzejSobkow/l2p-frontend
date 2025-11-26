@@ -8,7 +8,7 @@ const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/lobby` : '/lobby'
 const SOCKET_PATH = '/socket.io'
 
 export type LobbyMember = {
-  user_id: number | string
+  identifier: number | string
   nickname: string
   pfp_path?: string
   is_ready: boolean
@@ -17,7 +17,7 @@ export type LobbyMember = {
 export type LobbyState = {
   lobby_code: string
   name: string
-  host_id: number | string
+  host_identifier: number | string
   max_players: number
   current_players: number
   is_public: boolean

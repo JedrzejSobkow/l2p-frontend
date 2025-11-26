@@ -207,14 +207,14 @@ export const LobbyScreen = () => {
   const handlePassHost = (username: string) => {
     const targetMember = members.find(m => m.nickname === username)
     if (targetMember) {
-      transferHost(targetMember.user_id)
+      transferHost(targetMember.identifier)
     }
   }
 
   const handleKickOut = (username: string) => {
     const targetMember = members.find(m => m.nickname === username)
     if (targetMember) {
-      kickMember(targetMember.user_id)
+      kickMember(targetMember.identifier)
     }
   }
 
@@ -304,8 +304,8 @@ export const LobbyScreen = () => {
     }
   }
 
-  const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.user_id === currentLobby.host_id))
-  const userMember = members.find(m => m.user_id === user?.id)
+  const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.identifier === currentLobby.host_identifier))
+  const userMember = members.find(m => m.identifier === user?.id)
   const isReady = userMember?.is_ready || false
   const allMembersReady = members.length > 0 && members.every(m => m.is_ready)
   const currentPlayerCount = members.length
@@ -320,8 +320,13 @@ export const LobbyScreen = () => {
     username: member.nickname,
     place: index + 1,
     isReady: member.is_ready || false,
-    isHost: currentLobby?.host_id === member.user_id,
+    isHost: currentLobby?.host_identifier === member.identifier,
   }))
+
+  useEffect(() => {
+    console.log("Current Lobby Host ID:", currentLobby?.host_identifier);
+    console.log("Members:", members);
+  }, [currentLobby, members]);
 
   const gameInfo = currentLobby?.selected_game_info ? {
     display_name: currentLobby.selected_game_info.display_name,

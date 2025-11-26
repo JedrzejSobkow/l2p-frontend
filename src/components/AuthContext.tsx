@@ -36,10 +36,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  useEffect(() => {
+    console.log("User state changed:", user);
+  }, [user]);
+
   // Flip to unauthenticated immediately on global 401
   useEffect(() => {
     onUnauthorized(() => {
-      setUser(null)
+      // setUser(null)
       setStatus('unauthenticated')
     })
     return () => {
@@ -48,7 +52,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (user && googleWindow && !googleWindow.closed) {
+    if (status === 'authenticated' && googleWindow && !googleWindow.closed) {
       googleWindow.close()
       setGoogleWindow(null)
       window.location.reload(); //REFRESH SOCKETS AFTER GOOGLE AUTH
@@ -104,8 +108,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const guest = JSON.parse(storedGuest);
           if (!cancelled) {
             setUser(guest);
-            setStatus('authenticated');
+            setStatus('unauthenticated');
             console.log("Guest restored");
+            console.log(guest);
           }
         } else {
           console.log("Creating guest session...");
@@ -116,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
           if (!cancelled) {
             setUser(guest);
-            setStatus('authenticated');
+            setStatus('unauthenticated');
           }
           window.location.reload(); 
         }
@@ -145,26 +150,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Revalidate session on tab focus/visibility change (throttled)
-  const lastCheckRef = useRef(0)
-  useEffect(() => {
-    const revalidate = async () => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-      const now = Date.now()
-      if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
-      lastCheckRef.current = now
-      await refreshUser()
-    }
-    const onFocus = () => void revalidate()
-    const onVisibility = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') void revalidate()
-    }
-    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
-    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
-      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [status,refreshUser])
+  // const lastCheckRef = useRef(0)
+  // useEffect(() => {
+  //   const revalidate = async () => {
+  //     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+  //     const now = Date.now()
+  //     if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
+  //     lastCheckRef.current = now
+  //     await refreshUser()
+  //   }
+  //   const onFocus = () => void revalidate()
+  //   const onVisibility = () => {
+  //     if (typeof document !== 'undefined' && document.visibilityState === 'visible') void revalidate()
+  //   }
+  //   if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
+  //   if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
+  //   return () => {
+  //     if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
+  //     if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
+  //   }
+  // }, [status,refreshUser])
 
   const login = async (payload: LoginPayload) => {
     const me = await auth.login(payload)
@@ -197,7 +202,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       user,
-      isAuthenticated: user !== null,
+      isAuthenticated: status === 'authenticated',
       status,
       login,
       register,
