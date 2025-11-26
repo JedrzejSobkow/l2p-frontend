@@ -246,6 +246,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setCurrentLobby(null)
       setMembers([])
       setMessages([])
+      setGameState(null)
       setError({ message: data.message, error_code: 'KICKED' })
     }
 
@@ -378,6 +379,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     if (!currentLobby) return
     setIsLoading(true)
     emitLeaveLobby(currentLobby.lobby_code)
+    setGameState(null)
   }, [currentLobby])
 
   const updateSettingsHandler = useCallback((maxPlayers: number, isPublic: boolean, lobbyName?: string) => {

@@ -73,8 +73,8 @@ const LobbyInGameScreen = () => {
       setResult("draw");
       setWinnerName(null);
       setIsModalOpen(true);
-    } else if (gameState?.winner_id) {
-      const winner = members.find((member) => String(member.identifier) === String(gameState.winner_id));
+    } else if (gameState?.winner_identifier) {
+      const winner = members.find((member) => String(member.identifier) === String(gameState.winner_identifier));
       setResult("win");
       setWinnerName(winner?.nickname ?? "Unknown player");
       setIsModalOpen(true);

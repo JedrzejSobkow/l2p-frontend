@@ -63,8 +63,8 @@ const TicTacToeView: GameClientModule["GameView"] = ({
     if (gameState?.result === "draw") {
       return "Draw!";
     }
-    if (gameState?.winner_id) {
-      const winner = players.find((player) => String(player.userId) === String(gameState.winner_id));
+    if (gameState?.winner_identifier) {
+      const winner = players.find((player) => String(player.userId) === String(gameState.winner_identifier));
       return `${winner?.nickname ?? "Unknown player"} wins!`;
     }
     if (String(gameState?.current_turn_identifier) === localPlayerId) {
