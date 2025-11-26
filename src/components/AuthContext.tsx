@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       const me = await auth.getMe()
+      me.id = `user:${me.id}`;
       setUser(me)
       setStatus('authenticated')
     } catch {
@@ -106,6 +107,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedGuest = localStorage.getItem('guestUser');
         if (storedGuest) {
           const guest = JSON.parse(storedGuest);
+          guest.id = `guest:${guest.id}`;
           if (!cancelled) {
             setUser(guest);
             setStatus('unauthenticated');
@@ -118,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           console.log("Guest session created:", guest);
   
           localStorage.setItem('guestUser', JSON.stringify(guest));
+          guest.id = `guest:${guest.id}`;
   
           if (!cancelled) {
             setUser(guest);
@@ -129,6 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const me = await auth.getMe();
           if (!cancelled && me) {
+            me.id = `user:${me.id}`;
             console.log("Logged-in user detected, overriding guest session.");
             setUser(me); 
             setStatus('authenticated');

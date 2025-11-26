@@ -74,7 +74,7 @@ const LobbyInGameScreen = () => {
       setWinnerName(null);
       setIsModalOpen(true);
     } else if (gameState?.winner_id) {
-      const winner = members.find((member) => String(member.user_id) === String(gameState.winner_id));
+      const winner = members.find((member) => String(member.identifier) === String(gameState.winner_id));
       setResult("win");
       setWinnerName(winner?.nickname ?? "Unknown player");
       setIsModalOpen(true);
@@ -86,26 +86,26 @@ const LobbyInGameScreen = () => {
     const playerSymbols: Record<string, string> | undefined = gameState?.player_symbols;
     if (playerSymbols) {
       const withSymbols = members
-        .filter(m => String(m.user_id) in playerSymbols)
+        .filter(m => String(m.identifier) in playerSymbols)
         .map(m => ({
-          userId: String(m.user_id),
+          userId: String(m.identifier),
           nickname: m.nickname,
-          symbol: playerSymbols[String(m.user_id)],
-          timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.user_id)] ?? null,
+          symbol: playerSymbols[String(m.identifier)],
+          timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.identifier)] ?? null,
         }));
       withSymbols.sort((a, b) => (a.symbol === 'X' ? -1 : 1) - (b.symbol === 'X' ? -1 : 1));
       return withSymbols.map(({ userId, nickname, timeRemaining }) => ({ userId, nickname, timeRemaining }));
     }
     return members.map(m => ({
-      userId: String(m.user_id),
+      userId: String(m.identifier),
       nickname: m.nickname,
-      timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.user_id)] ?? null,
+      timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.identifier)] ?? null,
     }));
   }, [members, gameState]);
 
   const isMyTurn = useMemo(() => {
     if (!user || !gameState) return false;
-    const cur = (gameState as any).current_turn_player_id;
+    const cur = (gameState as any).current_turn_identifier;
     return String(cur) === String(user.id);
   }, [user, gameState]);
 
@@ -142,7 +142,7 @@ const LobbyInGameScreen = () => {
   const confirmKickOut = () => {
     const targetMember = members.find(m => m.nickname === kickTarget);
     if (targetMember) {
-      kickMember(targetMember.user_id);
+      kickMember(targetMember.identifier);
     }
     setIsKickModalOpen(false);
     setKickTarget(null);
@@ -189,19 +189,19 @@ const LobbyInGameScreen = () => {
           <div className="flex flex-col gap-2">
             {members.map((member, index) => (
               <InGameUserTile
-                key={member.user_id}
+                key={member.identifier}
                 avatar={
                   getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || pfpImage
                 }
                 username={member.nickname}
                 place={index + 1}
-                isHost={currentLobby?.host_id === member.user_id}
-                displayPassHost={currentLobby?.host_id === user?.id && user?.id !== member.user_id}
-                displayKickOut={currentLobby?.host_id === user?.id && user?.id !== member.user_id}
-                isYou={String(user?.id) === String(member.user_id)}
-                isCurrentTurn={String(gameState?.current_turn_player_id) === String(member.user_id)}
-                timeRemaining={players.find(p => p.userId === String(member.user_id))?.timeRemaining ?? null}
-                onPassHost={() => handlePassHost(member.user_id)}
+                isHost={currentLobby?.host_identifier === member.identifier}
+                displayPassHost={currentLobby?.host_identifier === user?.id && user?.id !== member.identifier}
+                displayKickOut={currentLobby?.host_identifier === user?.id && user?.id !== member.identifier}
+                isYou={String(user?.id) === String(member.identifier)}
+                isCurrentTurn={String(gameState?.current_turn_identifier) === String(member.identifier)}
+                timeRemaining={players.find(p => p.userId === String(member.identifier))?.timeRemaining ?? null}
+                onPassHost={() => handlePassHost(member.identifier)}
                 onKickOut={() => handleKickOut(member.nickname)}
               />
             ))}
