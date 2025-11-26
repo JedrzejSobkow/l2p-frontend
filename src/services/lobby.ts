@@ -205,9 +205,9 @@ export const offMemberJoined = (cb?: (data: { member: LobbyMember; current_playe
   cb ? lobbySocket.off('member_joined', cb) : lobbySocket.off('member_joined')
 }
 
-export const onMemberLeft = (cb: (data: { user_id: number | string; nickname: string; current_players: number }) => void) => 
+export const onMemberLeft = (cb: (data: { identifier: number | string; nickname: string; current_players: number }) => void) => 
   lobbySocket?.on('member_left', cb)
-export const offMemberLeft = (cb?: (data: { user_id: number | string; nickname: string; current_players: number }) => void) => {
+export const offMemberLeft = (cb?: (data: { identifier: number | string; nickname: string; current_players: number }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('member_left', cb) : lobbySocket.off('member_left')
 }

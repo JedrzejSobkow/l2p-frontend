@@ -182,9 +182,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       });      setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
-    const handleMemberLeft = (data: { user_id: number | string; nickname: string; current_players: number }) => {
+    const handleMemberLeft = (data: { identifier: number | string; nickname: string; current_players: number }) => {
       //console('Member left:', data)
-      setMembers(prev => prev.filter(m => m.identifier !== data.user_id))
+      setMembers(prev => prev.filter(m => m.identifier !== data.identifier))
       setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
