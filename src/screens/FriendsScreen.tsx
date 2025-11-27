@@ -4,7 +4,6 @@ import ChatWindow from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import { useChat } from '../components/chat/ChatProvider'
 import { useFriends, type Friend } from '../components/friends/FriendsContext'
-import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { pfpImage } from '@assets/images'
 import { useLobby } from '../components/lobby/LobbyContext'
@@ -13,7 +12,7 @@ const FriendsScreen: FC = () => {
   const { friends, removeFriend } = useFriends()
   const location = useLocation()
   const navigate = useNavigate()
-  const { currentLobby, gameState } = useLobby()
+  const { currentLobby, gameState,joinLobby } = useLobby()
   const initialFriendId =
     (location.state as { friendId?: string } | null)?.friendId ?? null
 
@@ -55,7 +54,6 @@ const FriendsScreen: FC = () => {
       selectedFriend.nickname,
       selectedFriend.avatarUrl,
     )
-    console.log('Loading messages for friend', id)
     loadMessages(id)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
@@ -201,7 +199,17 @@ const FriendsScreen: FC = () => {
         } lg:order-3 lg:block`}
       >
         {selectedFriend ? (
-          <FriendDetailsPanel friend={selectedFriend} onRemove={handleRemoveRequest} removing={removing} />
+          <FriendDetailsPanel 
+          friend={selectedFriend} 
+          onRemove={handleRemoveRequest} 
+          removing={removing} 
+          onLobbyJoin={selectedFriend.lobbyCode ? () => {
+            if (selectedFriend.lobbyCode){
+              joinLobby(selectedFriend.lobbyCode)
+              navigate('/lobby')
+            }
+          }: undefined}
+        />
         ) : (
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.85)] px-6 text-center text-sm text-white/60">
             Choose someone from the list to see their profile and quick actions.
@@ -232,10 +240,11 @@ export default FriendsScreen
 type FriendDetailsPanelProps = {
   friend: Friend
   onRemove: () => void
+  onLobbyJoin?: () => void
   removing?: boolean
 }
 
-const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove, removing }) => {
+const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove,onLobbyJoin, removing }) => {
   // const joinedAt = useMemo(() => {
   //   try {
   //     return new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(
@@ -246,6 +255,40 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove, rem
   //   }
   // }, [friend.created_at])
 
+  const statusInfo = useMemo(() => {
+    const status = friend.userStatus;
+    const gameName = friend.gameName;
+    console.log(friend.description)
+
+    switch (status) {
+      case 'online':
+        return {
+          containerClass: 'bg-green-500/10 border-green-500/20 text-green-400',
+          dotClass: 'bg-green-500',
+          label: 'Online'
+        }
+      case 'in_game':
+        return {
+          containerClass: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
+          dotClass: 'bg-purple-500',
+          label: gameName ? `Playing ${gameName}` : 'In Game'
+        }
+      case 'in_lobby':
+        return {
+          containerClass: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+          dotClass: 'bg-orange-500',
+          label: 'In Lobby'
+        }
+      case 'offline':
+      default:
+        return {
+          containerClass: 'bg-white/5 border-white/10 text-white/40',
+          dotClass: 'bg-white/40',
+          label: 'Offline'
+        }
+    }
+  }, [friend.userStatus, friend.gameName])
+
   return (
     <aside className="flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.98)]">
       <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
@@ -254,26 +297,35 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove, rem
           alt={friend.nickname}
           className="h-20 w-20 rounded-full border border-white/10 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
         />
-        <h2 className="mt-4 text-xl font-semibold text-white">{friend.nickname}</h2>
-        <span className="mt-2 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
-          Friend
+        <h2 className="mt-4 text-xl font-semibold text-headline">{friend.nickname}</h2>
+
+        <span className={`mt-2 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${statusInfo.containerClass}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dotClass}`} />
+          {statusInfo.label}
         </span>
-        {/* {joinedAt && (
-          <span className="mt-1 text-xs text-white/50">Friends since {joinedAt}</span>
-        )} */}
+
       </div>
 
       <div className="px-6 py-4">
         <p className="text-sm leading-relaxed text-white/70">
-          {friend.description || 'This player has not added a profile note yet.'}
+          {friend.description === null ? 'This player has not added a profile note yet.': friend.description}
         </p>
       </div>
 
       <div className="mt-auto space-y-3 px-6 pb-6 pt-2">
+        {onLobbyJoin && (
+          <button
+            type="button"
+            onClick={onLobbyJoin}
+            className="w-full rounded-full border border-button px-4 py-3 text-sm font-semibold text-button transition hover:text-headline hover:bg-button disabled:opacity-60 disabled:hover:border-white/20"
+          >
+            Join to lobby
+          </button>
+        )}
         <button
           type="button"
           onClick={onRemove}
-          className="w-full rounded-full border border-white/20 px-4 py-3 text-sm font-semibold text-white transition hover:border-red-400/60 hover:text-red-200 disabled:opacity-60 disabled:hover:border-white/20"
+          className="w-full rounded-full border border-red-500/50 px-4 py-3 text-sm font-semibold text-red-400 transition hover:border-red-500 hover:bg-red-500 hover:text-white disabled:opacity-60"
           disabled={removing}
         >
           {removing ? 'Removing...' : 'Remove from Friends'}

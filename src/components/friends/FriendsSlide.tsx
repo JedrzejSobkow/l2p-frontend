@@ -21,6 +21,7 @@ type FriendsSlideProps = {
 
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFriendId }) => {
   const { user } = useAuth()
+  const {joinLobby} = useLobby();
   const { openChat} = useChatDock()
   const {friends } = useFriends()
   const { currentLobby } = useLobby();
@@ -152,6 +153,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"
+            onLobbyJoin={joinLobby}
           />
         </div>
       </aside>

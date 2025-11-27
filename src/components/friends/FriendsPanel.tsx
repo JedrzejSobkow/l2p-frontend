@@ -11,6 +11,7 @@ import { pfpImage } from '@assets/images'
 type FriendsPanelProps = {
   onFriendSelect?: (friendId: string ) => void
   onFriendMessage?: (friendId: string ) => void
+  onLobbyJoin?: (lobbyCode: string ) => void
   title?: string
   className?: string
   selectedFriendId?: string | number
@@ -23,6 +24,7 @@ const normalizeId = (value: string | number | undefined | null) =>
 const FriendsPanel: FC<FriendsPanelProps> = ({
   onFriendSelect,
   onFriendMessage,
+  onLobbyJoin,
   title = 'Friends',
   className,
   selectedFriendId,
@@ -155,15 +157,19 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
 
   const renderFriend = (friend: Friend) => {
     const isSelected = selectedKey ? friend.id === selectedKey : false
-    console.log('Rendering friend:', friend)
     return (
       <FriendCard
-        unreadCount={getUnread?.(friend.id) ?? 0}
         key={friend.id}
         {...friend}
+        unreadCount={getUnread?.(friend.id) ?? 0}
         isSelected={isSelected}
         onClick={() => onFriendSelect?.(friend.id)}
         onMessage={onFriendMessage ? () => onFriendMessage(friend.id) : undefined}
+        onLobbyJoin={onLobbyJoin ? () => {
+          if (friend.lobbyCode){
+            onLobbyJoin(friend.lobbyCode)
+          }
+        }: undefined}
       />
     )
   }
@@ -202,8 +208,8 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
               className={cn(
                 'grid h-11 w-11 flex-shrink-0 place-items-center rounded-full border transition ml-auto',
                 mode === 'friends'
-                  ? 'border-white/15 text-white/80 hover:border-orange-400/40 hover:text-white disabled:opacity-50'
-                  : 'border-orange-400/60 text-orange-300 hover:border-orange-300 hover:text-orange-200',
+                  ? 'border-white/15 text-headline hover:border-button hover:text-button disabled:opacity-50'
+                  : 'border-button text-button',
               )}
               title={mode === 'friends' ? 'Find new users' : 'Back to friends'}
               aria-label={mode === 'friends' ? 'Find new users' : 'Back to friends'}
