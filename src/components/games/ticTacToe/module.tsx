@@ -89,7 +89,10 @@ const TicTacToeView: GameClientModule["GameView"] = ({
 
   const handleCellClick = (index: number) => {
     if (!isMyTurn || board[index] !== null) return;
-    onProposeMove({ position: index });
+    const row = Math.floor(index / dim);
+    const col = index % dim;
+    const moveData = { row, col };
+    onProposeMove(moveData);
   };
 
   const drawGrid = (g: PixiGraphics) => {

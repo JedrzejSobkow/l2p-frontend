@@ -14,6 +14,7 @@ import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 import { FaSignOutAlt } from 'react-icons/fa';
 import { getImage } from '../utils/imageMap';
 import { pfpImage } from '@/assets/images';
+import ClobberModule from '@/components/games/clobber/module';
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -34,6 +35,12 @@ const LobbyInGameScreen = () => {
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+
+    // Map game names to their respective modules
+    const gameModules: Record<string, any> = {
+      tictactoe: TicTacToeModule,
+      clobber: ClobberModule,
+    };
 
   useEffect(() => {
     if (error?.error_code === 'KICKED') {
@@ -109,20 +116,9 @@ const LobbyInGameScreen = () => {
     return String(cur) === String(user.id);
   }, [user, gameState]);
 
-  const handleProposeMove = useCallback((move: any) => {
-    if (!gameState) return;
-    const board = (gameState as any).board;
-    const dim = Array.isArray(board)
-      ? Array.isArray(board[0])
-        ? board.length
-        : Math.max(1, Math.floor(Math.sqrt(board.length)))
-      : 3;
-    const index = typeof move?.index === 'number' ? move.index : move?.position;
-    if (typeof index !== 'number') return;
-    const row = Math.floor(index / dim);
-    const col = index % dim;
-    emitMakeMove({ row, col });
-  }, [gameState]);
+  const handleProposeMove = useCallback((moveData: any) => {
+    emitMakeMove(moveData);
+  }, []);
 
   const handleSendMessage = (message: string) => {
     if (message.trim()) {
@@ -153,7 +149,16 @@ const LobbyInGameScreen = () => {
     navigate('/');
   };
 
-  const module = TicTacToeModule;
+    // Dynamically select the module based on the selected game
+  const module = useMemo(() => {
+    console.warn("CURRENTLOBBY:")
+    console.warn(currentLobby)
+    if (!currentLobby?.selected_game) {
+      console.log("DUPSKO TROCHE")
+      return null; // Fallback if no game is selected
+    }
+    return gameModules[currentLobby.selected_game] || null; // Use the mapped module or fallback
+  }, [currentLobby?.selected_game]);
 
   if (!gameState) {
     return <div>Loading game state...</div>; // Show a loading state until gameState is available
