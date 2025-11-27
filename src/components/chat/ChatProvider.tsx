@@ -10,9 +10,7 @@ import {
 } from 'react'
 import { useAuth } from '../AuthContext'
 import {
-  connectChatSocket,
-  disconnectChatSocket,
-  getConversations,
+  getInitialChats,
   sendMessage as emitChatMessage,
   sendTyping as emitTyping,
   getMessages as fetchMessages,
@@ -22,7 +20,11 @@ import {
   type Conversation,
   type ConversationUpdatedEvent,
   type UserTypingEvent,
-  type ConversationHistoryPayload
+  onMessage,
+  onUserTyping,
+  offMessage,
+  offUserTyping,
+  getChatSocket
 } from '../../services/chat'
 import { useFriends } from '../friends/FriendsContext'
 
@@ -182,7 +184,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const loadInitialConversations = useCallback(async () => {
     // not sure if needed
     try {
-      const result = await getConversations()
+      const result = await getInitialChats()
       const conversations = result?.conversations ?? []
       setState((prev) => {
         if (!conversations.length) return prev
@@ -223,15 +225,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     setState((prev) => {
       const existing = prev.targets[key]
-      const friend = friends.find(f => String(f.friend_user_id) === key)
+      const friend = friends.find(f => f.id === key)
       const finalNickname =
         nickname ??
-        friend?.friend_nickname ??
+        friend?.nickname ??
         existing?.nickname ??
         'Unknown'
       const finalAvatar =
         avatarUrl ??
-        friend?.friend_pfp_path ??
+        friend?.avatarUrl ??
         existing?.avatarUrl ??
         ''
       const next: ConversationTarget = {
@@ -458,13 +460,13 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
         }
       })
-      const friend = friends.find((f) => String(f.friend_user_id) === message.senderId)
+      const friend = friends.find((f) => f.id === message.senderId)
 
       if (!friend) return
       const target: ConversationTarget = {
         id: message.senderId,
         nickname: message.senderNickname,
-        avatarUrl: friend.friend_pfp_path
+        avatarUrl: friend.avatarUrl
       }
       incomingMessageListenersRef.current.forEach((listener) => {
         try {
@@ -524,35 +526,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 )
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      disconnectChatSocket()
-      return
-    }
-    const socket = connectChatSocket()
+    if (!isAuthenticated) return
+    const socket = getChatSocket()
+    if (!socket) return
 
-    const handleConnect = () => {
-      // refresh state on reconnect to ensure latest data
-      console.log('Chat socket connected')
-      loadedConversationsRef.current.clear()
-    }
-    const handleDisconnect = () => {
-      /* no-op */
-    }
-
-    socket.on('connect', handleConnect)
-    socket.on('disconnect', handleDisconnect)
-    socket.on('message', handleIncomingMessage)
-    socket.on('conversation_updated', handleConversationUpdated)
-    socket.on('user_typing', handleTypingEvent)
+    onMessage(handleIncomingMessage)
+    onUserTyping(handleTypingEvent)
 
     return () => {
-      socket.off('connect', handleConnect)
-      socket.off('disconnect', handleDisconnect)
-      socket.off('message', handleIncomingMessage)
-      socket.off('conversation_updated', handleConversationUpdated)
-      socket.off('user_typing', handleTypingEvent)
+      offMessage(handleIncomingMessage)
+      offUserTyping(handleTypingEvent)
     }
-  }, [handleTypingEvent,isAuthenticated,handleIncomingMessage,handleConversationUpdated])
+  }, [handleTypingEvent,handleIncomingMessage,handleConversationUpdated])
 
   useEffect(() => {
     if (isAuthenticated) return

@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { pfpImage } from '@/assets/images'
 import {
   acceptFriendRequest,
   declineFriendRequest,
@@ -15,54 +16,123 @@ import {
   searchFriends,
   sendFriendRequest,
   type Friendship,
+  type FriendshipStatus,
   type SearchFriendsPayload,
-} from '../../services/friends'
+} from '@/services/friends'
 import { useAuth } from '../AuthContext'
+import { 
+  connectChatSocket, 
+  offConversationUpdated, 
+  offFriendRemoved, 
+  offFriendRequestReceived, 
+  offFriendStatusUpdated, 
+  onConversationUpdated, 
+  onFriendRemoved, 
+  onFriendRequestReceived, 
+  onFriendStatusUpdated, 
+  getInitialChats,
+  type UserStatus, 
+  type ConversationUpdatedEvent,
+  type FriendRequestReceivedPayload,
+  type FriendStatusUpdatePayload,
+  onInitialFriendStatuses,
+  type Conversation,
+  offInitialFriendStatuses
+} from '@/services/chat'
+
+export type Friend = {
+  id: string,
+  nickname: string,
+  avatarUrl: string,
+  description: string,
+  friendShipStatus: FriendshipStatus,
+  isRequester: boolean,
+  userStatus?: UserStatus,
+  lastMessageTime?: string,
+  lastMessageIsMine?: boolean,
+  lastMessageContent?: string,
+  unreadCount?: number,
+  gameName?: string,
+  lobbyCode?: string,
+  lobbyFilledSlots?: number,
+  lobbyMaxSlots?: number,
+}
+
+type FriendsState = {
+  friendsById: Record<string, Friend>
+}
 
 type FriendsContextValue = {
   isLoading: boolean
-  friendships: Friendship[]
-  friends: Friendship[]
-  incomingRequests: Friendship[]
-  outgoingRequests: Friendship[]
-  refreshFriends: () => Promise<void>
+  friends: Friend[]
+  incomingRequests: Friend[]
+  outgoingRequests: Friend[]
   sendRequest: (friend_user_id: number | string) => Promise<void>
   acceptRequest: (friend_user_id: number | string) => Promise<void>
   declineRequest: (friend_user_id: number | string) => Promise<void>
   removeFriend: (friend_user_id: number | string) => Promise<void>
   searchUsers: (query: string, page?: number, pageSize?: number) => Promise<SearchFriendsPayload>
 }
-const hasFriendListChanged = (currentList: Friendship[], newList: Friendship[]) => {
-  if (currentList.length !== newList.length) return true
-
-  const currentMap = new Map(currentList.map(f => [f.friend_user_id, f]))
-
-  for (const newFriend of newList) {
-    const currentFriend = currentMap.get(newFriend.friend_user_id)
-
-    if (!currentFriend) return true
-    if (
-      currentFriend.status !== newFriend.status || 
-      currentFriend.friend_nickname !== newFriend.friend_nickname ||
-      currentFriend.friend_pfp_path !== newFriend.friend_pfp_path || 
-      currentFriend.friend_description !== newFriend.friend_description
-    ) {
-      return true
-    }
-  }
-
-  return false
-}
-
 
 const FriendsContext = createContext<FriendsContextValue | undefined>(undefined)
 
 export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const {isAuthenticated} = useAuth()
-  const [friendships, setFriendships] = useState<Friendship[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [state, setState] = useState<FriendsState>({ friendsById: {} })
 
-  const refreshFriends = useCallback(async () => {
+  const handleInitialFriendStatuses = useCallback((payload:{statuses:  FriendStatusUpdatePayload[]}) => {
+    if (!Array.isArray(payload.statuses)) return
+    payload.statuses.forEach((friend) => {
+      const key = String(friend.user_id)
+      setState((prev) => ({
+        friendsById: {
+          ...prev.friendsById,
+          [key]: {
+            ...prev.friendsById[key],
+            id: key,
+            userStatus: friend.status as UserStatus,
+            gameName: friend.game_name,
+            lobbyCode: friend.lobby_code,
+            lobbyFilledSlots: friend.lobby_filled_slots,
+            lobbyMaxSlots: friend.lobby_max_slots,
+          }
+        },
+      }))
+  })
+},[])
+
+  const loadInitialConversations = useCallback(async () => {
+    console.log('Loading initial conversations...')
+    try {
+      const data = await getInitialChats(100)
+      const normalized = Array.isArray(data.conversations)
+      ? data.conversations
+      : Array.isArray((data as any)?.conversations)
+      ? ((data as any).conversations as Conversation[])
+      : []
+
+      normalized.forEach((conversation) => {
+        const friendId = String(conversation.friend_id)
+        setState((prev) => ({
+          friendsById: {
+            ...prev.friendsById,
+            [friendId]: {
+              ...prev.friendsById[friendId],
+              lastMessageTime: conversation.last_message_time,
+              lastMessageContent: conversation.last_message_content ?? '',
+              lastMessageIsMine: conversation.last_message_is_mine,
+              unreadCount: conversation.unread_count,
+            }
+          },
+        }))
+      })
+    } catch (error) {
+      console.error('Error fetching initial conversations:', error)
+    }
+  }, [])
+
+  const loadInitialFriendships = useCallback(async () => {
     try {
       const data = await getFriendsList()
       const normalized = Array.isArray(data)
@@ -70,60 +140,105 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         : Array.isArray((data as any)?.friendships)
         ? ((data as any).friendships as Friendship[])
         : []
-      if (hasFriendListChanged(friendships, normalized)) {
-        setFriendships(normalized)
-      }
+      normalized.forEach((friendShip) => {
+        const friend: Friend = {
+          id: String(friendShip.friend_user_id),
+          nickname: String(friendShip.friend_nickname),
+          avatarUrl: friendShip.friend_pfp_path || pfpImage,
+          description: String(friendShip.friend_description),
+          friendShipStatus: friendShip.status,
+          isRequester: Boolean(friendShip.is_requester),
+        }
+        setState((prev) => ({
+          friendsById: {
+            ...prev.friendsById,
+            [friend.id]: friend,
+          },
+        }))
+      })
     } catch (error) {
       console.error('Error fetching friends list:', error)
     }
-  }, [friendships.length])
+  }, [])
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setFriendships([])
-      setIsLoading(false)
-      return
-    }
-    void refreshFriends()
-    const interval = window.setInterval(()=>{
-      void refreshFriends()
-    },2_000)
-    return () => window.clearInterval(interval)
-  }, [isAuthenticated, refreshFriends])
+  const handleConversationUpdated = useCallback((payload: ConversationUpdatedEvent) => {
+    const friendId = String(payload.friend_id)
+    setState((prev) => ({
+      friendsById: {
+        ...prev.friendsById,
+        [friendId]: {
+          ...prev.friendsById[friendId],
+          lastMessageTime: payload.last_message_time,
+          lastMessageContent: payload.last_message_content ?? '',
+          lastMessageIsMine: payload.last_message_is_mine,
+          unreadCount: (prev.friendsById[friendId]?.unreadCount || 0) + (payload.last_message_is_mine ? 0 : 1),
+        }
+      },
+    }))
+  }, [])
 
-
-  const upsertFriendship = useCallback((entry: Friendship) => {
-    setFriendships((prev) => {
-      const key = entry.friendship_id ?? entry.friend_user_id
-      const idx = prev.findIndex(
-        (item) => item.friendship_id ?? item.friend_user_id === key,
-      )
-      if (idx === -1) {
-        return [...prev, entry]
-      }
-      const copy = [...prev]
-      copy[idx] = entry
-      return copy
+  const handleFriendRemoved = useCallback((payload: { friend_user_id: number | string }) => {
+    const key = String(payload.friend_user_id)
+    setState((prev) => {
+      const newFriendsById = { ...prev.friendsById }
+      delete newFriendsById[key]
+      return { friendsById: newFriendsById }
     })
-    refreshFriends()
+  }, [])
+
+  const handleFriendRequestReceived = useCallback((payload: FriendRequestReceivedPayload) => {
+    const key = String(payload.sender_id)
+    console.log('Received friend request from:', payload)
+    setState((prev) => ({
+      friendsById: {
+        ...prev.friendsById,
+        [key]: {
+          ...prev.friendsById[key],
+          id: key,
+          nickname: payload.sender_nickname,
+          avatarUrl: payload.sender_pfp_path || pfpImage,
+          friendShipStatus: 'pending',
+          isRequester: false,
+        }
+      },
+    }))
+  }, [])
+
+  const handleFriendStatusUpdated = useCallback((payload: FriendStatusUpdatePayload) => {
+    const key = String(payload.user_id)
+    setState((prev) => ({
+      friendsById: {
+        ...prev.friendsById,
+        [key]: {
+          ...prev.friendsById[key],
+          id: key,
+          userStatus: payload.status as UserStatus,
+          gameName: payload.game_name,
+          lobbyCode: payload.lobby_code,
+          lobbyFilledSlots: payload.lobby_filled_slots,
+          lobbyMaxSlots: payload.lobby_max_slots,
+        }
+      },
+    }))
   }, [])
 
   const removeFriendship = useCallback((friend_user_id: number | string) => {
-    const key = friend_user_id
-    setFriendships((prev) =>
-      prev.filter((item) => item.friend_user_id !== key),
-    )
+    const key = String(friend_user_id)
+    setState((prev) => {
+      const newFriendsById = { ...prev.friendsById }
+      delete newFriendsById[key]
+      return { friendsById: newFriendsById }
+    })
+
   }, [])
 
   const sendRequestHandler = useCallback(async (friend_user_id: number | string) => {
     await sendFriendRequest(friend_user_id)
-    refreshFriends()
-  }, [upsertFriendship])
+  }, [])
 
   const acceptRequestHandler = useCallback(async (friend_user_id: number | string) => {
     await acceptFriendRequest(friend_user_id)
-    refreshFriends()
-  }, [upsertFriendship])
+  }, [])
 
   const declineRequestHandler = useCallback(async (friend_user_id: number | string) => {
     await declineFriendRequest(friend_user_id)
@@ -142,36 +257,78 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const { friends, incomingRequests, outgoingRequests } = useMemo(() => {
-    const accepted: Friendship[] = []
-    const incoming: Friendship[] = []
-    const outgoing: Friendship[] = []
+    const accepted: Friend[] = []
+    const incoming: Friend[] = []
+    const outgoing: Friend[] = []
 
-    friendships.forEach((entry) => {
-      if (entry.status === 'accepted') {
-        accepted.push(entry)
-      } else if (entry.status === 'pending') {
-        if (entry.is_requester) {
-          outgoing.push(entry)
+    Object.values(state.friendsById).forEach((friend) => {
+      if (friend.friendShipStatus === 'accepted') {
+        accepted.push(friend)
+      } else if (friend.friendShipStatus === 'pending') {
+        if (friend.isRequester) {
+          outgoing.push(friend)
         } else {
-          incoming.push(entry)
+          incoming.push(friend)
         }
       }
     })
+
+    accepted.sort((a,b) => a.lastMessageTime && b.lastMessageTime ? new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime() : 0)
+    
     return {
       friends: accepted,
       incomingRequests: incoming,
       outgoingRequests: outgoing,
     }
-  }, [friendships])
+  }, [state.friendsById])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+    setIsLoading(true)
+    let active = true
+
+    const init = async () => {
+      try {
+        await Promise.all([loadInitialFriendships(), loadInitialConversations()])
+        if (!active) return
+
+        const socket = connectChatSocket()
+        onConversationUpdated(handleConversationUpdated)
+        onFriendRemoved(handleFriendRemoved)
+        onFriendRequestReceived(handleFriendRequestReceived)
+        onFriendStatusUpdated(handleFriendStatusUpdated)
+        onInitialFriendStatuses(handleInitialFriendStatuses)
+      }
+      catch (error) {
+        console.error('Error initializing friends context:', error)
+      }
+      finally {
+        if (active) {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    init()
+
+    return () => {
+      active = false
+      offConversationUpdated(handleConversationUpdated)
+      offFriendRemoved(handleFriendRemoved)
+      offFriendRequestReceived(handleFriendRequestReceived)
+      offFriendStatusUpdated(handleFriendStatusUpdated)
+      offInitialFriendStatuses(handleInitialFriendStatuses)
+    }
+  }, [isAuthenticated])
 
   const value: FriendsContextValue = useMemo(
     () => ({
       isLoading,
-      friendships,
       friends,
       incomingRequests,
       outgoingRequests,
-      refreshFriends,
       sendRequest: sendRequestHandler,
       acceptRequest: acceptRequestHandler,
       declineRequest: declineRequestHandler,
@@ -182,11 +339,9 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       acceptRequestHandler,
       declineRequestHandler,
       friends,
-      friendships,
       incomingRequests,
       isLoading,
       outgoingRequests,
-      refreshFriends,
       removeFriendHandler,
       searchUsersHandler,
       sendRequestHandler,
