@@ -154,11 +154,11 @@ export const offFriendRequestReceived = (callback: (payload: FriendRequestReceiv
 }
 
 export const onFriendStatusUpdated = (callback: (payload: FriendStatusUpdatePayload) => void) => {
-  socket?.on('friend_status_updated', callback)
+  socket?.on('friend_status_update', callback)
 }
 export const offFriendStatusUpdated = (callback: (payload: FriendStatusUpdatePayload) => void) => {
   if (!socket) return
-  socket?.off('friend_status_updated', callback)
+  socket?.off('friend_status_update', callback)
 }
 
 export const onInitialFriendStatuses = (callback: (payload: {statuses: FriendStatusUpdatePayload[]}) => void) => {
