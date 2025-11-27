@@ -290,7 +290,7 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove,onLo
   }, [friend.userStatus, friend.gameName])
 
   return (
-    <aside className="flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.98)]">
+    <aside className="flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-background-secondary">
       <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
         <img
           src={friend.avatarUrl || pfpImage}

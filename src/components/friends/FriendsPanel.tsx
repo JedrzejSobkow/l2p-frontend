@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type FC, type ChangeEvent, useEffect } from 'react'
-import { FiChevronDown, FiSearch, FiUserPlus } from 'react-icons/fi'
+import { FiCheck, FiChevronDown, FiLoader, FiSearch, FiUserPlus, FiX } from 'react-icons/fi'
 import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
 import { useFriends, type Friend } from './FriendsContext'
@@ -143,7 +143,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     if (!id) return
     markProcessing(id, true)
     try {
-      await sendRequest(user.user_id)
+      await sendRequest(user.user_id, user.nickname, user.pfp_path || '')
       showPopup({type: 'confirmation', message: `Friend request sent to ${user.nickname}.`})
       setSearchResults((prev) => prev.filter((item) => normalizeId(item.user_id) !== id))
     } catch (error: any) {
@@ -340,19 +340,37 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              className="rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)] disabled:opacity-60 disabled:hover:translate-y-0"
                               onClick={() => handleAcceptRequest(request)}
                               disabled={processing}
+                              className={cn(
+                                "grid h-9 w-9 place-items-center rounded-full transition-all",
+                                "bg-button text-button-text-dark ",
+                                "hover:-translate-y-0.5 ",
+                                "disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-none"
+                              )}
+                              aria-label={`Accept request from ${request.nickname}`}
+                              title="Accept request"
                             >
-                              {processing ? '...' : 'Accept'}
+                              {processing ? (
+                                <FiLoader className="h-5 w-5 animate-spin" />
+                              ) : (
+                                <FiCheck className="h-5 w-5" />
+                              )}
                             </button>
                             <button
                               type="button"
-                              className="rounded-full border border-white/15 px-4 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-60"
                               onClick={() => handleDeclineRequest(request)}
                               disabled={processing}
+                              className={cn(
+                                "grid h-9 w-9 place-items-center rounded-full border transition-all",
+                                "border-red-500 bg-transparent text-red-500",
+                                "hover:bg-red-500 hover:text-headline",
+                                "disabled:cursor-not-allowed disabled:opacity-50"
+                              )}
+                              aria-label={`Decline request from ${request.nickname}`}
+                              title="Decline request"
                             >
-                              Decline
+                              <FiX className="h-5 w-5" />
                             </button>
                           </div>
                         </div>
