@@ -37,9 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  useEffect(() => {
-    console.log("User state changed:", user);
-  }, [user]);
 
   // Flip to unauthenticated immediately on global 401
   useEffect(() => {
@@ -111,13 +108,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (!cancelled) {
             setUser(guest);
             setStatus('unauthenticated');
-            console.log("Guest restored");
-            console.log(guest);
           }
         } else {
-          console.log("Creating guest session...");
           const guest = await auth.createGuestSession();
-          console.log("Guest session created:", guest);
   
           localStorage.setItem('guestUser', JSON.stringify(guest));
           guest.id = `guest:${guest.id}`;
@@ -133,7 +126,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const me = await auth.getMe();
           if (!cancelled && me) {
             me.id = `user:${me.id}`;
-            console.log("Logged-in user detected, overriding guest session.");
             setUser(me); 
             setStatus('authenticated');
           }

@@ -150,7 +150,6 @@ const LobbyInGameScreen = () => {
 
   const handleConfirmLeave = () => {
     leaveLobby();
-    navigate('/');
   };
 
   const module = TicTacToeModule;

@@ -21,12 +21,22 @@ const Layout = () => {
 
     useEffect(() => {
         const currentResult = gameState?.result;
+
+        if (!gameState?.result) {
+            prevGameResultRef.current = undefined
+        }
         if (currentResult === 'in_progress' && prevGameResultRef.current !== 'in_progress') {
             // Navigate on game start but allow leaving afterward
             navigate('/lobby/ingame');
         }
         prevGameResultRef.current = currentResult;
     }, [gameState?.result, navigate]);
+
+    useEffect(() => {
+        if (!gameState) {
+            prevGameResultRef.current = undefined
+        }
+    }, [gameState]);
 
     useEffect(() => {
         if (!gameState || gameState?.result !== 'in_progress') {

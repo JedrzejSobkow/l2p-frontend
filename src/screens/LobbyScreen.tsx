@@ -56,7 +56,6 @@ export const LobbyScreen = () => {
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
     const lobbySocket = getLobbySocket();
-    console.log("HALOOOOOO")
     if (!lobbySocket || !lobbySocket.connected) {
         return;
     }
@@ -323,10 +322,6 @@ export const LobbyScreen = () => {
     isHost: currentLobby?.host_identifier === member.identifier,
   }))
 
-  useEffect(() => {
-    console.log("Current Lobby Host ID:", currentLobby?.host_identifier);
-    console.log("Members:", members);
-  }, [currentLobby, members]);
 
   const gameInfo = currentLobby?.selected_game_info ? {
     display_name: currentLobby.selected_game_info.display_name,

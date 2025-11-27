@@ -76,9 +76,6 @@ export const connectGameSocket = (): Socket => {
     console.error('Game socket connect_error:', err)
   })
 
-  gameSocket.on('connect', () => {
-    console.log("Game socket connected ")
-  })
   return gameSocket
 }
 
