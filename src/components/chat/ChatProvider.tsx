@@ -181,44 +181,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     [],
   )
 
-  const loadInitialConversations = useCallback(async () => {
-    // not sure if needed
-    try {
-      const result = await getInitialChats()
-      const conversations = result?.conversations ?? []
-      setState((prev) => {
-        if (!conversations.length) return prev
-        const targets = { ...prev.targets }
-        conversations.forEach((conversation: Conversation) => {
-          const id = conversation.friend_id
-          const unreadCount = conversation.unread_count ?? 0
-          if (unreadCount > 0) {
-            prev.unreadById = {
-              ...prev.unreadById,
-              [id]: unreadCount,
-            }
-          }
-          targets[id] = {
-            id,
-            nickname: conversation.friend_nickname,
-            avatarUrl: conversation.friend_pfp_path ?? '',
-          }
-        })
-        return {
-          ...prev,
-          targets,
-        }
-      })
-    } catch (error) {
-      console.error('Failed to load initial conversations', error)
-    }
-  }, [])
-
-  // useEffect(() => {
-  //   if (!isAuthenticated) return
-  //   void loadInitialConversations()
-  // }, [loadInitialConversations, isAuthenticated])
-
   const ensureConversation = useCallback(
   (id: string, nickname?: string, avatarUrl?: string) => {
     const key = String(id)
