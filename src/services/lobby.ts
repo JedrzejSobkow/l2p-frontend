@@ -1,11 +1,8 @@
-import { io, type Socket } from 'socket.io-client'
+import { type Socket } from 'socket.io-client'
 import { connectGameSocket, disconnectGameSocket } from './game'
+import { disconnectNamespaceSocket, getNamespaceSocket } from './socket'
 
-
-const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
-const TRIMMED_BASE = API_BASE_URL.replace(/\/$/, '')
-const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/lobby` : '/lobby'
-const SOCKET_PATH = '/socket.io'
+const LOBBY_NAMESPACE = '/lobby'
 
 export type LobbyMember = {
   user_id: number | string
@@ -43,32 +40,19 @@ export type LobbyError = {
 }
 
 let lobbySocket: Socket | null = null
+let lobbyListenersRegistered = false
 
 export const connectLobbySocket = (): Socket => {
-  if (lobbySocket) {
-    if (!lobbySocket.connected) lobbySocket.connect()
-    return lobbySocket
+  lobbySocket = getNamespaceSocket(LOBBY_NAMESPACE)
+  if (!lobbyListenersRegistered) {
+    lobbySocket.on('connect', () => {
+      connectGameSocket()
+    })
+    lobbyListenersRegistered = true
   }
-
-  lobbySocket = io(SOCKET_URL, {
-    path: SOCKET_PATH,
-    transports: ['websocket'],
-    withCredentials: true,
-    reconnection: true,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    reconnectionAttempts: 5,
-    forceNew: false,
-  })
-
-  lobbySocket.on('connect_error', (err: any) => {
-    console.error('Lobby socket connect_error:', err)
-  })
-
-  lobbySocket.on('connect', () => {
-    connectGameSocket()
-  })
-
+  if (!lobbySocket.connected) {
+    lobbySocket.connect()
+  }
   return lobbySocket
 }
 
@@ -76,8 +60,9 @@ export const getLobbySocket = () => lobbySocket
 
 export const disconnectLobbySocket = () => {
   if (lobbySocket) {
-    lobbySocket.disconnect()
+    disconnectNamespaceSocket(LOBBY_NAMESPACE)
     lobbySocket = null
+    lobbyListenersRegistered = false
   }
 
   disconnectGameSocket()
