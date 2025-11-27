@@ -34,12 +34,14 @@ const ClobberView: GameClientModule["GameView"] = ({
 }) => {
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
+  const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
 
-  const board = useMemo(() => parseBoard((rawState as any)?.board), [rawState]);
+  const gameState = useMemo(() => rawState as any, [rawState]);
+  const board = useMemo(() => parseBoard(gameState?.board), [gameState]);
   const rows = board.length;
   const cols = board[0]?.length ?? 0;
 
-  const timing = (rawState as any)?.timing;
+  const timing = gameState?.timing;
   const timeoutSeconds = timing?.timeout_seconds;
   const turnStartTime = timing?.turn_start_time;
 
@@ -72,7 +74,6 @@ const ClobberView: GameClientModule["GameView"] = ({
   }, [timing, timeoutSeconds, turnStartTime]);
 
   const status = useMemo(() => {
-    const gameState = rawState as any;
     if (gameState?.result === "draw") {
       return "Draw!";
     }
@@ -85,7 +86,7 @@ const ClobberView: GameClientModule["GameView"] = ({
     }
     const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_player_id));
     return `${nextPlayer?.nickname ?? "Waiting..."}'s turn`;
-  }, [rawState, players, localPlayerId]);
+  }, [gameState, players, localPlayerId]);
 
   const handleCellClick = (row: number, col: number) => {
     if (!isMyTurn) return;
@@ -95,7 +96,11 @@ const ClobberView: GameClientModule["GameView"] = ({
     console.log(cell)
     if (!cell) return;
 
+    const myColor = gameState?.player_colors?.[localPlayerId];
+
     if (!selectedCell) {
+      // First click - only allow selecting a token that matches the player's color
+      if (cell !== myColor) return;
       setSelectedCell({ row, col });
     } else {
       const { row: fromRow, col: fromCol } = selectedCell;
@@ -108,7 +113,12 @@ const ClobberView: GameClientModule["GameView"] = ({
         onProposeMove(moveData);
         setSelectedCell(null);
       } else {
-        setSelectedCell({ row, col });
+        // Allow reselecting if the clicked cell matches the player's color
+        if (cell === myColor) {
+          setSelectedCell({ row, col });
+        } else {
+          setSelectedCell(null);
+        }
       }
     }
   };
@@ -174,23 +184,44 @@ const ClobberView: GameClientModule["GameView"] = ({
                 const x = BOARD_MARGIN + colIndex * cellSize + cellSize / 2;
                 const y = BOARD_MARGIN + rowIndex * cellSize + cellSize / 2;
                 const isSelected = selectedCell?.row === rowIndex && selectedCell?.col === colIndex;
+                const isHovered = hoveredCell?.row === rowIndex && hoveredCell?.col === colIndex;
+                
+                const myColor = gameState?.player_colors?.[localPlayerId];
+                let canClick = false;
+                
+                if (isMyTurn) {
+                  if (!selectedCell) {
+                    // First click - can click own color
+                    canClick = cell === myColor;
+                  } else {
+                    // Second click - can click adjacent opponent tokens
+                    const { row: fromRow, col: fromCol } = selectedCell;
+                    const isAdjacent =
+                      (Math.abs(rowIndex - fromRow) === 1 && colIndex === fromCol) ||
+                      (Math.abs(colIndex - fromCol) === 1 && rowIndex === fromRow);
+                    canClick = isAdjacent && cell !== myColor;
+                  }
+                }
+                
+                const scale = canClick && isHovered && !isSelected ? 1.15 : 1;
                 const label = cell === "W" ? "○" : "●";
+                
                 return (
-                  <pixiContainer key={`${rowIndex}-${colIndex}`}>
+                  <pixiContainer key={`${rowIndex}-${colIndex}`} x={x} y={y} scale={scale}>
                     <pixiGraphics
                       draw={(g: PixiGraphics) => {
                         g.clear();
                         g.fill({ color: PLAYER_COLORS[cell], alpha: isSelected ? 1 : 0.9 });
-                        g.circle(x, y, TOKEN_RADIUS);
+                        g.circle(0, 0, TOKEN_RADIUS);
                         g.fill();
                         if (isSelected) {
                           g.setStrokeStyle({ width: 3, color: 0xffff00 });
-                          g.circle(x, y, TOKEN_RADIUS);
+                          g.circle(0, 0, TOKEN_RADIUS);
                           g.stroke();
                         }
                       }}
                     />
-                    <pixiText text={label} anchor={0.5} x={x} y={y} style={tokenLabelStyles[cell]} />
+                    <pixiText text={label} anchor={0.5} x={0} y={0} style={tokenLabelStyles[cell]} />
                   </pixiContainer>
                 );
               })
@@ -212,6 +243,8 @@ const ClobberView: GameClientModule["GameView"] = ({
                 key={`${rowIndex}-${colIndex}`}
                 type="button"
                 onClick={() => handleCellClick(rowIndex, colIndex)}
+                onMouseEnter={() => setHoveredCell({ row: rowIndex, col: colIndex })}
+                onMouseLeave={() => setHoveredCell(null)}
                 className="w-full h-full bg-transparent"
               />
             ))
