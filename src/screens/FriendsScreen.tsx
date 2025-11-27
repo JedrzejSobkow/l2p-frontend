@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import ChatWindow from '../components/chat/ChatWindow'
 import FriendsPanel from '../components/friends/FriendsPanel'
 import { useChat } from '../components/chat/ChatProvider'
-import { useFriends } from '../components/friends/FriendsContext'
+import { useFriends, type Friend } from '../components/friends/FriendsContext'
 import type { Friendship } from '../services/friends'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { pfpImage } from '@assets/images'
@@ -26,7 +26,7 @@ const FriendsScreen: FC = () => {
   const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,sendTyping,loadMoreMessages,loadMessages,getHasMore} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
-    return friends.find((friend) => friend.friend_user_id === selectedFriendId) ?? null
+    return friends.find((friend) => friend.id === selectedFriendId) ?? null
   }, [friends, selectedFriendId])
 
   useEffect(() => {
@@ -42,36 +42,36 @@ const FriendsScreen: FC = () => {
 
   useEffect(() => {
     if (!selectedFriendId && friends.length > 0) {
-      setSelectedFriendId(friends[0].friend_user_id)
+      setSelectedFriendId(friends[0].id)
     }
   }, [friends, selectedFriendId])
 
   useEffect(() => {
     if (!selectedFriend) return
-    const id = selectedFriend.friend_user_id
+    const id = selectedFriend.id
     clearUnread(id)
     ensureConversation(
       id,
-      selectedFriend.friend_nickname,
-      selectedFriend.friend_pfp_path,
+      selectedFriend.nickname,
+      selectedFriend.avatarUrl,
     )
     console.log('Loading messages for friend', id)
     loadMessages(id)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
   const activeMessages = selectedFriend
-  ? getMessages(selectedFriend.friend_user_id)
+  ? getMessages(selectedFriend.id)
   : []
 
   useLayoutEffect(() => {
     if (!selectedFriend) return
     if (activeMessages.length === 0) return
-    clearUnread(selectedFriend.friend_user_id)
+    clearUnread(selectedFriend.id)
   },[selectedFriend,activeMessages.length,clearUnread])
 
   const handleSend = async ({ text, attachment }: { text: string; attachment?: File }) => {
     if (!selectedFriend) return
-    await sendMessage(selectedFriend.friend_user_id, { text, attachment })
+    await sendMessage(selectedFriend.id, { text, attachment })
   }
 
   const handleSelectFriend = (friendId: string ) => {
@@ -88,7 +88,7 @@ const FriendsScreen: FC = () => {
     if (!selectedFriend) return
     setRemoving(true)
     try {
-      await removeFriend(selectedFriend.friend_user_id)
+      await removeFriend(selectedFriend.id)
       setSelectedFriendId(null)
       setShowRemoveConfirm(false)
     } catch (error) {
@@ -162,7 +162,7 @@ const FriendsScreen: FC = () => {
           onFriendSelect={handleSelectFriend}
           title="Your Friends"
           className="h-full"
-          selectedFriendId={selectedFriend?.friend_user_id}
+          selectedFriendId={selectedFriend?.id}
         />
       </div>
       <div
@@ -175,15 +175,15 @@ const FriendsScreen: FC = () => {
             <ChatWindow
               messages={activeMessages}
               friendData={{
-                id: selectedFriend.friend_user_id,
-                nickname: selectedFriend.friend_nickname,
-                avatarUrl: selectedFriend.friend_pfp_path || ''
+                id: selectedFriend.id,
+                nickname: selectedFriend.nickname,
+                avatarUrl: selectedFriend.avatarUrl
               }}
-              hasMore={getHasMore(selectedFriend.friend_user_id) ?? true}
-              isTyping={getTyping(selectedFriend.friend_user_id)}
+              hasMore={getHasMore(selectedFriend.id) ?? true}
+              isTyping={getTyping(selectedFriend.id)}
               onSend={handleSend}
               onTyping={sendTyping}
-              onLoadMore={() => loadMoreMessages(selectedFriend.friend_user_id)}
+              onLoadMore={() => loadMoreMessages(selectedFriend.id)}
             />
           </>
         ) : (
@@ -214,7 +214,7 @@ const FriendsScreen: FC = () => {
         description={
           selectedFriend ? (
             <span>
-              You are about to remove <strong>{selectedFriend.friend_nickname}</strong> from your friends list.
+              You are about to remove <strong>{selectedFriend.nickname}</strong> from your friends list.
             </span>
           ) : undefined
         }
@@ -230,42 +230,42 @@ const FriendsScreen: FC = () => {
 export default FriendsScreen
 
 type FriendDetailsPanelProps = {
-  friend: Friendship
+  friend: Friend
   onRemove: () => void
   removing?: boolean
 }
 
 const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove, removing }) => {
-  const joinedAt = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(
-        new Date(friend.created_at),
-      )
-    } catch {
-      return null
-    }
-  }, [friend.created_at])
+  // const joinedAt = useMemo(() => {
+  //   try {
+  //     return new Intl.DateTimeFormat('en', { year: 'numeric', month: 'short', day: 'numeric' }).format(
+  //       new Date(friend.),
+  //     )
+  //   } catch {
+  //     return null
+  //   }
+  // }, [friend.created_at])
 
   return (
     <aside className="flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.98)]">
       <div className="flex flex-col items-center px-6 pb-2 pt-8 text-center">
         <img
-          src={friend.friend_pfp_path || pfpImage}
-          alt={friend.friend_nickname}
+          src={friend.avatarUrl || pfpImage}
+          alt={friend.nickname}
           className="h-20 w-20 rounded-full border border-white/10 object-cover shadow-[0_12px_24px_rgba(0,0,0,0.35)]"
         />
-        <h2 className="mt-4 text-xl font-semibold text-white">{friend.friend_nickname}</h2>
+        <h2 className="mt-4 text-xl font-semibold text-white">{friend.nickname}</h2>
         <span className="mt-2 inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
           Friend
         </span>
-        {joinedAt && (
+        {/* {joinedAt && (
           <span className="mt-1 text-xs text-white/50">Friends since {joinedAt}</span>
-        )}
+        )} */}
       </div>
 
       <div className="px-6 py-4">
         <p className="text-sm leading-relaxed text-white/70">
-          {friend.friend_description || 'This player has not added a profile note yet.'}
+          {friend.description || 'This player has not added a profile note yet.'}
         </p>
       </div>
 

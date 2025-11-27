@@ -61,7 +61,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
 
   const handleFriendSelect = (friendId: string | number) => {
     const normalizedId = String(friendId)
-    const friend = friends.find((val) => String(val.friend_user_id) === normalizedId)
+    const friend = friends.find((val) => val.id === normalizedId)
     if (!friend) {
       onClose()
       return
@@ -75,8 +75,8 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
     } else {
       openChat({
         id: normalizedId,
-        nickname: friend.friend_nickname,
-        avatarUrl: friend.friend_pfp_path,
+        nickname: friend.nickname,
+        avatarUrl: friend.avatarUrl,
       })
     }
     onClose()

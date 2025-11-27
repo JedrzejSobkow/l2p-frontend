@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState, type FC, type ChangeEvent, useEffect } 
 import { FiChevronDown, FiSearch, FiUserPlus } from 'react-icons/fi'
 import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
-import { useFriends } from './FriendsContext'
+import { useFriends, type Friend } from './FriendsContext'
 import type { Friendship, FriendResult } from '../../services/friends'
 import { usePopup } from '../PopupContext'
 import { useChat } from '../chat/ChatProvider'
@@ -99,7 +99,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const filteredFriends = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
     if (!query || mode === 'discover') return friends
-    return friends.filter((friend) => friend.friend_nickname.toLowerCase().includes(query))
+    return friends.filter((friend) => friend.nickname.toLowerCase().includes(query))
   }, [friends, mode, searchTerm])
 
   const selectedKey = normalizeId(selectedFriendId)
@@ -108,13 +108,13 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     setProcessingMap((prev) => ({ ...prev, [id]: value }))
   }
 
-  const handleAcceptRequest = async (friend: Friendship) => {
-    const id = normalizeId(friend.friend_user_id)
+  const handleAcceptRequest = async (friend: Friend) => {
+    const id = friend.id
     if (!id) return
     markProcessing(id, true)
     try {
-      await acceptRequest(friend.friend_user_id)
-      showPopup({type: 'confirmation', message: `Friend request from ${friend.friend_nickname} accepted.`})
+      await acceptRequest(id)
+      showPopup({type: 'confirmation', message: `Friend request from ${friend.nickname} accepted.`})
     } catch (error) {
       console.error('Failed to accept friend request', error)
       showPopup({type: 'error', message: 'Failed to accept friend request. Please try again later.'})
@@ -123,12 +123,12 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     }
   }
 
-  const handleDeclineRequest = async (friend: Friendship) => {
-    const id = normalizeId(friend.friend_user_id)
+  const handleDeclineRequest = async (friend: Friend) => {
+    const id = normalizeId(friend.id)
     if (!id) return
     markProcessing(id, true)
     try {
-      await declineRequest(friend.friend_user_id)
+      await declineRequest(friend.id)
     } catch (error) {
       console.error('Failed to decline friend request', error)
     } finally {
@@ -153,17 +153,17 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   }
 
 
-  const renderFriend = (friend: Friendship) => {
-    const key = normalizeId(friend.friend_user_id) ?? friend.friendship_id.toString()
-    const isSelected = selectedKey ? key === selectedKey : false
+  const renderFriend = (friend: Friend) => {
+    const isSelected = selectedKey ? friend.id === selectedKey : false
+    console.log('Rendering friend:', friend)
     return (
       <FriendCard
-        unreadCount={getUnread?.(key) ?? 0}
-        key={key}
+        unreadCount={getUnread?.(friend.id) ?? 0}
+        key={friend.id}
         {...friend}
         isSelected={isSelected}
-        onClick={() => onFriendSelect?.(friend.friend_user_id)}
-        onMessage={onFriendMessage ? () => onFriendMessage(friend.friend_user_id) : undefined}
+        onClick={() => onFriendSelect?.(friend.id)}
+        onMessage={onFriendMessage ? () => onFriendMessage(friend.id) : undefined}
       />
     )
   }
@@ -311,7 +311,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                 {showIncoming &&
                   (incomingRequests.length > 0 ? (
                     incomingRequests.map((request) => {
-                      const id = normalizeId(request.friend_user_id) ?? request.friendship_id.toString()
+                      const id = request.id
                       const processing = !!(id && processingMap[id])
                       return (
                         <div
@@ -320,14 +320,14 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <img
-                              src={request.friend_pfp_path || pfpImage}
-                              alt={request.friend_nickname}
+                              src={request.avatarUrl}
+                              alt={request.nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-white">{request.friend_nickname}</div>
-                              {request.friend_description && (
-                                <div className="truncate text-xs text-white/60">{request.friend_description}</div>
+                              <div className="truncate text-sm font-semibold text-white">{request.nickname}</div>
+                              {request.description && (
+                                <div className="truncate text-xs text-white/60">{request.description}</div>
                               )}
                             </div>
                           </div>
@@ -378,7 +378,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                 {showOutgoing &&
                   (outgoingRequests.length > 0 ? (
                     outgoingRequests.map((request) => {
-                      const id = normalizeId(request.friend_user_id) ?? request.friendship_id.toString()
+                      const id = request.id
                       const processing = !!(id && processingMap[id])
                       return (
                         <div
@@ -387,14 +387,14 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                         >
                           <div className="flex items-center gap-3 min-w-0">
                             <img
-                              src={request.friend_pfp_path || pfpImage}
-                              alt={request.friend_nickname}
+                              src={request.avatarUrl}
+                              alt={request.nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-white">{request.friend_nickname}</div>
-                              {request.friend_description && (
-                                <div className="truncate text-xs text-white/60">{request.friend_description}</div>
+                              <div className="truncate text-sm font-semibold text-white">{request.nickname}</div>
+                              {request.description && (
+                                <div className="truncate text-xs text-white/60">{request.description}</div>
                               )}
                             </div>
                           </div>
