@@ -164,7 +164,7 @@ export const offFriendStatusUpdated = (callback: (payload: FriendStatusUpdatePay
 export const onInitialFriendStatuses = (callback: (payload: {statuses: FriendStatusUpdatePayload[]}) => void) => {
   socket?.on('initial_friend_statuses', callback)
 }
-export const offInitialFriendStatuses = (callback: (payload: FriendStatusUpdatePayload[]) => void) => {
+export const offInitialFriendStatuses = (callback: (payload: {statuses: FriendStatusUpdatePayload[]}) => void) => {
   if (!socket) return
   socket?.off('initial_friend_statuses', callback)
 }
