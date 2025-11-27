@@ -1,3 +1,4 @@
+import { pfpImage } from '@/assets/images'
 import { request } from '../lib/http'
 export type FriendshipStatus = 'pending' | 'accepted' | 'blocked'
 
@@ -39,6 +40,7 @@ export async function searchFriends(query: string, page: number = 1, pageSize: n
     users: res.users.map((user) => ({
       ...user,
       user_id: String(user.user_id),
+      pfp_path: user.pfp_path ? String(user.pfp_path) : pfpImage,
     })),
   }
 }

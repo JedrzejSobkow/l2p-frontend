@@ -138,10 +138,10 @@ export const offDisconnect = (callback: () => void) => {
   if (!socket) return
   socket?.off('disconnect', callback)
 }
-export const onFriendRemoved = (callback: (payload: { friend_user_id: string }) => void) => {
+export const onFriendRemoved = (callback: (payload: { friend_id: string }) => void) => {
   socket?.on('friend_removed', callback)
 }
-export const offFriendRemoved = (callback: (payload: { friend_user_id: string }) => void) => {
+export const offFriendRemoved = (callback: (payload: { friend_id: string }) => void) => {
   if (!socket) return
   socket?.off('friend_removed', callback)
 }

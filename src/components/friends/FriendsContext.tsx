@@ -67,10 +67,10 @@ type FriendsContextValue = {
   friends: Friend[]
   incomingRequests: Friend[]
   outgoingRequests: Friend[]
-  sendRequest: (friend_user_id: number | string) => Promise<void>
-  acceptRequest: (friend_user_id: number | string) => Promise<void>
-  declineRequest: (friend_user_id: number | string) => Promise<void>
-  removeFriend: (friend_user_id: number | string) => Promise<void>
+  sendRequest: (friendId: number | string, nickname: string, avatarUrl: string) => Promise<void>
+  acceptRequest: (friendId: number | string) => Promise<void>
+  declineRequest: (friendId: number | string) => Promise<void>
+  removeFriend: (friendId: number | string) => Promise<void>
   searchUsers: (query: string, page?: number, pageSize?: number) => Promise<SearchFriendsPayload>
 }
 
@@ -181,8 +181,8 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
     }))
   }, [])
 
-  const handleFriendRemoved = useCallback((payload: { friend_user_id: number | string }) => {
-    const key = String(payload.friend_user_id)
+  const handleFriendRemoved = useCallback((payload: { friend_id: number | string }) => {
+    const key = String(payload.friend_id)
     setState((prev) => {
       const newFriendsById = { ...prev.friendsById }
       delete newFriendsById[key]
@@ -226,33 +226,47 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
     }))
   }, [])
 
-  const removeFriendship = useCallback((friend_user_id: number | string) => {
-    const key = String(friend_user_id)
-    setState((prev) => {
-      const newFriendsById = { ...prev.friendsById }
-      delete newFriendsById[key]
-      return { friendsById: newFriendsById }
-    })
+  // const removeFriendship = useCallback((friend_user_id: number | string) => {
+  //   const key = String(friend_user_id)
+  //   setState((prev) => {
+  //     const newFriendsById = { ...prev.friendsById }
+  //     delete newFriendsById[key]
+  //     return { friendsById: newFriendsById }
+  //   })
 
-  }, [])
+  // }, [])
 
-  const sendRequestHandler = useCallback(async (friend_user_id: number | string) => {
-    await sendFriendRequest(friend_user_id)
+  const sendRequestHandler = useCallback(async (friendId: number | string, nickname: string, avatarUrl: string) => {
+    await sendFriendRequest(friendId)
+    const key = String(friendId)
+    setState((prev) => ({
+      friendsById: {
+        ...prev.friendsById,
+        [key]: {
+          ...prev.friendsById[key],
+          id: key,
+          nickname: nickname,
+          avatarUrl: avatarUrl || pfpImage,
+          friendShipStatus: 'pending',
+          isRequester: true,
+        }
+      },
+    }))
   }, [])
 
   const acceptRequestHandler = useCallback(async (friend_user_id: number | string) => {
     await acceptFriendRequest(friend_user_id)
+
+            
   }, [])
 
   const declineRequestHandler = useCallback(async (friend_user_id: number | string) => {
     await declineFriendRequest(friend_user_id)
-    removeFriendship(friend_user_id)
-  }, [removeFriendship])
+  }, [])
 
   const removeFriendHandler = useCallback(async (friend_user_id: number | string) => {
     await deleteFriend(friend_user_id)
-    removeFriendship(friend_user_id)
-  }, [removeFriendship])
+  }, [])
 
   const searchUsersHandler = useCallback(
     (query: string, page?: number, pageSize?: number) =>
