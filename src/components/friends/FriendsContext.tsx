@@ -44,7 +44,7 @@ export type Friend = {
   id: string,
   nickname: string,
   avatarUrl: string,
-  description: string,
+  description: string | null,
   friendShipStatus: FriendshipStatus,
   isRequester: boolean,
   userStatus?: UserStatus,
@@ -145,7 +145,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
           id: String(friendShip.friend_user_id),
           nickname: String(friendShip.friend_nickname),
           avatarUrl: friendShip.friend_pfp_path || pfpImage,
-          description: String(friendShip.friend_description),
+          description: friendShip.friend_description,
           friendShipStatus: friendShip.status,
           isRequester: Boolean(friendShip.is_requester),
         }
@@ -171,6 +171,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         ...prev.friendsById,
         [friendId]: {
           ...prev.friendsById[friendId],
+          nickname: payload.friend_nickname,
           lastMessageTime: payload.last_message_time,
           lastMessageContent: payload.last_message_content ?? '',
           lastMessageIsMine: payload.last_message_is_mine,

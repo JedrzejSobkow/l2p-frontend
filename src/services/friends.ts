@@ -6,7 +6,7 @@ export type Friendship = {
   friend_user_id: string
   friend_nickname: string
   friend_pfp_path: string
-  friend_description?: string
+  friend_description: string | null
   status: FriendshipStatus
   created_at: string
   is_requester: boolean
@@ -81,7 +81,7 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
   return res.map(friend => ({
     is_requester: Boolean(friend.is_requester),
     created_at: String(friend.created_at),
-    friend_description: String(friend.friend_description),
+    friend_description: friend.friend_description,
     friend_nickname: String(friend.friend_nickname),
     status: friend.status as FriendshipStatus,
     friendship_id: String(friend.friendship_id),
