@@ -152,7 +152,10 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         setState((prev) => ({
           friendsById: {
             ...prev.friendsById,
-            [friend.id]: friend,
+            [friend.id]: {
+              ...prev.friendsById[friend.id],
+              ...
+              friend},
           },
         }))
       })
