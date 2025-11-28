@@ -154,7 +154,17 @@ export const emitUpdateGameRules = (lobbyCode: string, rules: Record<string, any
   lobbySocket?.emit('update_game_rules', { lobby_code: lobbyCode, rules })
 }
 
+export const emitInviteFriend = (lobbyCode: string, friendUserId: number | string) => {
+  lobbySocket?.emit('invite_friend', { lobby_code: lobbyCode, friend_id: friendUserId })
+}
+
 // Listeners
+export const onLobbyInviteSent = (cb: (data: {message: string}) => void) => 
+  lobbySocket?.on('lobby_invite_sent', cb)
+export const offLobbyInviteSent = (cb?: (data: {message: string}) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('lobby_invite_sent', cb) : lobbySocket.off('lobby_invite_sent')
+}
 export const onLobbyCreated = (cb: (data: { lobby_code: string }) => void) => 
   lobbySocket?.on('lobby_created', cb)
 export const offLobbyCreated = (cb?: (data: { lobby_code: string }) => void) => {

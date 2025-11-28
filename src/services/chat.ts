@@ -6,6 +6,18 @@ const CHAT_NAMESPACE = '/chat'
 
 export type UserStatus = 'online' | 'offline' | 'in_lobby' | 'in_game'
 
+
+export type LobbyInvite = {
+  lobby_code: string
+  lobby_name: string
+  inviter_id: string
+  inviter_nickname: string
+  inviter_pfp_path: string
+  game_name: string
+  current_players: number
+  max_players: number
+}
+
 export type FriendStatusUpdatePayload = { 
   user_id: string; 
   status: UserStatus, 
@@ -188,6 +200,12 @@ export const onConversationUpdated = (callback: (payload: ConversationUpdatedEve
 export const offConversationUpdated = (callback: (payload: ConversationUpdatedEvent) => void) => {
   if (!socket) return
   socket?.off('conversation_updated', callback)
+}
+export const onLobbyInviteReceived = (cb: (data: LobbyInvite) => void) => 
+  socket?.on('lobby_invite_received', cb)
+export const offLobbyInviteReceived = (cb?: (data: LobbyInvite) => void) => {
+  if (!socket) return
+  cb ? socket.off('lobby_invite_received', cb) : socket.off('lobby_invite_received')
 }
 
 export const sendMessage = (payload: SendChatMessagePayload) => {
