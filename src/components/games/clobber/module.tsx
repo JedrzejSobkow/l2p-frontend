@@ -67,18 +67,10 @@ const ClobberView: GameClientModule["GameView"] = ({
 
   const { boardWidth, boardHeight, cellSize } = useMemo(() => {
     const availableWidth = containerWidth * 0.8;
-    console.log("AVAILABLE WIDTH: ")
-    console.log(availableWidth)
     const calculatedCellSize = (availableWidth - (cols + 1) * LINE_WIDTH) / cols;
-    console.log("CALCULATED CELL SIZE: ")
-    console.log(calculatedCellSize)
     const calculatedBoardWidth = cols * calculatedCellSize + (LINE_WIDTH * (cols + 1));
-    console.log("CALCULATED BOARD WIDTH: ")
-    console.log(calculatedBoardWidth)
     const calculatedBoardHeight = rows * calculatedCellSize + (LINE_WIDTH * (rows + 1));
-    console.log("CALCULATED BOARD HEIGHT: ")
-    console.log(calculatedBoardHeight)
-    
+
     return {
       boardWidth: calculatedBoardWidth,
       boardHeight: calculatedBoardHeight,
@@ -107,18 +99,29 @@ const ClobberView: GameClientModule["GameView"] = ({
     }
   }, [timing, timeoutSeconds, turnStartTime]);
 
+  useEffect(() => {
+    console.log(hoveredCell)
+  }, [hoveredCell]);
+
+  const currentTurnColor = useMemo(() => {
+    if (String(gameState?.current_turn_identifier) === localPlayerId) {
+      return gameState?.player_colors?.[localPlayerId];
+    }
+    return gameState?.player_colors?.[gameState?.current_turn_identifier];
+  }, [gameState, localPlayerId]);
+
   const status = useMemo(() => {
     if (gameState?.result === "draw") {
       return "Draw!";
     }
-    if (gameState?.winner_id) {
-      const winner = players.find((player) => String(player.userId) === String(gameState.winner_id));
+    if (gameState?.winner_identifier) {
+      const winner = players.find((player) => String(player.userId) === String(gameState.winner_identifier));
       return `${winner?.nickname ?? "Unknown player"} wins!`;
     }
-    if (String(gameState?.current_turn_player_id) === localPlayerId) {
+    if (String(gameState?.current_turn_identifier) === localPlayerId) {
       return "Your turn";
     }
-    const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_player_id));
+    const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_identifier));
     return `${nextPlayer?.nickname ?? "Waiting..."}'s turn`;
   }, [gameState, players, localPlayerId]);
 
@@ -126,8 +129,6 @@ const ClobberView: GameClientModule["GameView"] = ({
     if (!isMyTurn) return;
 
     const cell = board[row]?.[col];
-    console.log("CLICKED")
-    console.log(cell)
     if (!cell) return;
 
     const myColor = gameState?.player_colors?.[localPlayerId];
@@ -203,16 +204,10 @@ const ClobberView: GameClientModule["GameView"] = ({
         <div 
           className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
           style={{ 
-            backgroundColor: String(gameState?.current_turn_player_id) === localPlayerId 
-              ? (gameState?.player_colors?.[localPlayerId] === "W" ? "#ffffff" : "#ff8906")
-              : (gameState?.player_colors?.[gameState?.current_turn_player_id] === "W" ? "#ffffff" : "#ff8906"),
-            color: String(gameState?.current_turn_player_id) === localPlayerId 
-              ? (gameState?.player_colors?.[localPlayerId] === "W" ? "#aaaaaa" : "#8b5010")
-              : (gameState?.player_colors?.[gameState?.current_turn_player_id] === "W" ? "#aaaaaa" : "#8b5010"),
+            backgroundColor: currentTurnColor === "W" ? "#ffffff" : "#ff8906",
+            color: currentTurnColor === "W" ? "#aaaaaa" : "#8b5010",
             border: "2px solid",
-            borderColor: String(gameState?.current_turn_player_id) === localPlayerId 
-              ? (gameState?.player_colors?.[localPlayerId] === "W" ? "#aaaaaa" : "#8b5010")
-              : (gameState?.player_colors?.[gameState?.current_turn_player_id] === "W" ? "#aaaaaa" : "#8b5010")
+            borderColor: currentTurnColor === "W" ? "#aaaaaa" : "#8b5010"
           }}
         >
           ○
