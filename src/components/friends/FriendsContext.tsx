@@ -13,6 +13,8 @@ import {
   declineFriendRequest,
   deleteFriend,
   getFriendsList,
+  getFriendStatus,
+  getUser,
   searchFriends,
   sendFriendRequest,
   type Friendship,
@@ -37,8 +39,12 @@ import {
   type FriendStatusUpdatePayload,
   onInitialFriendStatuses,
   type Conversation,
-  offInitialFriendStatuses
+  offInitialFriendStatuses,
+  onFriendRequestAccepted,
+  type FriendRequestAccepted,
+  offFriendRequestAccepted
 } from '@/services/chat'
+import { off } from 'process'
 
 export type Friend = {
   id: string,
@@ -68,7 +74,7 @@ type FriendsContextValue = {
   friends: Friend[]
   incomingRequests: Friend[]
   outgoingRequests: Friend[]
-  sendRequest: (friendId: number | string, nickname: string, avatarUrl: string) => Promise<void>
+  sendRequest: (friendId: number | string, nickname: string, avatarUrl: string, description: string) => Promise<void>
   acceptRequest: (friendId: number | string) => Promise<void>
   declineRequest: (friendId: number | string) => Promise<void>
   removeFriend: (friendId: number | string) => Promise<void>
@@ -193,7 +199,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
 
   const handleFriendRequestReceived = useCallback((payload: FriendRequestReceivedPayload) => {
     const key = String(payload.sender_id)
-    console.log('Received friend request from:', payload)
     setState((prev) => ({
       friendsById: {
         ...prev.friendsById,
@@ -237,7 +242,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
 
   // }, [])
 
-  const sendRequestHandler = useCallback(async (friendId: number | string, nickname: string, avatarUrl: string) => {
+  const sendRequestHandler = useCallback(async (friendId: number | string, nickname: string, avatarUrl: string, description: string) => {
     await sendFriendRequest(friendId)
     const key = String(friendId)
     setState((prev) => ({
@@ -250,6 +255,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
           avatarUrl: avatarUrl || pfpImage,
           friendShipStatus: 'pending',
           isRequester: true,
+          description: description || null,
         }
       },
     }))
@@ -257,6 +263,23 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
 
   const acceptRequestHandler = useCallback(async (friend_user_id: number | string) => {
     await acceptFriendRequest(friend_user_id)
+    const key = String(friend_user_id)
+    const status = await getFriendStatus(key)
+    setState((prev) => ({
+      friendsById: {
+        ...prev.friendsById,
+        [key]: {
+          ...prev.friendsById[key],
+          friendShipStatus: 'accepted',
+          isRequester: false,
+          userStatus: status.status as UserStatus,
+          gameName: status.game_name,
+          lobbyCode: status.lobby_code,
+          lobbyFilledSlots: status.lobby_filled_slots,
+          lobbyMaxSlots: status.lobby_max_slots,
+        }
+      },
+    }))
 
             
   }, [])
@@ -267,6 +290,29 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
 
   const removeFriendHandler = useCallback(async (friend_user_id: number | string) => {
     await deleteFriend(friend_user_id)
+  }, [])
+
+  const handleFriendRequestAccepted = useCallback(async (payload: FriendRequestAccepted) => {
+    const key = String(payload.accepter_id)
+    const friendStatus = await getFriendStatus(key)
+    setState((prev) => ({
+      friendsById: {
+        ...prev.friendsById,
+        [key]: {
+          ...prev.friendsById[key],
+          id: key,
+          nickname: payload.accepter_nickname,
+          avatarUrl: payload.accepter_pfp_path || pfpImage,
+          friendShipStatus: 'accepted',
+          isRequester: false,
+          userStatus: friendStatus.status as UserStatus,
+          gameName: friendStatus.game_name,
+          lobbyCode: friendStatus.lobby_code,
+          lobbyFilledSlots: friendStatus.lobby_filled_slots,
+          lobbyMaxSlots: friendStatus.lobby_max_slots,
+        }
+      },
+    }))
   }, [])
 
   const searchUsersHandler = useCallback(
@@ -327,6 +373,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         onFriendRequestReceived(handleFriendRequestReceived)
         onFriendStatusUpdated(handleFriendStatusUpdated)
         onInitialFriendStatuses(handleInitialFriendStatuses)
+        onFriendRequestAccepted(handleFriendRequestAccepted)
       }
       catch (error) {
         console.error('Error initializing friends context:', error)
@@ -347,6 +394,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       offFriendRequestReceived(handleFriendRequestReceived)
       offFriendStatusUpdated(handleFriendStatusUpdated)
       offInitialFriendStatuses(handleInitialFriendStatuses)
+      offFriendRequestAccepted(handleFriendRequestAccepted)
     }
   }, [isAuthenticated])
 

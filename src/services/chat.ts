@@ -7,6 +7,12 @@ const CHAT_NAMESPACE = '/chat'
 export type UserStatus = 'online' | 'offline' | 'in_lobby' | 'in_game'
 
 
+export type FriendRequestAccepted = {
+  accepter_id: string, 
+  accepter_nickname: string, 
+  accepter_pfp_path?: string | null
+}
+
 export type LobbyInvite = {
   lobby_code: string
   lobby_name: string
@@ -207,6 +213,13 @@ export const onLobbyInviteReceived = (cb: (data: LobbyInvite) => void) =>
 export const offLobbyInviteReceived = (cb?: (data: LobbyInvite) => void) => {
   if (!socket) return
   cb ? socket.off('lobby_invite_received', cb) : socket.off('lobby_invite_received')
+}
+
+export const onFriendRequestAccepted = (cb: (data: FriendRequestAccepted ) => void) =>
+  socket?.on('friend_request_accepted', cb)
+export const offFriendRequestAccepted = (cb?: (data: FriendRequestAccepted) => void) => {
+  if (!socket) return
+  cb ? socket.off('friend_request_accepted', cb) : socket.off('friend_request_accepted')
 }
 
 export const sendMessage = (payload: SendChatMessagePayload) => {

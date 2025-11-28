@@ -1,5 +1,6 @@
 import { pfpImage } from '@/assets/images'
 import { request } from '../lib/http'
+import type { User } from './auth'
 export type FriendshipStatus = 'pending' | 'accepted' | 'blocked'
 
 export type Friendship = {
@@ -26,6 +27,15 @@ export type SearchFriendsPayload = {
   page: number
   page_size: number
   total_pages: number
+}
+
+export type FriendStatusPayload = {
+  user_id: string
+  status: 'online' | 'offline' | 'in_lobby' | 'in_game'
+  game_name?: string
+  lobby_code?: string
+  lobby_filled_slots?: number
+  lobby_max_slots?: number
 }
 
 export async function searchFriends(query: string, page: number = 1, pageSize: number = 20): Promise<SearchFriendsPayload> {
@@ -90,4 +100,20 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
     friend_user_id: String(friend.friend_user_id),
     friend_pfp_path: friend.friend_pfp_path
   }))
+}
+
+export async function getFriendsStatuses(): Promise<FriendStatusPayload[]> {
+  return await request<FriendStatusPayload[]>(`/status/friends`, { method: 'GET', auth: true })
+}
+
+export async function getFriendStatus(friendId: string): Promise<FriendStatusPayload> {
+  return await request<FriendStatusPayload>(`/status/users/${friendId}`, { method: 'GET', auth: true })
+}
+
+export async function getUser(id: string): Promise<User> {
+  const user = await request<User>(`/users/${id}`)
+  return {
+    ...user,
+    id: String(id),
+  }
 }

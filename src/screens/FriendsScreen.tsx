@@ -46,8 +46,11 @@ const FriendsScreen: FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLobby, gameState,joinLobby } = useLobby()
-  const initialFriendId =
-    (location.state as { friendId?: string } | null)?.friendId ?? null
+  const initialFriendId = useMemo(() => {
+    const state = location.state as { friendId?: string } | null
+    if (friends.length === 0) return null
+    return state?.friendId ?? null
+  }, [location.state,friends.length])
 
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(initialFriendId)
   const [removing, setRemoving] = useState(false)
@@ -58,7 +61,10 @@ const FriendsScreen: FC = () => {
   const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,sendTyping,loadMoreMessages,loadMessages,getHasMore} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
-    return friendsById[selectedFriendId]
+    
+    const result =  friendsById[selectedFriendId]
+    if (result && result.friendShipStatus !== 'accepted') return null
+    return result
   }, [friendsById, selectedFriendId])
 
   const statusInfo = selectedFriend ? getStatusInfo(selectedFriend) : null
@@ -81,25 +87,25 @@ const FriendsScreen: FC = () => {
 
   useEffect(() => {
     if (!selectedFriend) return
-    if (!selectedFriend.id) return
-    clearUnread(selectedFriend.id)
-    ensureConversation(selectedFriend.id)
-    loadMessages(selectedFriend.id)
+    if (!selectedFriendId) return
+    clearUnread(selectedFriendId)
+    ensureConversation(selectedFriendId)
+    loadMessages(selectedFriendId)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
-  const activeMessages = selectedFriend
-  ? getMessages(selectedFriend.id)
+  const activeMessages = selectedFriendId
+  ? getMessages(selectedFriendId)
   : []
 
   useLayoutEffect(() => {
-    if (!selectedFriend) return
+    if (!selectedFriendId) return
     if (activeMessages.length === 0) return
-    clearUnread(selectedFriend.id)
-  },[selectedFriend,activeMessages.length,clearUnread])
+    clearUnread(selectedFriendId)
+  },[selectedFriendId,activeMessages.length,clearUnread])
 
   const handleSend = async ({ text, attachment }: { text: string; attachment?: File }) => {
-    if (!selectedFriend) return
-    await sendMessage(selectedFriend.id, { text, attachment })
+    if (!selectedFriendId) return
+    await sendMessage(selectedFriendId, { text, attachment })
   }
 
   const handleSelectFriend = (friendId: string ) => {
@@ -108,17 +114,18 @@ const FriendsScreen: FC = () => {
   }
 
   const handleRemoveRequest = () => {
-    if (!selectedFriend) return
+    if (!selectedFriendId) return
     setShowRemoveConfirm(true)
   }
 
   const handleConfirmRemove = async () => {
-    if (!selectedFriend) return
+    if (!selectedFriendId) return
     setRemoving(true)
     try {
-      await removeFriend(selectedFriend.id)
+      await removeFriend(selectedFriendId)
       setSelectedFriendId(null)
       setShowRemoveConfirm(false)
+      setActiveMobileTab('friends')
     } catch (error) {
       console.error('Failed to remove friend', error)
     } finally {
@@ -130,7 +137,7 @@ const FriendsScreen: FC = () => {
     if (removing) return
     setShowRemoveConfirm(false)
   }
-
+  console.log('Rendering FriendsScreen with selectedFriendId:', selectedFriend)
   return (
     <div className="flex flex-col gap-4 bg-background px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
       {currentLobby && (
@@ -163,7 +170,7 @@ const FriendsScreen: FC = () => {
             role="tab"
             aria-selected={activeMobileTab === 'chat'}
             onClick={() => selectedFriend && setActiveMobileTab('chat')}
-            disabled={!selectedFriend}
+            disabled={!selectedFriendId}
             className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
               activeMobileTab === 'chat' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
             } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
@@ -175,7 +182,7 @@ const FriendsScreen: FC = () => {
             role="tab"
             aria-selected={activeMobileTab === 'details'}
             onClick={() => selectedFriend && setActiveMobileTab('details')}
-            disabled={!selectedFriend}
+            disabled={!selectedFriendId}
             className={`rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
               activeMobileTab === 'details' ? 'bg-button text-white' : 'text-white/70 hover:text-white'
             } ${!selectedFriend ? 'cursor-not-allowed opacity-40' : ''}`}
@@ -209,15 +216,15 @@ const FriendsScreen: FC = () => {
               <ChatWindow
                 messages={activeMessages}
                 friendData={{
-                  id: selectedFriend.id,
+                  id: selectedFriendId!,
                   nickname: selectedFriend.nickname,
                   avatarUrl: selectedFriend.avatarUrl
                 }}
-                hasMore={getHasMore(selectedFriend.id) ?? true}
-                isTyping={getTyping(selectedFriend.id)}
+                hasMore={getHasMore(selectedFriendId!) ?? true}
+                isTyping={getTyping(selectedFriendId!)}
                 onSend={handleSend}
                 onTyping={sendTyping}
-                onLoadMore={() => loadMoreMessages(selectedFriend.id)}
+                onLoadMore={() => loadMoreMessages(selectedFriendId!)}
                 onJoinLobby={joinLobby}
                 className='rounded-none border-0 h-full'
               />
@@ -315,7 +322,7 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove,onLo
 
       <div className="px-6 py-4">
         <p className="text-sm leading-relaxed text-white/70">
-          {friend.description === null ? 'This player has not added a profile note yet.': friend.description}
+          {!friend.description || friend.description.length === 0 ? 'This player has not added a profile note yet.': friend.description}
         </p>
       </div>
 

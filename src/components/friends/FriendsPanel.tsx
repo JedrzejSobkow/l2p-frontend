@@ -143,7 +143,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     if (!id) return
     markProcessing(id, true)
     try {
-      await sendRequest(user.user_id, user.nickname, user.pfp_path || '')
+      await sendRequest(user.user_id, user.nickname, user.pfp_path || '',user.description || '')
       showPopup({type: 'confirmation', message: `Friend request sent to ${user.nickname}.`})
       setSearchResults((prev) => prev.filter((item) => normalizeId(item.user_id) !== id))
     } catch (error: any) {
@@ -404,19 +404,20 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                     outgoingRequests.map((request) => {
                       const id = request.id
                       const processing = !!(id && processingMap[id])
+                      console.log(request)
                       return (
                         <div
                           key={id}
                           className="flex items-center justify-between rounded-2xl border border-white/10 bg-[rgba(31,30,43,0.95)] px-3 py-2"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0">
                             <img
                               src={request.avatarUrl}
                               alt={request.nickname}
                               className="h-10 w-10 rounded-full object-cover"
                             />
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-white">{request.nickname}</div>
+                              <span className="truncate text-sm font-semibold text-headline">{request.nickname}</span>
                               {request.description && (
                                 <div className="truncate text-xs text-white/60">{request.description}</div>
                               )}
