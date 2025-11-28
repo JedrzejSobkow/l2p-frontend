@@ -13,7 +13,7 @@ const ChatScreenHeader: FC<ChatScreenHeaderProps> = ({
     avatarUrl, 
     statusInfo: { containerClass, label: statusText, dotClass } 
 }) => (
-  <header className="flex h-20 items-center justify-between border-b border-white/10 bg-background-secondary/40 px-6">
+  <header className="flex h-20 items-center justify-between border-b border-white/10 bg-background-secondary px-6">
     <div className="flex items-center gap-4">
       <img 
         src={avatarUrl || pfpImage} 
@@ -22,7 +22,7 @@ const ChatScreenHeader: FC<ChatScreenHeaderProps> = ({
       />
       <div>
         <h2 className="text-lg font-bold text-white">{nickname}</h2>
-        {statusText && <p className="text-sm text-white/50">{statusText}</p>}
+        {statusText && <p className={"text-sm " + containerClass + " bg-white/0"}>{statusText}</p>}
       </div>
     </div>
   </header>

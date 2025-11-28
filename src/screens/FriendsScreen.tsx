@@ -21,8 +21,8 @@ const getStatusInfo = (friend: Friend) => {
       }
     case 'in_game':
       return {
-        containerClass: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
-        dotClass: 'bg-purple-500',
+        containerClass: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+        dotClass: 'bg-orange-500',
         label: gameName ? `Playing ${gameName}` : 'In Game'
       }
     case 'in_lobby':
@@ -34,7 +34,7 @@ const getStatusInfo = (friend: Friend) => {
     case 'offline':
     default:
       return {
-        containerClass: 'bg-white/5 border-white/10 text-white/40',
+        containerClass: 'border-white/10 text-white/40',
         dotClass: 'bg-white/40',
         label: 'Offline'
       }

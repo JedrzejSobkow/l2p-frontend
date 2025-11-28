@@ -36,13 +36,12 @@ const ChatDock = () => {
   if (!isAuthenticated) return null
 
   const openSessions = sessions.filter((s) => !s.minimized)
-  const minimizedSessions = sessions.filter((s) => s.minimized)
+  const baseMinimized = sessions.filter((s) => s.minimized)
 
-
-  const visibleOpen = openSessions.slice(0, maxVisible)
-  const overflow = openSessions.slice(maxVisible) 
-  
-  const allMinimized = [...minimizedSessions, ...overflow]
+  const overflowCount = Math.max(0, openSessions.length - maxVisible)
+  const overflow = overflowCount > 0 ? openSessions.slice(0, overflowCount) : []
+  const visibleOpen = overflowCount > 0 ? openSessions.slice(overflowCount) : openSessions
+  const minimized = [...baseMinimized, ...overflow]
 
   const shouldHide = location.pathname.startsWith('/friends')
   if (shouldHide) return null
@@ -109,9 +108,9 @@ const ChatDock = () => {
           </div>
         )})}
       </div>
-      {allMinimized.length > 0 && (
+      {minimized.length > 0 && (
         <div className="group pointer-events-auto flex flex-col-reverse gap-2 pb-4 pl-4 items-end">
-          {allMinimized.map((s) => {
+          {minimized.map((s) => {
             const friend = friendsById[s.id]
             const unread = chat.getUnread(friend.id)
             return (

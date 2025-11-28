@@ -78,7 +78,7 @@ const normalizeTimestamp = (timestamp: string) => {
 const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
   const result = {
     id: String(message.id),
-    senderId: message.temp_id !== null ? String(message.temp_id) : String(message.sender_id),
+    senderId: String(message.sender_id),
     senderNickname: message.sender_nickname,
     content: message.content,
     imageUrl: message.image_url,
