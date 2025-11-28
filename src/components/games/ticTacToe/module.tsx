@@ -72,7 +72,7 @@ const TicTacToeView: GameClientModule["GameView"] = ({
       const myColor = mySymbol === "X" ? "#ffa94d" : "#74c0fc";
       return (
         <>
-          Your turn <span style={{ color: myColor }}>{mySymbol}</span>
+          <span style={{ color: myColor }}>{mySymbol}</span> Your turn
         </>
       );
     }
@@ -81,8 +81,8 @@ const TicTacToeView: GameClientModule["GameView"] = ({
     const nextColor = nextSymbol === "X" ? "#ffa94d" : "#74c0fc";
     return (
       <>
-        {nextPlayer?.nickname ?? "Waiting..."}'s turn{" "}
         <span style={{ color: nextColor }}>{nextSymbol}</span>
+        {" "}{nextPlayer?.nickname ?? " Waiting..."}'s turn
       </>
     );
   }, [rawState, players, localPlayerId]);
