@@ -199,14 +199,33 @@ const ClobberView: GameClientModule["GameView"] = ({
 
   return (
     <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
-      <div className="text-center text-lg font-semibold text-white">
-        {status}
-        <br />
-        {remainingTime !== null && (
-          <span className="text-sm text-gray-400">
-            {`Time left: ${Math.floor(remainingTime)}s`}
-          </span>
-        )}
+      <div className="text-center text-lg font-semibold text-white flex items-center justify-center gap-3">
+        <div 
+          className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
+          style={{ 
+            backgroundColor: String(gameState?.current_turn_player_id) === localPlayerId 
+              ? (gameState?.player_colors?.[localPlayerId] === "W" ? "#ffffff" : "#ff8906")
+              : (gameState?.player_colors?.[gameState?.current_turn_player_id] === "W" ? "#ffffff" : "#ff8906"),
+            color: String(gameState?.current_turn_player_id) === localPlayerId 
+              ? (gameState?.player_colors?.[localPlayerId] === "W" ? "#aaaaaa" : "#8b5010")
+              : (gameState?.player_colors?.[gameState?.current_turn_player_id] === "W" ? "#aaaaaa" : "#8b5010"),
+            border: "2px solid",
+            borderColor: String(gameState?.current_turn_player_id) === localPlayerId 
+              ? (gameState?.player_colors?.[localPlayerId] === "W" ? "#aaaaaa" : "#8b5010")
+              : (gameState?.player_colors?.[gameState?.current_turn_player_id] === "W" ? "#aaaaaa" : "#8b5010")
+          }}
+        >
+          ○
+        </div>
+        <div>
+          {status}
+          <br />
+          {remainingTime !== null && (
+            <span className="text-sm text-gray-400">
+              {`Time left: ${Math.floor(remainingTime)}s`}
+            </span>
+          )}
+        </div>
       </div>
       {containerWidth > 0 && boardWidth > 0 && (
         <div className="relative" style={{ width: boardWidth, height: boardHeight }}>
