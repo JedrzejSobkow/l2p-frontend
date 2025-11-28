@@ -167,14 +167,14 @@ const ClobberView: GameClientModule["GameView"] = ({
     const startX = 0;
     const startY = 0;
     for (let r = 0; r <= rows; r += 1) {
-      const y = startY + r * (cellSize + LINE_WIDTH) + LINE_WIDTH;
+      const y = startY + r * (cellSize + LINE_WIDTH) ;
       g.moveTo(startX, y);
-      g.lineTo(startX + cols * (cellSize + LINE_WIDTH) + LINE_WIDTH, y);
+      g.lineTo(startX + cols * (cellSize + LINE_WIDTH), y);
     }
     for (let c = 0; c <= cols; c += 1) {
-      const x = startX + c * (cellSize + LINE_WIDTH) + LINE_WIDTH;
+      const x = startX + c * (cellSize + LINE_WIDTH);
       g.moveTo(x, startY);
-      g.lineTo(x, startY + rows * (cellSize + LINE_WIDTH) + LINE_WIDTH);
+      g.lineTo(x, startY + rows * (cellSize + LINE_WIDTH));
     }
     g.stroke();
   };
@@ -182,13 +182,13 @@ const ClobberView: GameClientModule["GameView"] = ({
   const tokenLabelStyles = useMemo(
     () => ({
       W: new TextStyle({
-        fill: 0x000000,
+        fill: 0xaaaaaa,
         fontFamily: "Poppins, Inter, sans-serif",
         fontWeight: "700",
         fontSize: fontSize,
       }),
       B: new TextStyle({
-        fill: 0xffffff,
+        fill: 0x8b5010,
         fontFamily: "Poppins, Inter, sans-serif",
         fontWeight: "700",
         fontSize: fontSize,
@@ -244,7 +244,7 @@ const ClobberView: GameClientModule["GameView"] = ({
                   }
                   
                   const scale = canClick && isHovered && !isSelected ? 1.25 : 1;
-                  const label = cell === "W" ? "○" : "●";
+                  const label = "○"
                   
                   return (
                     <pixiContainer key={`${rowIndex}-${colIndex}`} x={x} y={y} scale={scale}>
@@ -254,8 +254,15 @@ const ClobberView: GameClientModule["GameView"] = ({
                           g.fill({ color: PLAYER_COLORS[cell], alpha: isSelected ? 1 : 0.9 });
                           g.circle(0, 0, tokenRadius);
                           g.fill();
+                          
+                          // Border around token
+                          const borderColor = cell === "W" ? 0xaaaaaa : 0x8b5010;
+                          g.setStrokeStyle({ width: 3, color: borderColor, alpha: 1 });
+                          g.circle(0, 0, tokenRadius);
+                          g.stroke();
+                          
                           if (isSelected) {
-                            g.setStrokeStyle({ width: 3, color: 0xffff00 });
+                            g.setStrokeStyle({ width: 3, color: 0x2abd69 });
                             g.circle(0, 0, tokenRadius);
                             g.stroke();
                           }
@@ -285,7 +292,7 @@ const ClobberView: GameClientModule["GameView"] = ({
                   onClick={() => handleCellClick(rowIndex, colIndex)}
                   onMouseEnter={() => setHoveredCell({ row: rowIndex, col: colIndex })}
                   onMouseLeave={() => setHoveredCell(null)}
-                  className="w-full h-full bg-transparent outline"
+                  className="w-full h-full bg-transparent"
                 />
               ))
             )}
