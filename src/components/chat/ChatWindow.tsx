@@ -15,6 +15,7 @@ import { usePopup } from '../PopupContext'
 import type { ChatMessage, ConversationTarget } from './ChatProvider'
 
 import { pfpImage } from '@assets/images'
+import LobbyInviteMessage from './LobbyInviteMessage'
 
 export interface ChatWindowProps {
   friendData: ConversationTarget
@@ -24,6 +25,7 @@ export interface ChatWindowProps {
   onSend: (payload: { text: string; attachment?: File }) => Promise<void> | void
   onTyping?: (friend_user_id: string) => void
   onLoadMore: () => Promise<void>
+  onJoinLobby?: (lobbyCode: string) => void
   className?: string
 }
 
@@ -69,7 +71,8 @@ const ChatWindow: FC<ChatWindowProps> = ({
   hasMore,
   onSend,
   onTyping,
-  onLoadMore
+  onLoadMore,
+  onJoinLobby
 }) => {
   const { showPopup } = usePopup()
   const [draft, setDraft] = useState('')
@@ -254,6 +257,16 @@ const ChatWindow: FC<ChatWindowProps> = ({
           const next = index > 0 ? messages[index + 1] : undefined
           const showTimestamp = !next || next.isMine !== message.isMine || !isSameMinute(message.createdAt, next.createdAt)
           // const showAvatar = !next || (next.isMine === false && message.isMine === false)
+          if (message.type === 'LOBBY_INVITE') {
+            return (
+              <div key={message.id} className={cn('flex gap-3 items-center justify-around')}>
+                  <LobbyInviteMessage 
+                    message={message} 
+                    onJoin={(code) => onJoinLobby?.(code)}
+                  />
+              </div>
+            )
+          }
           return (
              <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
                {!isOwn && (

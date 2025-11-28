@@ -7,6 +7,7 @@ import { useChat } from './ChatProvider'
 import { useLocation } from 'react-router'
 import { pfpImage } from '@assets/images'
 import { useFriends } from '../friends/FriendsContext'
+import { useLobby } from '../lobby/LobbyContext'
 
 const getMaxVisibleWindows = () => {
   if (typeof window === 'undefined') return 1
@@ -21,6 +22,7 @@ const ChatDock = () => {
   const { isAuthenticated } = useAuth()
   const chat = useChat()
   const {friendsById} = useFriends()
+  const {joinLobby} = useLobby()
   const location = useLocation()
   
   const [maxVisible, setMaxVisible] = useState<number>(() => getMaxVisibleWindows())
@@ -100,6 +102,7 @@ const ChatDock = () => {
                 onSend={async ({ text, attachment }) => chat.sendMessage(friend.id, { text, attachment })}
                 onTyping={chat.sendTyping}
                 onLoadMore={() => chat.loadMoreMessages(friend.id)}
+                onJoinLobby={joinLobby}
                 className="h-full" 
               />
             </div>

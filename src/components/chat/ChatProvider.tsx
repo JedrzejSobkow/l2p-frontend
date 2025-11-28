@@ -24,7 +24,10 @@ import {
   onUserTyping,
   offMessage,
   offUserTyping,
-  getChatSocket
+  getChatSocket,
+  type LobbyInvite,
+  onLobbyInviteReceived,
+  offLobbyInviteReceived
 } from '../../services/chat'
 import { useFriends } from '../friends/FriendsContext'
 
@@ -51,6 +54,14 @@ export type ChatMessage = {
   createdAt: string
   imageUrl?: string
   isMine: boolean
+  type?: 'TEXT' | 'LOBBY_INVITE'
+  metadata?: {
+    lobbyCode?: string
+    lobbyName?: string
+    gameName?: string
+    maxPlayers?: number
+    currentPlayers?: number
+  }
 }
 
 const normalizeTimestamp = (timestamp: string) => {
@@ -194,17 +205,17 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const loadMessages = useCallback(
     async (friendId: string,beforeMessageId?: string) => {
-
-      if (!beforeMessageId && loadedConversationsRef.current.has(friendId)){
+      const id = String(friendId)
+      if (!beforeMessageId && loadedConversationsRef.current.has(id)){
         return
       }
       try {
-        const res = await fetchMessages(friendId,beforeMessageId,10)
+        const res = await fetchMessages(id,beforeMessageId,10)
         const newMessages: ChatMessage[] = res.messages.map((message) => (
           mapDtoToChatMessage(message)
         )).reverse()
         setState((prev) => {
-          const prevMessages = prev.messagesById[friendId] ?? []
+          const prevMessages = prev.messagesById[id] ?? []
           const existingIds = new Set(prevMessages.map((m)=> m.id))
 
           const dedupedNew = newMessages.filter((msg) => !existingIds.has(msg.id))
@@ -213,20 +224,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ...prev,
             messagesById: {
               ...prev.messagesById,
-              [friendId]: merged
+              [id]: merged
             },
             nextCursorById: {
               ...prev.nextCursorById,
-              [friendId]: res.next_cursor
+              [id]: res.next_cursor
             },
             hasMoreById: {
               ...prev.hasMoreById,
-              [friendId]: res.has_more
+              [id]: res.has_more
             },
           }
         })
         if (!beforeMessageId){
-          loadedConversationsRef.current.add(friendId)
+          loadedConversationsRef.current.add(id)
         }
       } 
       catch{
@@ -451,6 +462,63 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   [ensureConversation],
 )
 
+const handleReceivedLobbyInvite = useCallback(
+    (payload: LobbyInvite) => {
+      // 1. Ensure conversation exists with the inviter
+      const inviterId = String(payload.inviter_id)
+      ensureConversation(inviterId)
+
+      // 2. Create a synthetic message object
+      const inviteMessage: ChatMessage = {
+        id: `invite-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        senderId: inviterId,
+        senderNickname: payload.inviter_nickname,
+        content: `Invited you to play ${payload.game_name}`,
+        createdAt: new Date().toISOString(),
+        isMine: false,
+        type: 'LOBBY_INVITE',
+        metadata: {
+          lobbyCode: payload.lobby_code,
+          lobbyName: payload.lobby_name,
+          gameName: payload.game_name,
+          currentPlayers: payload.current_players,
+          maxPlayers: payload.max_players
+        }
+      }
+
+      // 3. Append to message history
+      // Note: If conversation isn't loaded yet, loadMessages might be safer, 
+      // but appending directly works for immediate feedback.
+      if (!loadedConversationsRef.current.has(inviterId)){
+         void loadMessages(inviterId)
+      } else {
+         appendMessage(inviterId, inviteMessage)
+      }
+
+      // 4. Update unread count
+      setState((prev) => {
+        const currentUnread = prev.unreadById?.[inviterId] ?? 0
+        return {
+          ...prev,
+          unreadById: {
+            ...prev.unreadById,
+            [inviterId]: currentUnread + 1,
+          },
+        }
+      })
+      
+      // 5. Notify listeners (e.g. for popups/toasts elsewhere)
+      incomingMessageListenersRef.current.forEach((listener) => {
+        try {
+          listener({ conversationId: inviterId })
+        } catch (error) {
+          console.error('Incoming listener failed', error)
+        }
+      })
+    },
+    [ensureConversation, appendMessage, loadMessages]
+  )
+
   useEffect(() => {
     if (!isAuthenticated) return
     const socket = getChatSocket()
@@ -458,10 +526,12 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     onMessage(handleIncomingMessage)
     onUserTyping(handleTypingEvent)
+    onLobbyInviteReceived(handleReceivedLobbyInvite)
 
     return () => {
       offMessage(handleIncomingMessage)
       offUserTyping(handleTypingEvent)
+      offLobbyInviteReceived(handleReceivedLobbyInvite)
     }
   }, [handleTypingEvent,handleIncomingMessage,handleConversationUpdated])
 

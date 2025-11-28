@@ -81,10 +81,10 @@ const FriendsScreen: FC = () => {
 
   useEffect(() => {
     if (!selectedFriend) return
-    const id = selectedFriend.id
-    clearUnread(id)
-    ensureConversation(id)
-    loadMessages(id)
+    if (!selectedFriend.id) return
+    clearUnread(selectedFriend.id)
+    ensureConversation(selectedFriend.id)
+    loadMessages(selectedFriend.id)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
   const activeMessages = selectedFriend
@@ -218,6 +218,7 @@ const FriendsScreen: FC = () => {
                 onSend={handleSend}
                 onTyping={sendTyping}
                 onLoadMore={() => loadMoreMessages(selectedFriend.id)}
+                onJoinLobby={joinLobby}
                 className='rounded-none border-0 h-full'
               />
             </div>

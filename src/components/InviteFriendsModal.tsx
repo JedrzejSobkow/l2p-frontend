@@ -6,7 +6,7 @@ import { pfpImage } from '@/assets/images';
 type InviteFriendsModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onInvite: (friendUserId: number | string, friendNickname: string) => void;
+  onInvite: (friendId: string, lobbyCode: string) => void;
   lobbyCode: string;
 };
 
@@ -28,9 +28,9 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
     );
   }, [friends, searchTerm]);
 
-  const handleInvite = (friendUserId: string | number, friendNickname: string) => {
-    onInvite(friendUserId, friendNickname);
-    setInvitedFriends((prev) => new Set(prev).add(friendUserId));
+  const handleInvite = (friendId: string, lobbyCode: string) => {
+    onInvite(friendId, lobbyCode);
+    setInvitedFriends((prev) => new Set(prev).add(friendId));
   };
 
   const handleClose = () => {
@@ -111,7 +111,10 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => handleInvite(friend.id, friend.nickname)}
+                    onClick={() => {
+                      if (lobbyCode)
+                      handleInvite(friend.id, lobbyCode)
+                    }}
                     disabled={isInvited}
                     className="flex items-center gap-2 rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   >

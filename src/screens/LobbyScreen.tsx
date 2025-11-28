@@ -51,6 +51,7 @@ export const LobbyScreen = () => {
     getAvailableGames,
     selectGame,
     clearGameSelection,
+    sendInvite
   } = useLobby()
 
   // Redirect user to home if they are not in a lobby
@@ -236,19 +237,6 @@ export const LobbyScreen = () => {
   const handleConfirmLeave = () => {
     leaveLobby()
     // navigate('/')
-  }
-
-  const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {
-    if (!currentLobby) return
-    const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
-    const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
-
-    sendPrivateMessage({
-      friend_user_id: friendUserId,
-      content: inviteMessage,
-    })
-
-    showPopup({ type: 'confirmation', message: `Invitation sent to ${friendNickname}.` });
   }
 
   const handleSelectGame = (gameName: string) => {
@@ -660,7 +648,7 @@ export const LobbyScreen = () => {
       <InviteFriendsModal
         isOpen={isInviteFriendsModalOpen}
         onClose={() => setIsInviteFriendsModalOpen(false)}
-        onInvite={handleInviteFriend}
+        onInvite={sendInvite}
         lobbyCode={currentLobby.lobby_code || ''}
       />
 
