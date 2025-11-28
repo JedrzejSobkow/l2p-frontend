@@ -203,9 +203,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       } : null)
     }
 
-    const handleMemberKicked = (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => {
+    const handleMemberKicked = (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => {
       //console('Member kicked:', data)
-      setMembers(prev => prev.filter(m => m.identifier !== data.user_id))
+      setMembers(prev => prev.filter(m => m.identifier !== data.identifier))
     }
 
     const handleMemberReadyChanged = (data: { identifier: number | string; nickname: string; is_ready: boolean }) => {

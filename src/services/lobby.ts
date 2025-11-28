@@ -134,7 +134,7 @@ export const emitGetPublicLobbiesByGame = (gameName: string) => {
 }
 
 export const emitKickMember = (userId: number | string) => {
-  lobbySocket?.emit('kick_member', { user_id: userId })
+  lobbySocket?.emit('kick_member', { identifier: userId })
 }
 
 export const emitToggleReady = (lobbyCode: string) => {
@@ -226,9 +226,9 @@ export const offSettingsUpdated = (cb?: (data: { max_players: number; is_public:
   cb ? lobbySocket.off('settings_updated', cb) : lobbySocket.off('settings_updated')
 }
 
-export const onMemberKicked = (cb: (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => void) => 
+export const onMemberKicked = (cb: (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => void) => 
   lobbySocket?.on('member_kicked', cb)
-export const offMemberKicked = (cb?: (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => void) => {
+export const offMemberKicked = (cb?: (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('member_kicked', cb) : lobbySocket.off('member_kicked')
 }
