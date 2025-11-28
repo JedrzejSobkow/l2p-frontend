@@ -64,6 +64,7 @@ type FriendsState = {
 
 type FriendsContextValue = {
   isLoading: boolean
+  friendsById: Record<string, Friend>
   friends: Friend[]
   incomingRequests: Friend[]
   outgoingRequests: Friend[]
@@ -291,7 +292,15 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       }
     })
 
-    accepted.sort((a,b) => a.lastMessageTime && b.lastMessageTime ? new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime() : 0)
+    accepted.sort((a, b) => {
+      const statusPriority = (friend: Friend) => (friend.userStatus === 'offline' ? 1 : 0)
+      const statusDiff = statusPriority(a) - statusPriority(b)
+      if (statusDiff !== 0) return statusDiff
+
+      const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0
+      const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0
+      return bTime - aTime
+    })
     
     return {
       friends: accepted,
@@ -345,6 +354,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       isLoading,
       friends,
+      friendsById: state.friendsById,
       incomingRequests,
       outgoingRequests,
       sendRequest: sendRequestHandler,
@@ -357,6 +367,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
       acceptRequestHandler,
       declineRequestHandler,
       friends,
+      state.friendsById,
       incomingRequests,
       isLoading,
       outgoingRequests,

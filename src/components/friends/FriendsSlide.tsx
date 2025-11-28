@@ -23,7 +23,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
   const { user } = useAuth()
   const {joinLobby} = useLobby();
   const { openChat} = useChatDock()
-  const {friends } = useFriends()
+  const {friendsById } = useFriends()
   const { currentLobby } = useLobby();
   const { showPopup } = usePopup();
   const navigate = useNavigate()
@@ -62,7 +62,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
 
   const handleFriendSelect = (friendId: string | number) => {
     const normalizedId = String(friendId)
-    const friend = friends.find((val) => val.id === normalizedId)
+    const friend = friendsById[normalizedId]
     if (!friend) {
       onClose()
       return

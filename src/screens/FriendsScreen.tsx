@@ -9,7 +9,7 @@ import { pfpImage } from '@assets/images'
 import { useLobby } from '../components/lobby/LobbyContext'
 
 const FriendsScreen: FC = () => {
-  const { friends, removeFriend } = useFriends()
+  const { friendsById,friends, removeFriend } = useFriends()
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLobby, gameState,joinLobby } = useLobby()
@@ -25,8 +25,8 @@ const FriendsScreen: FC = () => {
   const {clearUnread,ensureConversation,getMessages,sendMessage,getTyping,sendTyping,loadMoreMessages,loadMessages,getHasMore} = useChat()
   const selectedFriend = useMemo(() => {
     if (!selectedFriendId) return null
-    return friends.find((friend) => friend.id === selectedFriendId) ?? null
-  }, [friends, selectedFriendId])
+    return friendsById[selectedFriendId]
+  }, [friendsById, selectedFriendId])
 
   useEffect(() => {
     const state =

@@ -99,7 +99,7 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { user,isAuthenticated } = useAuth()
-  const {friends} = useFriends()
+  const {friendsById} = useFriends()
   const [state, setState] = useState<ConversationsState>({
     messagesById: {},
     targets: {},
@@ -112,25 +112,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const typingThrottleRef = useRef<Map<string, number>>(new Map())
   const incomingMessageListenersRef = useRef<Set<IncomingMessageListener>>(new Set())
-  // useEffect(() => {
-  //   if (!isAuthenticated)
-  //     return
-
-  //   setState(prev => {
-  //     const targets = {...prev.targets}
-
-  //     friends.forEach(friend => {
-  //       if(!targets[friend.friend_user_id]){
-  //         targets[friend.friend_user_id] = {
-  //           id: friend.friend_user_id,
-  //           nickname: friend.friend_nickname,
-  //           avatarUrl: friend.friend_pfp_path || 
-  //         }
-  //       }
-  //     })
-  //     return {...prev,targets}
-  //   })
-  // },[friends,isAuthenticated])
 
   const getMessages = useCallback(
     (friendId: string) => state.messagesById[friendId] ?? [],
@@ -187,7 +168,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
     setState((prev) => {
       const existing = prev.targets[key]
-      const friend = friends.find(f => f.id === key)
+      const friend = friendsById[key]
       const finalNickname =
         nickname ??
         friend?.nickname ??
@@ -218,12 +199,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       }
     })
   },
-  [friends],
+  [friendsById],
 )
 
   const loadMessages = useCallback(
     async (friendId: string,beforeMessageId?: string) => {
-      const loadingKey = `${friendId}:${beforeMessageId ?? 'initial'}`
 
       if (!beforeMessageId && loadedConversationsRef.current.has(friendId)){
         return
@@ -422,7 +402,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
         }
       })
-      const friend = friends.find((f) => f.id === message.senderId)
+      const friend = friendsById[message.senderId]
 
       if (!friend) return
       const target: ConversationTarget = {
@@ -438,7 +418,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         }
       })
     }
-  ,[appendMessage,ensureConversation,getTarget,friends,loadMessages])
+  ,[appendMessage,ensureConversation,getTarget,friendsById,loadMessages])
 
   const handleConversationUpdated = useCallback(
     (payload: ConversationUpdatedEvent) => {
