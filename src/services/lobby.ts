@@ -8,7 +8,7 @@ const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/lobby` : '/lobby'
 const SOCKET_PATH = '/socket.io'
 
 export type LobbyMember = {
-  user_id: number | string
+  identifier: number | string
   nickname: string
   pfp_path?: string
   is_ready: boolean
@@ -17,7 +17,7 @@ export type LobbyMember = {
 export type LobbyState = {
   lobby_code: string
   name: string
-  host_id: number | string
+  host_identifier: number | string
   max_players: number
   current_players: number
   is_public: boolean
@@ -118,7 +118,7 @@ export const emitUpdateSettings = (lobbyCode: string, maxPlayers: number, isPubl
 }
 
 export const emitTransferHost = (newHostId: number | string) => {
-  lobbySocket?.emit('transfer_host', { new_host_id: newHostId })
+  lobbySocket?.emit('transfer_host', { new_host_identifier: newHostId })
 }
 
 export const emitGetLobby = () => {
@@ -134,7 +134,7 @@ export const emitGetPublicLobbiesByGame = (gameName: string) => {
 }
 
 export const emitKickMember = (userId: number | string) => {
-  lobbySocket?.emit('kick_member', { user_id: userId })
+  lobbySocket?.emit('kick_member', { identifier: userId })
 }
 
 export const emitToggleReady = (lobbyCode: string) => {
@@ -205,16 +205,16 @@ export const offMemberJoined = (cb?: (data: { member: LobbyMember; current_playe
   cb ? lobbySocket.off('member_joined', cb) : lobbySocket.off('member_joined')
 }
 
-export const onMemberLeft = (cb: (data: { user_id: number | string; nickname: string; current_players: number }) => void) => 
+export const onMemberLeft = (cb: (data: { identifier: number | string; nickname: string; current_players: number }) => void) => 
   lobbySocket?.on('member_left', cb)
-export const offMemberLeft = (cb?: (data: { user_id: number | string; nickname: string; current_players: number }) => void) => {
+export const offMemberLeft = (cb?: (data: { identifier: number | string; nickname: string; current_players: number }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('member_left', cb) : lobbySocket.off('member_left')
 }
 
-export const onHostTransferred = (cb: (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => void) => 
+export const onHostTransferred = (cb: (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => void) => 
   lobbySocket?.on('host_transferred', cb)
-export const offHostTransferred = (cb?: (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => void) => {
+export const offHostTransferred = (cb?: (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('host_transferred', cb) : lobbySocket.off('host_transferred')
 }
@@ -226,16 +226,16 @@ export const offSettingsUpdated = (cb?: (data: { max_players: number; is_public:
   cb ? lobbySocket.off('settings_updated', cb) : lobbySocket.off('settings_updated')
 }
 
-export const onMemberKicked = (cb: (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => void) => 
+export const onMemberKicked = (cb: (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => void) => 
   lobbySocket?.on('member_kicked', cb)
-export const offMemberKicked = (cb?: (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => void) => {
+export const offMemberKicked = (cb?: (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('member_kicked', cb) : lobbySocket.off('member_kicked')
 }
 
-export const onMemberReadyChanged = (cb: (data: { user_id: number | string; nickname: string; is_ready: boolean }) => void) => 
+export const onMemberReadyChanged = (cb: (data: { identifier: number | string; nickname: string; is_ready: boolean }) => void) => 
   lobbySocket?.on('member_ready_changed', cb)
-export const offMemberReadyChanged = (cb?: (data: { user_id: number | string; nickname: string; is_ready: boolean }) => void) => {
+export const offMemberReadyChanged = (cb?: (data: { identifier: number | string; nickname: string; is_ready: boolean }) => void) => {
   if (!lobbySocket) return
   cb ? lobbySocket.off('member_ready_changed', cb) : lobbySocket.off('member_ready_changed')
 }

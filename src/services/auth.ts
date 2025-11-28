@@ -106,6 +106,26 @@ export async function verifyUser(payload: ActivateUserPayload): Promise<string |
   return res
 }
 
+export async function createGuestSession(): Promise<User> {
+  const response = await request<{ guest_id: string; nickname: string; expires_in: number }>(
+    '/auth/guest/session',
+    {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+      },
+      auth: false,
+    }
+  );
+
+  return {
+    id: response.guest_id,
+    nickname: response.nickname,
+    is_active: true,
+    is_verified: false,
+  };
+}
+
 // /users/ endpoints
 
 export async function getMe(): Promise<User> {

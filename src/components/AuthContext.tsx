@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       const me = await auth.getMe()
+      me.id = `user:${me.id}`;
       setUser(me)
       setStatus('authenticated')
     } catch {
@@ -36,10 +37,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+
   // Flip to unauthenticated immediately on global 401
   useEffect(() => {
     onUnauthorized(() => {
-      setUser(null)
+      // setUser(null)
       setStatus('unauthenticated')
     })
     return () => {
@@ -48,7 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (user && googleWindow && !googleWindow.closed) {
+    if (status === 'authenticated' && googleWindow && !googleWindow.closed) {
       googleWindow.close()
       setGoogleWindow(null)
       window.location.reload(); //REFRESH SOCKETS AFTER GOOGLE AUTH
@@ -99,45 +101,71 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
-        const me = await auth.getMe()
-        if (!cancelled) {
-          setUser(me)
-          setStatus('authenticated')
+        const storedGuest = localStorage.getItem('guestUser');
+        if (storedGuest) {
+          const guest = JSON.parse(storedGuest);
+          guest.id = `guest:${guest.id}`;
+          if (!cancelled) {
+            setUser(guest);
+            setStatus('unauthenticated');
+          }
+        } else {
+          const guest = await auth.createGuestSession();
+  
+          localStorage.setItem('guestUser', JSON.stringify(guest));
+          guest.id = `guest:${guest.id}`;
+  
+          if (!cancelled) {
+            setUser(guest);
+            setStatus('unauthenticated');
+          }
+          window.location.reload(); 
         }
-      } 
-      catch {
+  
+        try {
+          const me = await auth.getMe();
+          if (!cancelled && me) {
+            me.id = `user:${me.id}`;
+            setUser(me); 
+            setStatus('authenticated');
+          }
+        } catch (error) {
+          console.log("No logged-in user detected, keeping guest session.");
+        }
+      } catch (error) {
+        console.error("Error during session initialization:", error);
         if (!cancelled) {
-          setUser(null)
-          setStatus('unauthenticated')
+          setUser(null);
+          setStatus('unauthenticated');
         }
       }
-    })()
+    })();
     return () => {
-      cancelled = true
-    }
-  }, [])
+      cancelled = true;
+    };
+  }, []);
 
   // Revalidate session on tab focus/visibility change (throttled)
-  const lastCheckRef = useRef(0)
-  useEffect(() => {
-    const revalidate = async () => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-      const now = Date.now()
-      if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
-      lastCheckRef.current = now
-      await refreshUser()
-    }
-    const onFocus = () => void revalidate()
-    const onVisibility = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') void revalidate()
-    }
-    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
-    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
-      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [status,refreshUser])
+  // const lastCheckRef = useRef(0)
+  // useEffect(() => {
+  //   const revalidate = async () => {
+  //     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+  //     const now = Date.now()
+  //     if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
+  //     lastCheckRef.current = now
+  //     await refreshUser()
+  //   }
+  //   const onFocus = () => void revalidate()
+  //   const onVisibility = () => {
+  //     if (typeof document !== 'undefined' && document.visibilityState === 'visible') void revalidate()
+  //   }
+  //   if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
+  //   if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
+  //   return () => {
+  //     if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
+  //     if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
+  //   }
+  // }, [status,refreshUser])
 
   const login = async (payload: LoginPayload) => {
     const me = await auth.login(payload)
@@ -170,7 +198,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       user,
-      isAuthenticated: user !== null,
+      isAuthenticated: status === 'authenticated',
       status,
       login,
       register,

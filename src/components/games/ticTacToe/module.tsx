@@ -63,11 +63,11 @@ const TicTacToeView: GameClientModule["GameView"] = ({
     if (gameState?.result === "draw") {
       return "Draw!";
     }
-    if (gameState?.winner_id) {
-      const winner = players.find((player) => String(player.userId) === String(gameState.winner_id));
+    if (gameState?.winner_identifier) {
+      const winner = players.find((player) => String(player.userId) === String(gameState.winner_identifier));
       return `${winner?.nickname ?? "Unknown player"} wins!`;
     }
-    if (String(gameState?.current_turn_player_id) === localPlayerId) {
+    if (String(gameState?.current_turn_identifier) === localPlayerId) {
       const mySymbol = gameState?.player_symbols?.[localPlayerId];
       const myColor = mySymbol === "X" ? "#ffa94d" : "#74c0fc";
       return (
@@ -76,8 +76,8 @@ const TicTacToeView: GameClientModule["GameView"] = ({
         </>
       );
     }
-    const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_player_id));
-    const nextSymbol = gameState?.player_symbols?.[gameState?.current_turn_player_id];
+    const nextPlayer = players.find((player) => String(player.userId) === String(gameState?.current_turn_identifier));
+    const nextSymbol = gameState?.player_symbols?.[gameState?.current_turn_identifier];
     const nextColor = nextSymbol === "X" ? "#ffa94d" : "#74c0fc";
     return (
       <>

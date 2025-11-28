@@ -172,28 +172,25 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     const handleMemberJoined = (data: { member: LobbyMember; current_players: number }) => {
       //console('Member joined:', data)
       setMembers(prev => {
-        // Sprawdź, czy użytkownik już istnieje w tablicy `members`
-        const exists = prev.some(m => m.user_id === data.member.user_id);
+        const exists = prev.some(m => m.identifier === data.member.identifier);
       
-        // Jeśli użytkownik już istnieje, zwróć niezmienioną tablicę
         if (exists) {
           return prev;
         }
       
-        // Jeśli użytkownika nie ma, dodaj go do tablicy
         return [...prev, data.member];
       });      setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
-    const handleMemberLeft = (data: { user_id: number | string; nickname: string; current_players: number }) => {
+    const handleMemberLeft = (data: { identifier: number | string; nickname: string; current_players: number }) => {
       //console('Member left:', data)
-      setMembers(prev => prev.filter(m => m.user_id !== data.user_id))
+      setMembers(prev => prev.filter(m => m.identifier !== data.identifier))
       setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
-    const handleHostTransferred = (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => {
+    const handleHostTransferred = (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => {
       //console('Host transferred:', data)
-      setCurrentLobby(prev => prev ? { ...prev, host_id: data.new_host_id } : null)
+      setCurrentLobby(prev => prev ? { ...prev, host_identifier: data.new_host_identifier } : null)
     }
 
     const handleSettingsUpdated = (data: { max_players: number; is_public: boolean; name?: string }) => {
@@ -206,14 +203,14 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       } : null)
     }
 
-    const handleMemberKicked = (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => {
+    const handleMemberKicked = (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => {
       //console('Member kicked:', data)
-      setMembers(prev => prev.filter(m => m.user_id !== data.user_id))
+      setMembers(prev => prev.filter(m => m.identifier !== data.identifier))
     }
 
-    const handleMemberReadyChanged = (data: { user_id: number | string; nickname: string; is_ready: boolean }) => {
+    const handleMemberReadyChanged = (data: { identifier: number | string; nickname: string; is_ready: boolean }) => {
       //console('Member ready changed:', data)
-      setMembers(prev => prev.map(m => m.user_id === data.user_id ? { ...m, is_ready: data.is_ready } : m))
+      setMembers(prev => prev.map(m => m.identifier === data.identifier ? { ...m, is_ready: data.is_ready } : m))
     }
 
     const handlePublicLobbies = (data: { lobbies: LobbyState[]; total: number }) => {
@@ -249,6 +246,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setCurrentLobby(null)
       setMembers([])
       setMessages([])
+      setGameState(null)
       setError({ message: data.message, error_code: 'KICKED' })
     }
 
@@ -381,6 +379,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     if (!currentLobby) return
     setIsLoading(true)
     emitLeaveLobby(currentLobby.lobby_code)
+    setGameState(null)
   }, [currentLobby])
 
   const updateSettingsHandler = useCallback((maxPlayers: number, isPublic: boolean, lobbyName?: string) => {

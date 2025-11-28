@@ -27,6 +27,7 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
 
     const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 
+    
     return (
         <header className="w-full h-16 bg-background text-headline flex items-center justify-between px-5 relative font-sans text-sm font-light overflow-hidden">
             {/* Bottom Line */}
@@ -114,7 +115,7 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                             <div className="user-info flex flex-col items-start">
                                 <span className="hide-on-mobile text-base font-light text-headline">
                                     Hello, 
-                                    <span className="text-base font-medium pl-1 text-headline">Guest</span>
+                                    <span className="text-base font-medium pl-1 text-headline">{user?.nickname}</span>
                                 </span>
                             </div>
                         )}

@@ -24,7 +24,7 @@ export type GameStartedEvent = {
   game_name: string
   game_state: any
   game_info?: any
-  current_turn_player_id?: number
+  current_turn_identifier?: number
 }
 
 export type MoveMadeEvent = {
@@ -38,14 +38,14 @@ export type MoveMadeEvent = {
 export type GameEndedEvent = {
   lobby_code: string
   result: string
-  winner_id: number | null
+  winner_identifier: number | null
   game_state: any
 }
 
 export type PlayerForfeitedEvent = {
   lobby_code: string
   player_id: number
-  winner_id: number | null
+  winner_identifier: number | null
   game_state: any
 }
 
@@ -76,9 +76,6 @@ export const connectGameSocket = (): Socket => {
     console.error('Game socket connect_error:', err)
   })
 
-  gameSocket.on('connect', () => {
-    console.log("Game socket connected ")
-  })
   return gameSocket
 }
 
