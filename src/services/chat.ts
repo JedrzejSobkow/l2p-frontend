@@ -76,6 +76,7 @@ export type SendChatMessagePayload = {
   friend_user_id: number | string
   content?: string
   image_path?: string
+  temp_id: string
 }
 
 export type TypingIndicatorPayload = {

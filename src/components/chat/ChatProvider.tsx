@@ -55,6 +55,7 @@ export type ChatMessage = {
   imageUrl?: string
   isMine: boolean
   type?: 'TEXT' | 'LOBBY_INVITE'
+  temp_id?: string
   metadata?: {
     lobbyCode?: string
     lobbyName?: string
@@ -82,7 +83,8 @@ const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
     content: message.content,
     imageUrl: message.image_url,
     createdAt: normalizeTimestamp(message.created_at),
-    isMine: message.is_mine
+    isMine: message.is_mine,
+    temp_id: message.temp_id
   }
 
   return result
@@ -104,6 +106,7 @@ type ChatContextValue = {
   sendMessage: (friendId: string, payload: { text?: string; attachment?: File }) => Promise<void>
   sendTyping: (friendId: string) => void
   clearUnread: (friendId: string) => void
+  clearState: (friendId: string) => void
 
   subscribeToIncomingMessages: (listener: IncomingMessageListener) => () => void
 }
@@ -163,6 +166,38 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         [friendId]: 0,
       },
     }))
+  }, [])
+
+  const clearState = useCallback((friendId: string) => {
+    const id = String(friendId)
+
+    setState((prev) => {
+      const { [id]: _messages, ...restMessages } = prev.messagesById
+      const { [id]: _target, ...restTargets } = prev.targets
+      const { [id]: _typing, ...restTyping } = prev.typingById
+      const { [id]: _unread, ...restUnread } = prev.unreadById
+      const { [id]: _hasMore, ...restHasMore } = prev.hasMoreById
+      const { [id]: _cursor, ...restCursors } = prev.nextCursorById
+
+      return {
+        ...prev,
+        messagesById: restMessages,
+        targets: restTargets,
+        typingById: restTyping,
+        unreadById: restUnread,
+        hasMoreById: restHasMore,
+        nextCursorById: restCursors,
+      }
+    })
+
+    loadedConversationsRef.current.delete(id)
+    typingThrottleRef.current.delete(id)
+
+    const timeout = typingTimeoutRef.current.get(id)
+    if (timeout) {
+      clearTimeout(timeout)
+      typingTimeoutRef.current.delete(id)
+    }
   }, [])
 
   const subscribeToIncomingMessages = useCallback(
@@ -263,20 +298,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const appendMessage = useCallback((friendId: string, message: ChatMessage) => {
     setState((prev) => {
       const existing = prev.messagesById[friendId] ?? []
-
       if (existing.some((msg) => msg.id === message.id)){
         return prev
       }
-
       const sanitized = !message.id.startsWith('temp') 
-      ? existing.filter((msg) => 
-        !msg.id.startsWith('temp') || 
-        msg.senderId !== message.senderId || 
-        msg.content !== message.content ||
-        Boolean(msg.imageUrl) !== Boolean(message.imageUrl),
-      )
-      : existing
-
+      ? existing.filter((msg) => msg.id !== message.temp_id): existing
       return {
         ...prev,
         messagesById: {
@@ -302,8 +328,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         tempImageUrl = URL.createObjectURL(file)
       }
       const optimisticMessage: ChatMessage = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        senderId: senderId,
+        id: `temp-${friendId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        senderId: String(senderId),
         senderNickname: senderNickname,
         content: text,
         imageUrl: tempImageUrl,
@@ -338,15 +364,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ...payloadBase,
             content: text || undefined,
             image_path: uploadDescriptor.image_path,
+            temp_id: optimisticMessage.id
           })
         } else {
           emitChatMessage({
             ...payloadBase,
             content: text || undefined,
+            temp_id: optimisticMessage.id
           })
         }
       } catch (error) {
-        console.error('Failed to send message', error)
         setState((prev) => {
           const list = prev.messagesById[friendId] ?? []
           return {
@@ -357,6 +384,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             },
           }
         })
+        throw error
       } finally {
         if (tempImageUrl) {
           const urlToRevoke = tempImageUrl
@@ -380,12 +408,19 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }
   ,[])
 
+  const extractFriendId = (tempId: string) => {
+    const match = /^temp-([^ -]+?)-/.exec(String(tempId))
+  return match?.[1] ?? null
+  }
+
   const handleIncomingMessage = useCallback(
     (payload: ChatMessageDTO) => {
       if (!payload) return
       const message = mapDtoToChatMessage(payload)
       if (message.isMine) {
-        appendMessage(message.senderId, message)
+        const friendId = extractFriendId(message.temp_id!)
+        if (friendId)
+          appendMessage(friendId, message)
         return
       }
       
@@ -569,6 +604,7 @@ const handleReceivedLobbyInvite = useCallback(
       sendMessage,
       sendTyping,
       clearUnread,
+      clearState,
       subscribeToIncomingMessages,
     }),
     [
@@ -583,6 +619,7 @@ const handleReceivedLobbyInvite = useCallback(
       sendMessage,
       sendTyping,
       clearUnread,
+      clearState,
       subscribeToIncomingMessages,
     ],
   )

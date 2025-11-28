@@ -26,17 +26,18 @@ const LobbyInviteMessage: FC<LobbyInviteMessageProps> = ({ message, onJoin }) =>
       <div className="w-64 overflow-hidden rounded-2xl border border-orange-500/30 bg-gradient-to-br from-[rgba(40,30,20,0.95)] to-[rgba(25,20,15,0.95)] shadow-lg">
         {/* Header Strip */}
         <div className="flex items-center justify-between border-b border-orange-500/20 bg-orange-500/10 px-4 py-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-orange-400">
-            Game Invite
+          <span className="text-xs font-bold tracking-wider text-orange-400">
+            {message.senderNickname} invitation
           </span>
-          <FiPlay className="h-3 w-3 text-orange-400" />
         </div>
 
         {/* Content */}
         <div className="p-4">
-          <h3 className="mb-1 text-base font-bold text-white">
-            {metadata.gameName || 'Unknown Game'}
+          {metadata.gameName && (
+            <h3 className="mb-1 text-base font-bold text-white">
+            {metadata.gameName}
           </h3>
+          )}
           <p className="mb-3 text-xs text-white/60">
             {metadata.lobbyName || 'Custom Lobby'}
           </p>
@@ -56,7 +57,7 @@ const LobbyInviteMessage: FC<LobbyInviteMessageProps> = ({ message, onJoin }) =>
               ${
                 isFull
                   ? 'bg-white/5 text-white/30 cursor-not-allowed'
-                  : 'bg-orange-500 text-white hover:bg-orange-400 hover:shadow-[0_0_15px_rgba(249,115,22,0.4)]'
+                  : 'bg-orange-500 text-white hover:bg-orange-400'
               }
             `}
           >
@@ -64,11 +65,6 @@ const LobbyInviteMessage: FC<LobbyInviteMessageProps> = ({ message, onJoin }) =>
           </button>
         </div>
       </div>
-      
-      {/* Time */}
-      <span className="ml-2 text-[10px] text-white/30">
-        {new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-      </span>
     </div>
   )
 }

@@ -46,6 +46,7 @@ const FriendsScreen: FC = () => {
   const location = useLocation()
   const navigate = useNavigate()
   const { currentLobby, gameState,joinLobby } = useLobby()
+  const {clearState} = useChat()
   const initialFriendId = useMemo(() => {
     const state = location.state as { friendId?: string } | null
     if (friends.length === 0) return null
@@ -126,6 +127,7 @@ const FriendsScreen: FC = () => {
       setSelectedFriendId(null)
       setShowRemoveConfirm(false)
       setActiveMobileTab('friends')
+      clearState(selectedFriendId)
     } catch (error) {
       console.error('Failed to remove friend', error)
     } finally {
@@ -137,7 +139,6 @@ const FriendsScreen: FC = () => {
     if (removing) return
     setShowRemoveConfirm(false)
   }
-  console.log('Rendering FriendsScreen with selectedFriendId:', selectedFriend)
   return (
     <div className="flex flex-col gap-4 bg-background px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
       {currentLobby && (
