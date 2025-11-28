@@ -75,15 +75,17 @@ const normalizeTimestamp = (timestamp: string) => {
 }
 
 const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
-  return {
+  const result = {
     id: String(message.id),
-    senderId: String(message.sender_id),
+    senderId: message.temp_id !== null ? String(message.temp_id) : String(message.sender_id),
     senderNickname: message.sender_nickname,
     content: message.content,
     imageUrl: message.image_url,
     createdAt: normalizeTimestamp(message.created_at),
     isMine: message.is_mine
   }
+
+  return result
 }
 
 type IncomingMessageListener = (payload: { conversationId: string}) => void
@@ -382,7 +384,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     (payload: ChatMessageDTO) => {
       if (!payload) return
       const message = mapDtoToChatMessage(payload)
-      if (message.isMine) return
+      if (message.isMine) {
+        appendMessage(message.senderId, message)
+        return
+      }
       
       ensureConversation(message.senderId)
 

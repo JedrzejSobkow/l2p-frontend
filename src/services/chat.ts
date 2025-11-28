@@ -41,6 +41,7 @@ export type ChatMessageDTO = {
   created_at: string
   is_mine: boolean
   image_url?: string
+  temp_id?: string
 }
 
 export type ConversationHistoryPayload = {
