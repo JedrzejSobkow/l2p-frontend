@@ -130,17 +130,17 @@ const ClobberView: GameClientModule["GameView"] = ({
     g.fill();
 
     g.setStrokeStyle({ width: 2, color: GRID_LINE_COLOR, alpha: 0.12 });
-    const startX = BOARD_MARGIN;
-    const startY = BOARD_MARGIN;
+    const startX = 0;
+    const startY = 0;
     for (let r = 0; r <= rows; r += 1) {
-      const y = startY + r * cellSize;
+      const y = startY + r * (cellSize + BOARD_MARGIN/2);
       g.moveTo(startX, y);
-      g.lineTo(startX + cols * cellSize, y);
+      g.lineTo(startX + cols * (cellSize + BOARD_MARGIN/2), y);
     }
     for (let c = 0; c <= cols; c += 1) {
-      const x = startX + c * cellSize;
+      const x = startX + c * (cellSize + BOARD_MARGIN/2);
       g.moveTo(x, startY);
-      g.lineTo(x, startY + rows * cellSize);
+      g.lineTo(x, startY + rows * (cellSize + BOARD_MARGIN/2));
     }
     g.stroke();
   };
@@ -181,8 +181,8 @@ const ClobberView: GameClientModule["GameView"] = ({
             {board.map((row, rowIndex) =>
               row.map((cell, colIndex) => {
                 if (cell !== "W" && cell !== "B") return null;
-                const x = BOARD_MARGIN + colIndex * cellSize + cellSize / 2;
-                const y = BOARD_MARGIN + rowIndex * cellSize + cellSize / 2;
+                const x = BOARD_MARGIN / 4 + colIndex * cellSize + cellSize / 2 + (BOARD_MARGIN/2) * (colIndex);
+                const y = BOARD_MARGIN / 4 + rowIndex * cellSize + cellSize / 2 + (BOARD_MARGIN/2) * (rowIndex);
                 const isSelected = selectedCell?.row === rowIndex && selectedCell?.col === colIndex;
                 const isHovered = hoveredCell?.row === rowIndex && hoveredCell?.col === colIndex;
                 
