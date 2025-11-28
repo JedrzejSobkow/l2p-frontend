@@ -1,19 +1,18 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Application, extend } from "@pixi/react";
 import { Container, Graphics, Text, TextStyle, type Graphics as PixiGraphics } from "pixi.js";
 import type { GameClientModule } from "../GameClientModule";
 
 extend({ Container, Graphics, Text });
 
-const CELL_SIZE = 80;
-const BOARD_MARGIN = 20;
-const TOKEN_RADIUS = 28;
+// const BOARD_MARGIN = 20;
 const BORDER_RADIUS = 24;
+const LINE_WIDTH = 2
 
 const GRID_LINE_COLOR = 0xffffff;
 const PLAYER_COLORS = {
   W: 0xffffff,
-  B: 0x000000,
+  B: 0xff8906,
 };
 
 const parseBoard = (raw: unknown): (string | null)[][] => {
@@ -35,6 +34,8 @@ const ClobberView: GameClientModule["GameView"] = ({
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const gameState = useMemo(() => rawState as any, [rawState]);
   const board = useMemo(() => parseBoard(gameState?.board), [gameState]);
@@ -45,15 +46,48 @@ const ClobberView: GameClientModule["GameView"] = ({
   const timeoutSeconds = timing?.timeout_seconds;
   const turnStartTime = timing?.turn_start_time;
 
-  const cellSize = useMemo(() => {
-    const screenWidth = window.innerWidth;
-    if (screenWidth < 640) return 50;
-    if (screenWidth < 1024) return 65;
-    return CELL_SIZE;
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateContainerWidth();
+    
+    const resizeObserver = new ResizeObserver(updateContainerWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
   }, []);
 
-  const boardWidth = cols * cellSize + BOARD_MARGIN * 2;
-  const boardHeight = rows * cellSize + BOARD_MARGIN * 2;
+  const { boardWidth, boardHeight, cellSize } = useMemo(() => {
+    const availableWidth = containerWidth * 0.8;
+    console.log("AVAILABLE WIDTH: ")
+    console.log(availableWidth)
+    const calculatedCellSize = (availableWidth - (cols + 1) * LINE_WIDTH) / cols;
+    console.log("CALCULATED CELL SIZE: ")
+    console.log(calculatedCellSize)
+    const calculatedBoardWidth = cols * calculatedCellSize + (LINE_WIDTH * (cols + 1));
+    console.log("CALCULATED BOARD WIDTH: ")
+    console.log(calculatedBoardWidth)
+    const calculatedBoardHeight = rows * calculatedCellSize + (LINE_WIDTH * (rows + 1));
+    console.log("CALCULATED BOARD HEIGHT: ")
+    console.log(calculatedBoardHeight)
+    
+    return {
+      boardWidth: calculatedBoardWidth,
+      boardHeight: calculatedBoardHeight,
+      cellSize: calculatedCellSize
+    };
+  }, [containerWidth, cols, rows]);
+
+  const tokenRadius = useMemo(() => cellSize * 0.35, [cellSize]);
+  const fontSize = useMemo(() => Math.max(12, cellSize * 0.25), [cellSize]);
 
   useEffect(() => {
     if (timing?.timeout_type === "per_turn" && timeoutSeconds && turnStartTime) {
@@ -129,18 +163,18 @@ const ClobberView: GameClientModule["GameView"] = ({
     g.roundRect(0, 0, boardWidth, boardHeight, BORDER_RADIUS);
     g.fill();
 
-    g.setStrokeStyle({ width: 2, color: GRID_LINE_COLOR, alpha: 0.12 });
+    g.setStrokeStyle({ width: LINE_WIDTH, color: GRID_LINE_COLOR, alpha: 0.12 });
     const startX = 0;
     const startY = 0;
     for (let r = 0; r <= rows; r += 1) {
-      const y = startY + r * (cellSize + BOARD_MARGIN/2);
+      const y = startY + r * (cellSize + LINE_WIDTH) + LINE_WIDTH;
       g.moveTo(startX, y);
-      g.lineTo(startX + cols * (cellSize + BOARD_MARGIN/2), y);
+      g.lineTo(startX + cols * (cellSize + LINE_WIDTH) + LINE_WIDTH, y);
     }
     for (let c = 0; c <= cols; c += 1) {
-      const x = startX + c * (cellSize + BOARD_MARGIN/2);
+      const x = startX + c * (cellSize + LINE_WIDTH) + LINE_WIDTH;
       g.moveTo(x, startY);
-      g.lineTo(x, startY + rows * (cellSize + BOARD_MARGIN/2));
+      g.lineTo(x, startY + rows * (cellSize + LINE_WIDTH) + LINE_WIDTH);
     }
     g.stroke();
   };
@@ -151,20 +185,20 @@ const ClobberView: GameClientModule["GameView"] = ({
         fill: 0x000000,
         fontFamily: "Poppins, Inter, sans-serif",
         fontWeight: "700",
-        fontSize: 20,
+        fontSize: fontSize,
       }),
       B: new TextStyle({
         fill: 0xffffff,
         fontFamily: "Poppins, Inter, sans-serif",
         fontWeight: "700",
-        fontSize: 20,
+        fontSize: fontSize,
       }),
     }),
-    []
+    [fontSize]
   );
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
       <div className="text-center text-lg font-semibold text-white">
         {status}
         <br />
@@ -174,83 +208,90 @@ const ClobberView: GameClientModule["GameView"] = ({
           </span>
         )}
       </div>
-      <div className="relative">
-        <Application width={boardWidth} height={boardHeight} backgroundAlpha={0}>
-          <pixiContainer>
-            <pixiGraphics draw={drawBoard} />
-            {board.map((row, rowIndex) =>
-              row.map((cell, colIndex) => {
-                if (cell !== "W" && cell !== "B") return null;
-                const x = BOARD_MARGIN / 4 + colIndex * cellSize + cellSize / 2 + (BOARD_MARGIN/2) * (colIndex);
-                const y = BOARD_MARGIN / 4 + rowIndex * cellSize + cellSize / 2 + (BOARD_MARGIN/2) * (rowIndex);
-                const isSelected = selectedCell?.row === rowIndex && selectedCell?.col === colIndex;
-                const isHovered = hoveredCell?.row === rowIndex && hoveredCell?.col === colIndex;
-                
-                const myColor = gameState?.player_colors?.[localPlayerId];
-                let canClick = false;
-                
-                if (isMyTurn) {
-                  if (!selectedCell) {
-                    // First click - can click own color
-                    canClick = cell === myColor;
-                  } else {
-                    // Second click - can click adjacent opponent tokens
-                    const { row: fromRow, col: fromCol } = selectedCell;
-                    const isAdjacent =
-                      (Math.abs(rowIndex - fromRow) === 1 && colIndex === fromCol) ||
-                      (Math.abs(colIndex - fromCol) === 1 && rowIndex === fromRow);
-                    canClick = isAdjacent && cell !== myColor;
+      {containerWidth > 0 && boardWidth > 0 && (
+        <div className="relative" style={{ width: boardWidth, height: boardHeight }}>
+          <Application 
+            key={`${boardWidth}-${boardHeight}`}
+            width={boardWidth} 
+            height={boardHeight} 
+            backgroundAlpha={0}
+          >
+            <pixiContainer>
+              <pixiGraphics draw={drawBoard} />
+              {board.map((row, rowIndex) =>
+                row.map((cell, colIndex) => {
+                  if (cell !== "W" && cell !== "B") return null;
+                  const x = colIndex * (cellSize + LINE_WIDTH) + LINE_WIDTH + cellSize / 2 ;
+                  const y = rowIndex * (cellSize + LINE_WIDTH) + LINE_WIDTH + cellSize / 2 ;
+                  const isSelected = selectedCell?.row === rowIndex && selectedCell?.col === colIndex;
+                  const isHovered = hoveredCell?.row === rowIndex && hoveredCell?.col === colIndex;
+                  
+                  const myColor = gameState?.player_colors?.[localPlayerId];
+                  let canClick = false;
+                  
+                  if (isMyTurn) {
+                    if (!selectedCell) {
+                      // First click - can click own color
+                      canClick = cell === myColor;
+                    } else {
+                      // Second click - can click adjacent opponent tokens
+                      const { row: fromRow, col: fromCol } = selectedCell;
+                      const isAdjacent =
+                        (Math.abs(rowIndex - fromRow) === 1 && colIndex === fromCol) ||
+                        (Math.abs(colIndex - fromCol) === 1 && rowIndex === fromRow);
+                      canClick = isAdjacent && cell !== myColor;
+                    }
                   }
-                }
-                
-                const scale = canClick && isHovered && !isSelected ? 1.15 : 1;
-                const label = cell === "W" ? "○" : "●";
-                
-                return (
-                  <pixiContainer key={`${rowIndex}-${colIndex}`} x={x} y={y} scale={scale}>
-                    <pixiGraphics
-                      draw={(g: PixiGraphics) => {
-                        g.clear();
-                        g.fill({ color: PLAYER_COLORS[cell], alpha: isSelected ? 1 : 0.9 });
-                        g.circle(0, 0, TOKEN_RADIUS);
-                        g.fill();
-                        if (isSelected) {
-                          g.setStrokeStyle({ width: 3, color: 0xffff00 });
-                          g.circle(0, 0, TOKEN_RADIUS);
-                          g.stroke();
-                        }
-                      }}
-                    />
-                    <pixiText text={label} anchor={0.5} x={0} y={0} style={tokenLabelStyles[cell]} />
-                  </pixiContainer>
-                );
-              })
+                  
+                  const scale = canClick && isHovered && !isSelected ? 1.25 : 1;
+                  const label = cell === "W" ? "○" : "●";
+                  
+                  return (
+                    <pixiContainer key={`${rowIndex}-${colIndex}`} x={x} y={y} scale={scale}>
+                      <pixiGraphics
+                        draw={(g: PixiGraphics) => {
+                          g.clear();
+                          g.fill({ color: PLAYER_COLORS[cell], alpha: isSelected ? 1 : 0.9 });
+                          g.circle(0, 0, tokenRadius);
+                          g.fill();
+                          if (isSelected) {
+                            g.setStrokeStyle({ width: 3, color: 0xffff00 });
+                            g.circle(0, 0, tokenRadius);
+                            g.stroke();
+                          }
+                        }}
+                      />
+                      <pixiText text={label} anchor={0.5} x={0} y={0} style={tokenLabelStyles[cell]} />
+                    </pixiContainer>
+                  );
+                })
+              )}
+            </pixiContainer>
+          </Application>
+          <div 
+            className="absolute top-0 left-0 grid" 
+            style={{ 
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateRows: `repeat(${rows}, 1fr)`,
+              width: `${boardWidth}px`,
+              height: `${boardHeight}px`
+            }}
+          >
+            {board.map((row, rowIndex) =>
+              row.map((_, colIndex) => (
+                <button
+                  key={`${rowIndex}-${colIndex}`}
+                  type="button"
+                  onClick={() => handleCellClick(rowIndex, colIndex)}
+                  onMouseEnter={() => setHoveredCell({ row: rowIndex, col: colIndex })}
+                  onMouseLeave={() => setHoveredCell(null)}
+                  className="w-full h-full bg-transparent outline"
+                />
+              ))
             )}
-          </pixiContainer>
-        </Application>
-        <div 
-          className="absolute top-0 left-0 grid" 
-          style={{ 
-            gridTemplateColumns: `repeat(${cols}, 1fr)`,
-            gridTemplateRows: `repeat(${rows}, 1fr)`,
-            width: `${boardWidth}px`,
-            height: `${boardHeight}px`
-          }}
-        >
-          {board.map((row, rowIndex) =>
-            row.map((_, colIndex) => (
-              <button
-                key={`${rowIndex}-${colIndex}`}
-                type="button"
-                onClick={() => handleCellClick(rowIndex, colIndex)}
-                onMouseEnter={() => setHoveredCell({ row: rowIndex, col: colIndex })}
-                onMouseLeave={() => setHoveredCell(null)}
-                className="w-full h-full bg-transparent"
-              />
-            ))
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
