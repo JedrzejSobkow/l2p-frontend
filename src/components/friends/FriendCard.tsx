@@ -36,7 +36,7 @@ const FriendCard: FC<FriendCardProps> = ({
       case 'online':
         return { dot: 'bg-green-500', textClass: 'text-green-500', label: 'Online' }
       case 'in_game':
-        return { dot: 'bg-purple-500', textClass: 'text-purple-400', label: gameName ? `Playing ${gameName}` : 'In Game' }
+        return { dot: 'bg-orange-500', textClass: 'text-orange-400', label: gameName ? `Playing ${gameName.toUpperCase()}` : 'In Game' }
       case 'in_lobby':
         return { dot: 'bg-orange-500', textClass: 'text-orange-400', label: 'In Lobby' }
       case 'offline':

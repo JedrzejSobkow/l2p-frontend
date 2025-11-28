@@ -87,20 +87,16 @@ const FriendsScreen: FC = () => {
   }, [friends, selectedFriendId])
 
   useEffect(() => {
-    if (!selectedFriend) return
-    if (!selectedFriendId) return
+    if (!selectedFriend || !selectedFriendId) return
     clearUnread(selectedFriendId)
     ensureConversation(selectedFriendId)
     loadMessages(selectedFriendId)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
-  const activeMessages = selectedFriendId
-  ? getMessages(selectedFriendId)
-  : []
+  const activeMessages = selectedFriendId ? getMessages(selectedFriendId) : []
 
   useLayoutEffect(() => {
-    if (!selectedFriendId) return
-    if (activeMessages.length === 0) return
+    if (!selectedFriendId || activeMessages.length === 0) return
     clearUnread(selectedFriendId)
   },[selectedFriendId,activeMessages.length,clearUnread])
 
@@ -109,7 +105,7 @@ const FriendsScreen: FC = () => {
     await sendMessage(selectedFriendId, { text, attachment })
   }
 
-  const handleSelectFriend = (friendId: string ) => {
+  const handleSelectFriend = (friendId: string) => {
     setSelectedFriendId(friendId)
     setActiveMobileTab('chat')
   }
@@ -139,21 +135,37 @@ const FriendsScreen: FC = () => {
     if (removing) return
     setShowRemoveConfirm(false)
   }
+
   return (
-    <div className="flex flex-col gap-4 bg-background px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh]">
-      {currentLobby && (
-        <div className="flex items-center justify-end md:hidden">
-          <button
-            type="button"
-            onClick={() => navigate(gameState?.result === 'in_progress' ? '/lobby/ingame' : '/lobby')}
-            className="flex items-center gap-2 rounded-full border border-white/20 bg-background-secondary px-4 py-2 text-sm font-semibold text-headline transition hover:border-white/40 hover:bg-white/10"
-          >
-            {gameState?.result === 'in_progress' ? 'Back to game' : 'Return to lobby'}
-          </button>
-        </div>
-      )}
-      {/* Mobile tabs */}
-      <div className="mb-4 lg:hidden">
+    <div className="flex flex-col gap-4 bg-background px-6 py-8 text-white lg:grid lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(260px,320px)] h-[92dvh] overflow-hidden">
+      <div className="flex flex-col gap-3 shrink-0 lg:hidden">
+        {currentLobby && (
+          <div className="relative overflow-hidden rounded-2xl border border-orange-500/30 bg-orange-500/10 p-3 ">
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-orange-100 leading-tight">
+                    Game Active
+                  </span>
+                  <span className="text-[10px] uppercase tracking-wider text-orange-200/60 font-medium">
+                    {gameState?.result === 'in_progress' ? 'Match in progress' : 'Waiting in Lobby'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(gameState?.result === 'in_progress' ? '/lobby/ingame' : '/lobby')}
+                className="shrink-0 rounded-xl bg-button px-5 py-2.5 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95"
+              >
+                {gameState?.result === 'in_progress' ? 'Return' : 'Lobby'}
+              </button>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-3 gap-1 rounded-2xl border border-white/15 bg-white/5 p-1">
           <button
             type="button"
@@ -192,8 +204,8 @@ const FriendsScreen: FC = () => {
           </button>
         </div>
       </div>
-
-      <div className={`order-1 h-full w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
+      
+      <div className={`order-1 lg:order-1 flex-1 min-h-0 lg:h-full w-full ${activeMobileTab === 'friends' ? 'block' : 'hidden'} lg:block`}>
         <FriendsPanel
           onFriendSelect={handleSelectFriend}
           title="Your Friends"
@@ -202,17 +214,17 @@ const FriendsScreen: FC = () => {
         />
       </div>
       <div
-        className={`order-3 flex flex-col w-full h-full flex-1 min-h-0 ${
+        className={`order-3 lg:order-2 flex-col w-full flex-1 min-h-0 h-full ${
           activeMobileTab === 'chat' ? 'flex' : 'hidden'
-        } lg:order-2 lg:flex`}
+        } lg:flex`}
       >
         {selectedFriend ? (
           <div className="flex h-full flex-col rounded-3xl border border-white/10 overflow-hidden">
-          <ChatScreenHeader 
+            <ChatScreenHeader 
               nickname={selectedFriend.nickname} 
               avatarUrl={selectedFriend.avatarUrl}
               statusInfo={statusInfo!}
-          />
+            />
             <div className="flex-1 min-h-0">
               <ChatWindow
                 messages={activeMessages}
@@ -241,22 +253,22 @@ const FriendsScreen: FC = () => {
         )}
       </div>
       <div
-        className={`order-2 w-full h-full ${
+        className={`order-2 lg:order-3 w-full flex-1 min-h-0 lg:h-full ${
           activeMobileTab === 'details' ? 'block' : 'hidden'
-        } lg:order-3 lg:block`}
+        } lg:block`}
       >
         {selectedFriend ? (
           <FriendDetailsPanel 
-          friend={selectedFriend} 
-          onRemove={handleRemoveRequest} 
-          removing={removing} 
-          onLobbyJoin={selectedFriend.lobbyCode ? () => {
-            if (selectedFriend.lobbyCode){
-              joinLobby(selectedFriend.lobbyCode)
-              navigate('/lobby')
-            }
-          }: undefined}
-        />
+            friend={selectedFriend} 
+            onRemove={handleRemoveRequest} 
+            removing={removing} 
+            onLobbyJoin={selectedFriend.lobbyCode ? () => {
+              if (selectedFriend.lobbyCode){
+                joinLobby(selectedFriend.lobbyCode)
+                navigate('/lobby')
+              }
+            }: undefined}
+          />
         ) : (
           <div className="flex h-full min-h-[280px] flex-col items-center justify-center rounded-3xl border border-white/10 bg-[rgba(21,20,34,0.85)] px-6 text-center text-sm text-white/60">
             Choose someone from the list to see their profile and quick actions.
