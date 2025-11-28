@@ -7,6 +7,39 @@ import { useFriends, type Friend } from '../components/friends/FriendsContext'
 import ConfirmDialog from '../components/ConfirmDialog'
 import { pfpImage } from '@assets/images'
 import { useLobby } from '../components/lobby/LobbyContext'
+import ChatScreenHeader from '@/components/chat/ChatScreenHeader'
+
+const getStatusInfo = (friend: Friend) => {
+  const status = friend.userStatus;
+  const gameName = friend.gameName;
+  switch (status) {
+    case 'online':
+      return {
+        containerClass: 'bg-green-500/10 border-green-500/20 text-green-400',
+        dotClass: 'bg-green-500',
+        label: 'Online'
+      }
+    case 'in_game':
+      return {
+        containerClass: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
+        dotClass: 'bg-purple-500',
+        label: gameName ? `Playing ${gameName}` : 'In Game'
+      }
+    case 'in_lobby':
+      return {
+        containerClass: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+        dotClass: 'bg-orange-500',
+        label: 'In Lobby'
+      }
+    case 'offline':
+    default:
+      return {
+        containerClass: 'bg-white/5 border-white/10 text-white/40',
+        dotClass: 'bg-white/40',
+        label: 'Offline'
+      }
+  }
+}
 
 const FriendsScreen: FC = () => {
   const { friendsById,friends, removeFriend } = useFriends()
@@ -28,6 +61,7 @@ const FriendsScreen: FC = () => {
     return friendsById[selectedFriendId]
   }, [friendsById, selectedFriendId])
 
+  const statusInfo = selectedFriend ? getStatusInfo(selectedFriend) : null
   useEffect(() => {
     const state =
       (location.state as { friendId?: string, tab?: string } | null)
@@ -49,11 +83,7 @@ const FriendsScreen: FC = () => {
     if (!selectedFriend) return
     const id = selectedFriend.id
     clearUnread(id)
-    ensureConversation(
-      id,
-      selectedFriend.nickname,
-      selectedFriend.avatarUrl,
-    )
+    ensureConversation(id)
     loadMessages(id)
   }, [clearUnread,ensureConversation,loadMessages, selectedFriend])
 
@@ -169,21 +199,29 @@ const FriendsScreen: FC = () => {
         } lg:order-2 lg:flex`}
       >
         {selectedFriend ? (
-          <>
-            <ChatWindow
-              messages={activeMessages}
-              friendData={{
-                id: selectedFriend.id,
-                nickname: selectedFriend.nickname,
-                avatarUrl: selectedFriend.avatarUrl
-              }}
-              hasMore={getHasMore(selectedFriend.id) ?? true}
-              isTyping={getTyping(selectedFriend.id)}
-              onSend={handleSend}
-              onTyping={sendTyping}
-              onLoadMore={() => loadMoreMessages(selectedFriend.id)}
-            />
-          </>
+          <div className="flex h-full flex-col rounded-3xl border border-white/10 overflow-hidden">
+          <ChatScreenHeader 
+              nickname={selectedFriend.nickname} 
+              avatarUrl={selectedFriend.avatarUrl}
+              statusInfo={statusInfo!}
+          />
+            <div className="flex-1 min-h-0">
+              <ChatWindow
+                messages={activeMessages}
+                friendData={{
+                  id: selectedFriend.id,
+                  nickname: selectedFriend.nickname,
+                  avatarUrl: selectedFriend.avatarUrl
+                }}
+                hasMore={getHasMore(selectedFriend.id) ?? true}
+                isTyping={getTyping(selectedFriend.id)}
+                onSend={handleSend}
+                onTyping={sendTyping}
+                onLoadMore={() => loadMoreMessages(selectedFriend.id)}
+                className='rounded-none border-0 h-full'
+              />
+            </div>
+          </div>
         ) : (
           <div className="flex h-full min-h-[420px] flex-col items-center justify-center rounded-[32px] border border-dashed border-white/15 bg-white/5 px-6 text-center">
             <p className="text-base font-medium text-white/80">Add some friends to start chatting.</p>
@@ -255,39 +293,7 @@ const FriendDetailsPanel: FC<FriendDetailsPanelProps> = ({ friend, onRemove,onLo
   //   }
   // }, [friend.created_at])
 
-  const statusInfo = useMemo(() => {
-    const status = friend.userStatus;
-    const gameName = friend.gameName;
-    console.log(friend.description)
-
-    switch (status) {
-      case 'online':
-        return {
-          containerClass: 'bg-green-500/10 border-green-500/20 text-green-400',
-          dotClass: 'bg-green-500',
-          label: 'Online'
-        }
-      case 'in_game':
-        return {
-          containerClass: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
-          dotClass: 'bg-purple-500',
-          label: gameName ? `Playing ${gameName}` : 'In Game'
-        }
-      case 'in_lobby':
-        return {
-          containerClass: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
-          dotClass: 'bg-orange-500',
-          label: 'In Lobby'
-        }
-      case 'offline':
-      default:
-        return {
-          containerClass: 'bg-white/5 border-white/10 text-white/40',
-          dotClass: 'bg-white/40',
-          label: 'Offline'
-        }
-    }
-  }, [friend.userStatus, friend.gameName])
+  const statusInfo = getStatusInfo(friend)
 
   return (
     <aside className="flex h-full min-h-[380px] flex-col overflow-hidden rounded-3xl border border-white/10 bg-background-secondary">

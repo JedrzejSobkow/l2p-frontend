@@ -74,11 +74,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
     if (isSmallScreen) {
       navigate('/friends', { state: { friendId: normalizedId } })
     } else {
-      openChat({
-        id: normalizedId,
-        nickname: friend.nickname,
-        avatarUrl: friend.avatarUrl,
-      })
+      openChat(normalizedId)
     }
     onClose()
   }
