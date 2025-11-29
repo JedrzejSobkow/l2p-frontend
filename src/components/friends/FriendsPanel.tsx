@@ -173,7 +173,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
       />
     )
   }
-  
+
   return (
     <>
     <div
@@ -220,7 +220,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
         </div>
       </header>
 
-      <div className="flex-1 space-y-6 overflow-y-auto px-6 pb-6 pt-4 scrollbar-default">
+      <div className="flex-1 space-y-6 overflow-y-auto px-6 pb-6 pt-4 scrollbar-default overscroll-contain">
         {mode === 'discover' ? (
           <section>
             {!searchTerm.trim() && (
