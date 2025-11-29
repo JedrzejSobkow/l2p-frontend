@@ -6,7 +6,7 @@ import { pfpImage } from '@/assets/images';
 type InviteFriendsModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onInvite: (friendUserId: number | string, friendNickname: string) => void;
+  onInvite: (friendId: string, lobbyCode: string) => void;
   lobbyCode: string;
 };
 
@@ -24,13 +24,13 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
     const query = searchTerm.trim().toLowerCase();
     if (!query) return friends;
     return friends.filter((friend) =>
-      friend.friend_nickname.toLowerCase().includes(query)
+      friend.nickname.toLowerCase().includes(query)
     );
   }, [friends, searchTerm]);
 
-  const handleInvite = (friendUserId: string | number, friendNickname: string) => {
-    onInvite(friendUserId, friendNickname);
-    setInvitedFriends((prev) => new Set(prev).add(friendUserId));
+  const handleInvite = (friendId: string, lobbyCode: string) => {
+    onInvite(friendId, lobbyCode);
+    setInvitedFriends((prev) => new Set(prev).add(friendId));
   };
 
   const handleClose = () => {
@@ -92,26 +92,29 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
 
           {!isLoading &&
             filteredFriends.map((friend) => {
-              const isInvited = invitedFriends.has(friend.friend_user_id);
+              const isInvited = invitedFriends.has(friend.id);
               return (
                 <div
-                  key={friend.friend_user_id}
+                  key={friend.id}
                   className="flex items-center justify-between rounded-lg border border-white/10 bg-[rgba(31,30,43,0.95)] p-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <img
-                      src={friend.friend_pfp_path || pfpImage}
-                      alt={friend.friend_nickname}
+                      src={friend.avatarUrl || pfpImage}
+                      alt={friend.nickname}
                       className="h-10 w-10 rounded-full object-cover"
                     />
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-white">
-                        {friend.friend_nickname}
+                        {friend.nickname}
                       </div>
                     </div>
                   </div>
                   <button
-                    onClick={() => handleInvite(friend.friend_user_id, friend.friend_nickname)}
+                    onClick={() => {
+                      if (lobbyCode)
+                      handleInvite(friend.id, lobbyCode)
+                    }}
                     disabled={isInvited}
                     className="flex items-center gap-2 rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                   >

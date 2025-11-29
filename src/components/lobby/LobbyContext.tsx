@@ -70,6 +70,9 @@ import {
   offGameRulesUpdated,
   emitGetPublicLobbiesByGame,
   isLobbySocketConnected,
+  emitInviteFriend,
+  offLobbyInviteSent,
+  onLobbyInviteSent,
 } from '../../services/lobby'
 
 import {
@@ -84,6 +87,8 @@ import {
     isGameSocketConnected,
     onGameStarted,
 } from '../../services/game'
+
+import { usePopup } from '../PopupContext';
 
 type LobbyContextValue = {
   isLoading: boolean
@@ -113,6 +118,7 @@ type LobbyContextValue = {
   selectGame: (gameName: string) => void
   clearGameSelection: () => void
   setGameState: (state: any) => void
+  sendInvite: (friendId: string, lobbyCode: string) => void
   isLobbySocketConnected: boolean
   isGameSocketConnected: boolean
 }
@@ -129,6 +135,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<LobbyError | null>(null)
   const [gameState, setGameState] = useState<any | null>(null)
+  const { showPopup } = usePopup();
 
   // Initialize socket connection
   useEffect(() => {
@@ -310,6 +317,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setGameState(data.game_state)
     }
 
+    const handleInviteSent = () => {
+      showPopup({ type: 'confirmation', message: `Invitation succesfully sent.` })
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -334,6 +345,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onGameStarted(handleGameStarted)
     onMoveMade(handleMoveMade)
     onGameEnded(handleGameEnded)
+    onLobbyInviteSent(handleInviteSent)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -360,8 +372,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offGameStarted(handleGameStarted)
       offMoveMade(handleMoveMade)
       offGameEnded(handleGameEnded)
+      offLobbyInviteSent(handleInviteSent)
     }
-  }, [currentLobby?.lobby_code])
+  }, [currentLobby?.lobby_code,showPopup])
 
   const createLobbyHandler = useCallback((maxPlayers: number = 6, isPublic: boolean = false, name?: string, gameName?: string) => {
     setIsLoading(true)
@@ -474,6 +487,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     setGameState(state);
   }, []);
 
+  const sendIviteHandler = useCallback((friendId: string, lobbyCode: string) => {
+    emitInviteFriend(lobbyCode, friendId)
+  }, [])
+
   const value: LobbyContextValue = useMemo(
     () => ({
       isLoading,
@@ -486,6 +503,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       availableGames,
       gameState,
       createLobby: createLobbyHandler,
+      sendInvite: sendIviteHandler,
       joinLobby: joinLobbyHandler,
       leaveLobby: leaveLobbyHandler,
       updateSettings: updateSettingsHandler,
@@ -517,6 +535,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       availableGames,
       gameState,
       createLobbyHandler,
+      sendIviteHandler,
       joinLobbyHandler,
       leaveLobbyHandler,
       updateSettingsHandler,

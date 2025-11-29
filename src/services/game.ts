@@ -1,9 +1,7 @@
-import { io, type Socket } from 'socket.io-client'
+import { type Socket } from 'socket.io-client'
+import { disconnectNamespaceSocket, getNamespaceSocket } from './socket'
 
-const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
-const TRIMMED_BASE = API_BASE_URL.replace(/\/$/, '')
-const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/game` : '/game'
-const SOCKET_PATH = '/socket.io'
+const GAME_NAMESPACE = '/game'
 
 export type EngineConfig = {
   game_name: string
@@ -55,26 +53,21 @@ export type GameErrorEvent = {
 }
 
 let gameSocket: Socket | null = null
+let gameListenersRegistered = false
 
 export const connectGameSocket = (): Socket => {
-  if (gameSocket) {
-    if (!gameSocket.connected) gameSocket.connect()
-    return gameSocket
-  }
-  gameSocket = io(SOCKET_URL, {
-    path: SOCKET_PATH,
-    transports: ['websocket'],
-    withCredentials: true,
-    reconnection: true,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    reconnectionAttempts: 5,
-    forceNew: false,
-  })
+  gameSocket = getNamespaceSocket(GAME_NAMESPACE)
 
-  gameSocket.on('connect_error', (err: any) => {
-    console.error('Game socket connect_error:', err)
-  })
+  if (!gameListenersRegistered) {
+    gameSocket.on('connect', () => {
+      console.log('Game socket connected')
+    })
+    gameListenersRegistered = true
+  }
+
+  if (!gameSocket.connected) {
+    gameSocket.connect()
+  }
 
   return gameSocket
 }
@@ -83,8 +76,9 @@ export const getGameSocket = () => gameSocket
 
 export const disconnectGameSocket = () => {
   if (gameSocket) {
-    gameSocket.disconnect()
+    disconnectNamespaceSocket(GAME_NAMESPACE)
     gameSocket = null
+    gameListenersRegistered = false
   }
 }
 

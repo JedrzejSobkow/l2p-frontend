@@ -1,4 +1,6 @@
+import { pfpImage } from '@/assets/images'
 import { request } from '../lib/http'
+import type { User } from './auth'
 export type FriendshipStatus = 'pending' | 'accepted' | 'blocked'
 
 export type Friendship = {
@@ -6,7 +8,7 @@ export type Friendship = {
   friend_user_id: string
   friend_nickname: string
   friend_pfp_path: string
-  friend_description?: string
+  friend_description: string | null
   status: FriendshipStatus
   created_at: string
   is_requester: boolean
@@ -27,6 +29,15 @@ export type SearchFriendsPayload = {
   total_pages: number
 }
 
+export type FriendStatusPayload = {
+  user_id: string
+  status: 'online' | 'offline' | 'in_lobby' | 'in_game'
+  game_name?: string
+  lobby_code?: string
+  lobby_filled_slots?: number
+  lobby_max_slots?: number
+}
+
 export async function searchFriends(query: string, page: number = 1, pageSize: number = 20): Promise<SearchFriendsPayload> {
   const params = new URLSearchParams()
   params.set('q', query)
@@ -39,6 +50,7 @@ export async function searchFriends(query: string, page: number = 1, pageSize: n
     users: res.users.map((user) => ({
       ...user,
       user_id: String(user.user_id),
+      pfp_path: user.pfp_path ? String(user.pfp_path) : pfpImage,
     })),
   }
 }
@@ -81,11 +93,27 @@ export async function getFriendsList(status?: FriendshipStatus): Promise<Friends
   return res.map(friend => ({
     is_requester: Boolean(friend.is_requester),
     created_at: String(friend.created_at),
-    friend_description: String(friend.friend_description),
+    friend_description: friend.friend_description,
     friend_nickname: String(friend.friend_nickname),
     status: friend.status as FriendshipStatus,
     friendship_id: String(friend.friendship_id),
     friend_user_id: String(friend.friend_user_id),
     friend_pfp_path: friend.friend_pfp_path
   }))
+}
+
+export async function getFriendsStatuses(): Promise<FriendStatusPayload[]> {
+  return await request<FriendStatusPayload[]>(`/status/friends`, { method: 'GET', auth: true })
+}
+
+export async function getFriendStatus(friendId: string): Promise<FriendStatusPayload> {
+  return await request<FriendStatusPayload>(`/status/users/${friendId}`, { method: 'GET', auth: true })
+}
+
+export async function getUser(id: string): Promise<User> {
+  const user = await request<User>(`/users/${id}`)
+  return {
+    ...user,
+    id: String(id),
+  }
 }

@@ -10,9 +10,7 @@ import {
 } from 'react'
 import { useAuth } from '../AuthContext'
 import {
-  connectChatSocket,
-  disconnectChatSocket,
-  getConversations,
+  getInitialChats,
   sendMessage as emitChatMessage,
   sendTyping as emitTyping,
   getMessages as fetchMessages,
@@ -22,7 +20,14 @@ import {
   type Conversation,
   type ConversationUpdatedEvent,
   type UserTypingEvent,
-  type ConversationHistoryPayload
+  onMessage,
+  onUserTyping,
+  offMessage,
+  offUserTyping,
+  getChatSocket,
+  type LobbyInvite,
+  onLobbyInviteReceived,
+  offLobbyInviteReceived
 } from '../../services/chat'
 import { useFriends } from '../friends/FriendsContext'
 
@@ -49,6 +54,15 @@ export type ChatMessage = {
   createdAt: string
   imageUrl?: string
   isMine: boolean
+  type?: 'TEXT' | 'LOBBY_INVITE'
+  temp_id?: string
+  metadata?: {
+    lobbyCode?: string
+    lobbyName?: string
+    gameName?: string
+    maxPlayers?: number
+    currentPlayers?: number
+  }
 }
 
 const normalizeTimestamp = (timestamp: string) => {
@@ -62,18 +76,21 @@ const normalizeTimestamp = (timestamp: string) => {
 }
 
 const mapDtoToChatMessage = (message: ChatMessageDTO): ChatMessage => {
-  return {
+  const result = {
     id: String(message.id),
     senderId: String(message.sender_id),
     senderNickname: message.sender_nickname,
     content: message.content,
     imageUrl: message.image_url,
     createdAt: normalizeTimestamp(message.created_at),
-    isMine: message.is_mine
+    isMine: message.is_mine,
+    temp_id: message.temp_id
   }
+
+  return result
 }
 
-type IncomingMessageListener = (payload: { conversationId: string; target: ConversationTarget }) => void
+type IncomingMessageListener = (payload: { conversationId: string}) => void
 
 type ChatContextValue = {
   getMessages: (friendId: string) => ChatMessage[]
@@ -81,14 +98,16 @@ type ChatContextValue = {
   getUnread: (friendId: string) => number
   getTyping: (friendId: string) => boolean
   getHasMore: (friendId: string) => boolean
+  hasAnyUnread: boolean
 
   loadMessages: (friendId: string, beforeMessageId?: string) => Promise<void>
   loadMoreMessages: (friendId: string) => Promise<void>
 
-  ensureConversation: (id: string, nickname?: string, avatarUrl?: string) => void
+  ensureConversation: (id: string) => void
   sendMessage: (friendId: string, payload: { text?: string; attachment?: File }) => Promise<void>
   sendTyping: (friendId: string) => void
   clearUnread: (friendId: string) => void
+  clearState: (friendId: string) => void
 
   subscribeToIncomingMessages: (listener: IncomingMessageListener) => () => void
 }
@@ -97,7 +116,7 @@ const ChatContext = createContext<ChatContextValue | undefined>(undefined)
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const { user,isAuthenticated } = useAuth()
-  const {friends} = useFriends()
+  const {friendsById} = useFriends()
   const [state, setState] = useState<ConversationsState>({
     messagesById: {},
     targets: {},
@@ -110,25 +129,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const typingThrottleRef = useRef<Map<string, number>>(new Map())
   const incomingMessageListenersRef = useRef<Set<IncomingMessageListener>>(new Set())
-  // useEffect(() => {
-  //   if (!isAuthenticated)
-  //     return
 
-  //   setState(prev => {
-  //     const targets = {...prev.targets}
-
-  //     friends.forEach(friend => {
-  //       if(!targets[friend.friend_user_id]){
-  //         targets[friend.friend_user_id] = {
-  //           id: friend.friend_user_id,
-  //           nickname: friend.friend_nickname,
-  //           avatarUrl: friend.friend_pfp_path || 
-  //         }
-  //       }
-  //     })
-  //     return {...prev,targets}
-  //   })
-  // },[friends,isAuthenticated])
+  const hasAnyUnread = useMemo(() => {
+    return Object.values(state.unreadById).some((count) => count > 0)
+  },[state.unreadById])
 
   const getMessages = useCallback(
     (friendId: string) => state.messagesById[friendId] ?? [],
@@ -169,6 +173,38 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }))
   }, [])
 
+  const clearState = useCallback((friendId: string) => {
+    const id = String(friendId)
+
+    setState((prev) => {
+      const { [id]: _messages, ...restMessages } = prev.messagesById
+      const { [id]: _target, ...restTargets } = prev.targets
+      const { [id]: _typing, ...restTyping } = prev.typingById
+      const { [id]: _unread, ...restUnread } = prev.unreadById
+      const { [id]: _hasMore, ...restHasMore } = prev.hasMoreById
+      const { [id]: _cursor, ...restCursors } = prev.nextCursorById
+
+      return {
+        ...prev,
+        messagesById: restMessages,
+        targets: restTargets,
+        typingById: restTyping,
+        unreadById: restUnread,
+        hasMoreById: restHasMore,
+        nextCursorById: restCursors,
+      }
+    })
+
+    loadedConversationsRef.current.delete(id)
+    typingThrottleRef.current.delete(id)
+
+    const timeout = typingTimeoutRef.current.get(id)
+    if (timeout) {
+      clearTimeout(timeout)
+      typingTimeoutRef.current.delete(id)
+    }
+  }, [])
+
   const subscribeToIncomingMessages = useCallback(
     (listener: IncomingMessageListener) => {
       incomingMessageListenersRef.current.add(listener)
@@ -179,98 +215,49 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     [],
   )
 
-  const loadInitialConversations = useCallback(async () => {
-    // not sure if needed
-    try {
-      const result = await getConversations()
-      const conversations = result?.conversations ?? []
-      setState((prev) => {
-        if (!conversations.length) return prev
-        const targets = { ...prev.targets }
-        conversations.forEach((conversation: Conversation) => {
-          const id = conversation.friend_id
-          const unreadCount = conversation.unread_count ?? 0
-          if (unreadCount > 0) {
-            prev.unreadById = {
-              ...prev.unreadById,
-              [id]: unreadCount,
-            }
-          }
-          targets[id] = {
-            id,
-            nickname: conversation.friend_nickname,
-            avatarUrl: conversation.friend_pfp_path ?? '',
-          }
-        })
-        return {
-          ...prev,
-          targets,
-        }
-      })
-    } catch (error) {
-      console.error('Failed to load initial conversations', error)
-    }
-  }, [])
-
-  // useEffect(() => {
-  //   if (!isAuthenticated) return
-  //   void loadInitialConversations()
-  // }, [loadInitialConversations, isAuthenticated])
-
   const ensureConversation = useCallback(
-  (id: string, nickname?: string, avatarUrl?: string) => {
+  (id: string) => {
     const key = String(id)
 
     setState((prev) => {
       const existing = prev.targets[key]
-      const friend = friends.find(f => String(f.friend_user_id) === key)
-      const finalNickname =
-        nickname ??
-        friend?.friend_nickname ??
-        existing?.nickname ??
-        'Unknown'
-      const finalAvatar =
-        avatarUrl ??
-        friend?.friend_pfp_path ??
-        existing?.avatarUrl ??
-        ''
-      const next: ConversationTarget = {
-        id: key,
-        nickname: finalNickname,
-        avatarUrl: finalAvatar,
-      }
+      const friend = friendsById[key]
+      if (!friend) return prev
 
       if (existing &&
-          existing.nickname === finalNickname &&
-          existing.avatarUrl === finalAvatar) {
+          existing.nickname === friend.nickname &&
+          existing.avatarUrl === friend.avatarUrl) {
         return prev
       }
       return {
         ...prev,
         targets: {
           ...prev.targets,
-          [key]: next,
-        },
+          [key]: {
+            id: key,
+            nickname: friend.nickname,
+            avatarUrl: friend.avatarUrl || '',
+          }
+        }
       }
     })
   },
-  [friends],
+  [friendsById],
 )
 
   const loadMessages = useCallback(
     async (friendId: string,beforeMessageId?: string) => {
-      const loadingKey = `${friendId}:${beforeMessageId ?? 'initial'}`
-
-      if (!beforeMessageId && loadedConversationsRef.current.has(friendId)){
+      const id = String(friendId)
+      if (!beforeMessageId && loadedConversationsRef.current.has(id)){
         return
       }
       try {
-        const res = await fetchMessages(friendId,beforeMessageId,10)
+        const res = await fetchMessages(id,beforeMessageId,10)
         const newMessages: ChatMessage[] = res.messages.map((message) => (
           mapDtoToChatMessage(message)
         )).reverse()
         setState((prev) => {
-          const prevMessages = prev.messagesById[friendId] ?? []
+          const prevMessages = prev.messagesById[id] ?? []
           const existingIds = new Set(prevMessages.map((m)=> m.id))
 
           const dedupedNew = newMessages.filter((msg) => !existingIds.has(msg.id))
@@ -279,20 +266,20 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ...prev,
             messagesById: {
               ...prev.messagesById,
-              [friendId]: merged
+              [id]: merged
             },
             nextCursorById: {
               ...prev.nextCursorById,
-              [friendId]: res.next_cursor
+              [id]: res.next_cursor
             },
             hasMoreById: {
               ...prev.hasMoreById,
-              [friendId]: res.has_more
+              [id]: res.has_more
             },
           }
         })
         if (!beforeMessageId){
-          loadedConversationsRef.current.add(friendId)
+          loadedConversationsRef.current.add(id)
         }
       } 
       catch{
@@ -316,20 +303,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const appendMessage = useCallback((friendId: string, message: ChatMessage) => {
     setState((prev) => {
       const existing = prev.messagesById[friendId] ?? []
-
       if (existing.some((msg) => msg.id === message.id)){
         return prev
       }
-
       const sanitized = !message.id.startsWith('temp') 
-      ? existing.filter((msg) => 
-        !msg.id.startsWith('temp') || 
-        msg.senderId !== message.senderId || 
-        msg.content !== message.content ||
-        Boolean(msg.imageUrl) !== Boolean(message.imageUrl),
-      )
-      : existing
-
+      ? existing.filter((msg) => msg.id !== message.temp_id): existing
       return {
         ...prev,
         messagesById: {
@@ -355,8 +333,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         tempImageUrl = URL.createObjectURL(file)
       }
       const optimisticMessage: ChatMessage = {
-        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        senderId: senderId,
+        id: `temp-${friendId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        senderId: String(senderId),
         senderNickname: senderNickname,
         content: text,
         imageUrl: tempImageUrl,
@@ -391,15 +369,16 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             ...payloadBase,
             content: text || undefined,
             image_path: uploadDescriptor.image_path,
+            temp_id: optimisticMessage.id
           })
         } else {
           emitChatMessage({
             ...payloadBase,
             content: text || undefined,
+            temp_id: optimisticMessage.id
           })
         }
       } catch (error) {
-        console.error('Failed to send message', error)
         setState((prev) => {
           const list = prev.messagesById[friendId] ?? []
           return {
@@ -410,6 +389,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             },
           }
         })
+        throw error
       } finally {
         if (tempImageUrl) {
           const urlToRevoke = tempImageUrl
@@ -433,13 +413,23 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }
   ,[])
 
+  const extractFriendId = (tempId: string) => {
+    const match = /^temp-([^ -]+?)-/.exec(String(tempId))
+  return match?.[1] ?? null
+  }
+
   const handleIncomingMessage = useCallback(
     (payload: ChatMessageDTO) => {
       if (!payload) return
       const message = mapDtoToChatMessage(payload)
-      if (message.isMine) return
+      if (message.isMine) {
+        const friendId = extractFriendId(message.temp_id!)
+        if (friendId)
+          appendMessage(friendId, message)
+        return
+      }
       
-      ensureConversation(message.senderId, message.senderNickname)
+      ensureConversation(message.senderId)
 
       
       if (!loadedConversationsRef.current.has(message.senderId)){
@@ -458,23 +448,18 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           },
         }
       })
-      const friend = friends.find((f) => String(f.friend_user_id) === message.senderId)
+      const friend = friendsById[message.senderId]
 
       if (!friend) return
-      const target: ConversationTarget = {
-        id: message.senderId,
-        nickname: message.senderNickname,
-        avatarUrl: friend.friend_pfp_path
-      }
       incomingMessageListenersRef.current.forEach((listener) => {
         try {
-          listener({conversationId: target.id, target})
+          listener({conversationId: message.senderId})
         } catch(error) {
           console.error('Incoming message listener failed', error)
         }
       })
     }
-  ,[appendMessage,ensureConversation,getTarget,friends,loadMessages])
+  ,[appendMessage,ensureConversation,getTarget,friendsById,loadMessages])
 
   const handleConversationUpdated = useCallback(
     (payload: ConversationUpdatedEvent) => {
@@ -485,9 +470,8 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const handleTypingEvent = useCallback(
   (payload: UserTypingEvent) => {
     const conversationId = String(payload.user_id)
-    const nickname = payload.nickname
 
-    ensureConversation(conversationId, nickname)
+    ensureConversation(conversationId)
     setState((prev) => {
       if (prev.typingById[conversationId]) return prev
 
@@ -523,36 +507,78 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   [ensureConversation],
 )
 
+const handleReceivedLobbyInvite = useCallback(
+    (payload: LobbyInvite) => {
+      // 1. Ensure conversation exists with the inviter
+      const inviterId = String(payload.inviter_id)
+      ensureConversation(inviterId)
+
+      // 2. Create a synthetic message object
+      const inviteMessage: ChatMessage = {
+        id: `invite-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        senderId: inviterId,
+        senderNickname: payload.inviter_nickname,
+        content: `Invited you to play ${payload.game_name}`,
+        createdAt: new Date().toISOString(),
+        isMine: false,
+        type: 'LOBBY_INVITE',
+        metadata: {
+          lobbyCode: payload.lobby_code,
+          lobbyName: payload.lobby_name,
+          gameName: payload.game_name,
+          currentPlayers: payload.current_players,
+          maxPlayers: payload.max_players
+        }
+      }
+
+      // 3. Append to message history
+      // Note: If conversation isn't loaded yet, loadMessages might be safer, 
+      // but appending directly works for immediate feedback.
+      if (!loadedConversationsRef.current.has(inviterId)){
+         void loadMessages(inviterId)
+      } else {
+         appendMessage(inviterId, inviteMessage)
+      }
+
+      // 4. Update unread count
+      setState((prev) => {
+        const currentUnread = prev.unreadById?.[inviterId] ?? 0
+        return {
+          ...prev,
+          unreadById: {
+            ...prev.unreadById,
+            [inviterId]: currentUnread + 1,
+          },
+        }
+      })
+      
+      // 5. Notify listeners (e.g. for popups/toasts elsewhere)
+      incomingMessageListenersRef.current.forEach((listener) => {
+        try {
+          listener({ conversationId: inviterId })
+        } catch (error) {
+          console.error('Incoming listener failed', error)
+        }
+      })
+    },
+    [ensureConversation, appendMessage, loadMessages]
+  )
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      disconnectChatSocket()
-      return
-    }
-    const socket = connectChatSocket()
+    if (!isAuthenticated) return
+    const socket = getChatSocket()
+    if (!socket) return
 
-    const handleConnect = () => {
-      // refresh state on reconnect to ensure latest data
-      console.log('Chat socket connected')
-      loadedConversationsRef.current.clear()
-    }
-    const handleDisconnect = () => {
-      /* no-op */
-    }
-
-    socket.on('connect', handleConnect)
-    socket.on('disconnect', handleDisconnect)
-    socket.on('message', handleIncomingMessage)
-    socket.on('conversation_updated', handleConversationUpdated)
-    socket.on('user_typing', handleTypingEvent)
+    onMessage(handleIncomingMessage)
+    onUserTyping(handleTypingEvent)
+    onLobbyInviteReceived(handleReceivedLobbyInvite)
 
     return () => {
-      socket.off('connect', handleConnect)
-      socket.off('disconnect', handleDisconnect)
-      socket.off('message', handleIncomingMessage)
-      socket.off('conversation_updated', handleConversationUpdated)
-      socket.off('user_typing', handleTypingEvent)
+      offMessage(handleIncomingMessage)
+      offUserTyping(handleTypingEvent)
+      offLobbyInviteReceived(handleReceivedLobbyInvite)
     }
-  }, [handleTypingEvent,isAuthenticated,handleIncomingMessage,handleConversationUpdated])
+  }, [handleTypingEvent,handleIncomingMessage,handleConversationUpdated])
 
   useEffect(() => {
     if (isAuthenticated) return
@@ -577,12 +603,14 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getUnread,
       getTyping,
       getHasMore,
+      hasAnyUnread,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
       sendMessage,
       sendTyping,
       clearUnread,
+      clearState,
       subscribeToIncomingMessages,
     }),
     [
@@ -591,12 +619,14 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       getUnread,
       getTyping,
       getHasMore,
+      hasAnyUnread,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
       sendMessage,
       sendTyping,
       clearUnread,
+      clearState,
       subscribeToIncomingMessages,
     ],
   )
