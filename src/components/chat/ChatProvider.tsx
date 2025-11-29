@@ -98,6 +98,7 @@ type ChatContextValue = {
   getUnread: (friendId: string) => number
   getTyping: (friendId: string) => boolean
   getHasMore: (friendId: string) => boolean
+  hasAnyUnread: boolean
 
   loadMessages: (friendId: string, beforeMessageId?: string) => Promise<void>
   loadMoreMessages: (friendId: string) => Promise<void>
@@ -128,6 +129,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const typingTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const typingThrottleRef = useRef<Map<string, number>>(new Map())
   const incomingMessageListenersRef = useRef<Set<IncomingMessageListener>>(new Set())
+
+  const hasAnyUnread = useMemo(() => {
+    return Object.values(state.unreadById).some((count) => count > 0)
+  },[state.unreadById])
 
   const getMessages = useCallback(
     (friendId: string) => state.messagesById[friendId] ?? [],
@@ -598,6 +603,7 @@ const handleReceivedLobbyInvite = useCallback(
       getUnread,
       getTyping,
       getHasMore,
+      hasAnyUnread,
       loadMessages,
       loadMoreMessages,
       ensureConversation,
@@ -613,6 +619,7 @@ const handleReceivedLobbyInvite = useCallback(
       getUnread,
       getTyping,
       getHasMore,
+      hasAnyUnread,
       loadMessages,
       loadMoreMessages,
       ensureConversation,

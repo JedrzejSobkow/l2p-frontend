@@ -7,6 +7,7 @@ import { useLobby } from './lobby/LobbyContext';
 import { usePopup } from './PopupContext';
 import { useFriends } from './friends/FriendsContext';
 import ConfirmDialog from './ConfirmDialog';
+import { useChat } from './chat/ChatProvider';
 
 
 const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
@@ -16,6 +17,7 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
     const navigate = useNavigate();
     const { showPopup } = usePopup()
     const {incomingRequests} = useFriends()
+    const {hasAnyUnread} = useChat()
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     
 
@@ -166,7 +168,7 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                         alt="Menu Icon"
                         className="w-9 h-9 transition-transform group-hover:scale-105"
                     />
-                    {incomingRequests.length > 0 && (
+                    {(incomingRequests.length > 0 || hasAnyUnread) && (
                         <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-button border-2 border-background animate-bounce" />
                     )}
                 </div>
