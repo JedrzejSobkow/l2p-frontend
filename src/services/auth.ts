@@ -8,6 +8,7 @@ export type User = {
   is_verified: boolean,
   pfp_path?: string
   description?: string
+  expiration_timestamp?: number
 }
 
 export type LoginPayload = {
@@ -118,9 +119,13 @@ export async function createGuestSession(): Promise<User> {
     }
   );
 
+  const now = Math.floor(Date.now() / 1000); // current timestamp in seconds
+  const expirationTimestamp = now + response.expires_in;
+
   return {
     id: response.guest_id,
     nickname: response.nickname,
+    expiration_timestamp: expirationTimestamp,
     is_active: true,
     is_verified: false,
   };
