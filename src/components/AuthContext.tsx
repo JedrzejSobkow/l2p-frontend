@@ -3,6 +3,7 @@ import type { User, LoginPayload, RegisterPayload } from '../services/auth'
 import * as auth from '../services/auth'
 import { onUnauthorized } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
+import { deleteMe, getMe, patchMe } from '@/services/users'
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated'
 
 type AuthContextValue = {
@@ -27,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshUser = async () => {
     try {
-      const me = await auth.getMe()
+      const me = await getMe()
       me.id = `user:${me.id}`;
       setUser(me)
       setStatus('authenticated')
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
   
         try {
-          const me = await auth.getMe();
+          const me = await getMe();
           if (!cancelled && me) {
             me.id = `user:${me.id}`;
             setUser(me); 
@@ -178,13 +179,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateProfile = async (updates: Partial<User>) => {
-    const updated = await auth.patchMe(updates)
+    const updated = await patchMe(updates)
     setUser(updated)
     return updated
   }
 
   const deleteAccount = async () => {
-    await auth.deleteMe()
+    await deleteMe()
     setUser(null)
     setStatus('unauthenticated')
   }
