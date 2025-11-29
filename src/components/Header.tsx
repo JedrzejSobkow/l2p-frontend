@@ -5,6 +5,8 @@ import { logoImage, pfpImage } from '@assets/images';
 import { wifiIcon, playIcon, globeIcon, peopleIcon, menuIcon } from '@assets/icons';
 import { useLobby } from './lobby/LobbyContext';
 import { usePopup } from './PopupContext';
+import { useFriends } from './friends/FriendsContext';
+import ConfirmDialog from './ConfirmDialog';
 
 
 const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
@@ -13,6 +15,9 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { showPopup } = usePopup()
+    const {incomingRequests} = useFriends()
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    
 
     const handleNavigation = (path: string) => {
         if (currentLobby) {
@@ -84,32 +89,46 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                     <span className="hide-on-small">Just you and people you share passion with</span>
                 </div>
             </div>
-            {/* User Info */}
             <div className="flex items-center gap-2 flex-shrink-0 pr-4">
                 {isAuthenticated ? (
                     <>
-                        <img
-                            src={user?.pfp_path || pfpImage}
-                            alt="User Icon"
-                            className="w-10 h-10 rounded-full cursor-pointer"
-                            onClick={() => handleNavigation('/profile')}
-                        />
-                        <div className="user-info flex flex-col items-start">
-                            <span className="hide-on-mobile text-base font-light text-headline cursor-pointer">
-                                Hello, 
-                                <span className="text-base font-medium pl-1 text-headline">{user?.nickname}</span>
-                            </span>
-                            <button
-                                type="button"
-                                onClick={logout}
-                                className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer"
-                            >
-                                logout
-                            </button>
+                        {/* Authenticated User Info */}
+                        <div 
+                            className="flex items-center gap-2"
+                        >
+                            {/* Profile Picture with Hover Scale */}
+                            <img
+                                src={user?.pfp_path || pfpImage}
+                                alt="User Icon"
+                                onClick={() => handleNavigation('/profile')}
+                                className="w-10 h-10 rounded-full transition-transform duration-200 hover:scale-105 cursor-pointer"
+                            />
+                            
+                            <div className="user-info flex flex-col items-start">
+                                <span className="hide-on-mobile text-base font-light text-headline">
+                                    Hello, 
+                                    {/* Przejście do profilu po kliknięciu na nick, który też się lekko skaluje */}
+                                    <span 
+                                        onClick={() => handleNavigation('/profile')}
+                                        className="text-base cursor-pointer font-medium pl-1 text-headline transition-transform duration-200 hover:text-highlight">
+                                        {user?.nickname}
+                                    </span>
+                                </span>
+                                <button
+                                    type="button"
+                                    // Użycie lokalnego stanu do otwarcia Modalu/Dialogu
+                                    // Zastąp 'true' funkcją ustawiającą stan np. setShowLogoutConfirm(true)
+                                    onClick={() => setShowLogoutConfirm(true)}
+                                    className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer transition-colors hover:text-red-400"
+                                >
+                                    logout
+                                </button>
+                            </div>
                         </div>
                     </>
                 ) : (
                     <>
+                        {/* Guest/Unauthenticated User Info */}
                         {!isAuthScreen && (
                             <div className="user-info flex flex-col items-start">
                                 <span className="hide-on-mobile text-base font-light text-headline">
@@ -118,26 +137,48 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                                 </span>
                             </div>
                         )}
-                        <Link
-                            to="/login"
-                            className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-colors duration-200 hover:bg-highlight hover:text-button-text-dark"
-                        >
-                            Log in
-                        </Link>
+                        
+                        { !isAuthScreen && <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => handleNavigation('/login')}
+                                className="rounded-full bg-highlight px-4 py-2 text-xs font-semibold text-background-secondary transition-transform duration-200 hover:scale-105"
+                            >
+                                Log in
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleNavigation('/register')}
+                                className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-transform duration-200 hover:scale-105 hide-on-mobile"
+                            >
+                                Register
+                            </button>
+                        </div>}
                     </>
                 )}
             </div>
             {/* Menu Button */}
             {isAuthenticated && (
-                <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                <img
-                    onClick={onToggleFriends}
-                    src={menuIcon}
-                    alt="Menu Icon"
-                    className="w-9 h-9"
-                />
-            </div>
+                <div className="w-12 h-12 flex items-center justify-center flex-shrink-0 cursor-pointer relative group"
+                    onClick={onToggleFriends}>
+                    <img
+                        src={menuIcon}
+                        alt="Menu Icon"
+                        className="w-9 h-9 transition-transform group-hover:scale-105"
+                    />
+                    {incomingRequests.length > 0 && (
+                        <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-button border-2 border-background animate-bounce" />
+                    )}
+                </div>
             )}
+            <ConfirmDialog
+            open={showLogoutConfirm}
+            title="Log out?"
+            description="Are you sure you want to log out?"
+            confirmLabel="Log Out"
+            onConfirm={logout}
+            onCancel={() => setShowLogoutConfirm(false)}
+        />
         </header>
     );
 };

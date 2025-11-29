@@ -173,7 +173,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
       />
     )
   }
-
+  
   return (
     <>
     <div
@@ -301,10 +301,19 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
               <button
                 type="button"
                 onClick={() => setShowIncoming((prev) => !prev)}
-                className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide text-white/70 transition-colors hover:text-white"
+                className="flex w-full items-center justify-between border-b border-white/5 pb-2 text-left text-sm font-semibold uppercase tracking-wide transition-colors text-white/70 hover:text-white"
                 aria-expanded={showIncoming}
               >
-                <span>Incoming Requests ({incomingRequests.length})</span>
+                <div className="flex items-center gap-2">
+                  <span>Incoming Requests ({incomingRequests.length})</span>
+                  {incomingRequests.length > 0 && (
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-bounce absolute inline-flex w-2.5 h-2.5 rounded-full bg-button"></span>
+
+                    </span>
+                  )}
+                </div>
+
                 <FiChevronDown
                   className={`h-4 w-4 transition-transform ${showIncoming ? 'rotate-0' : '-rotate-90'}`}
                 />
