@@ -109,11 +109,3 @@ export async function getFriendsStatuses(): Promise<FriendStatusPayload[]> {
 export async function getFriendStatus(friendId: string): Promise<FriendStatusPayload> {
   return await request<FriendStatusPayload>(`/status/users/${friendId}`, { method: 'GET', auth: true })
 }
-
-export async function getUser(id: string): Promise<User> {
-  const user = await request<User>(`/users/${id}`)
-  return {
-    ...user,
-    id: String(id),
-  }
-}

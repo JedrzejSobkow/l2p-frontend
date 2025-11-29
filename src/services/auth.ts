@@ -1,4 +1,5 @@
 import { request } from '../lib/http'
+import { getMe } from './users'
 
 export type User = {
   id?: string
@@ -124,18 +125,4 @@ export async function createGuestSession(): Promise<User> {
     is_active: true,
     is_verified: false,
   };
-}
-
-// /users/ endpoints
-
-export async function getMe(): Promise<User> {
-  return await request<User>('/users/me', { method: 'GET' })
-}
-
-export async function patchMe(payload: Partial<User>): Promise<User> {
-  return  await request<User>('/users/me', { method: 'PATCH', body: payload })
-}
-
-export async function deleteMe(): Promise<void> {
-  await request('/users/me', { method: 'DELETE' })
 }
