@@ -104,10 +104,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedGuest = localStorage.getItem('guestUser');
         if (storedGuest) {
           const guest = JSON.parse(storedGuest);
-          guest.id = `guest:${guest.id}`;
-          if (!cancelled) {
-            setUser(guest);
-            setStatus('unauthenticated');
+          const now = Math.floor(Date.now() / 1000);
+          
+          // Check if guest session has expired
+          if (guest.expiration_timestamp && now >= guest.expiration_timestamp) {
+            console.log("Guest session expired, creating new one");
+            localStorage.removeItem('guestUser');
+            const newGuest = await auth.createGuestSession();
+            localStorage.setItem('guestUser', JSON.stringify(newGuest));
+            newGuest.id = `guest:${newGuest.id}`;
+            if (!cancelled) {
+              setUser(newGuest);
+              setStatus('unauthenticated');
+            }
+            window.location.reload();
+          } else {
+            guest.id = `guest:${guest.id}`;
+            if (!cancelled) {
+              setUser(guest);
+              setStatus('unauthenticated');
+            }
           }
         } else {
           const guest = await auth.createGuestSession();
