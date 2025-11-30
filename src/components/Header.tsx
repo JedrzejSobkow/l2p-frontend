@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { logoImage, pfpImage } from '@assets/images';
@@ -8,6 +8,9 @@ import { usePopup } from './PopupContext';
 import { useFriends } from './friends/FriendsContext';
 import ConfirmDialog from './ConfirmDialog';
 import { useChat } from './chat/ChatProvider';
+import { useOnlineCount } from '@/hooks/useOnlineCount';
+import { FiLoader } from 'react-icons/fi';
+import { FaWifi } from 'react-icons/fa';
 
 
 const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
@@ -19,6 +22,8 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
     const {incomingRequests} = useFriends()
     const {hasAnyUnread} = useChat()
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    
+    const {count, loading} = useOnlineCount()
     
 
     const handleNavigation = (path: string) => {
@@ -34,7 +39,6 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
 
     const isAuthScreen = location.pathname === '/login' || location.pathname === '/register';
 
-    
     return (
         <header className="w-full h-16 bg-background text-headline flex items-center justify-between px-5 relative font-sans text-sm font-light overflow-hidden">
             {/* Bottom Line */}
@@ -54,24 +58,35 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                 />
             </div>
             {/* Header Elements */}
-            <div className="header-elements flex gap-6 items-center pr-2 flex-1 justify-start">
+            <div className="header-elements flex gap-6 items-center pr-2 flex-1 justify-start text-sm font-normal">
                 {/* WiFi Section */}
                 <div className="flex items-center gap-2 hide-on-smaller">
-                    <img
-                        src={wifiIcon}
-                        alt="WiFi Icon"
-                        className="w-9 h-9"
-                    />
-                    <span>524 players online</span>
+                    <FaWifi className='w-9 h-9 text-active'/>
+                    <span className="min-w-[100px]">
+                        {loading ? (
+                            <span className="flex items-center gap-2 text-white/50">
+                                <FiLoader className="h-4 w-4 animate-spin" />
+                                <span>Connecting...</span>
+                            </span>
+                        ) : count !== null ? (
+                            <span className="text-white/90">
+                                {count} {count === 1 ? 'player' : 'players'} online
+                            </span>
+                        ) : (
+                            <span className="text-white/30 italic">
+                                Server offline
+                            </span>
+                        )}
+                    </span>
                 </div>
                 {/* Element 2 */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 hide-on-small">
                     <img
                         src={playIcon}
                         alt="Play Icon"
                         className="w-9 h-9 hide-on-small"
                     />
-                    <span className="hide-on-small">No need for creating account</span>
+                    <span >No need for creating account</span>
                 </div>
                 {/* Element 3 */}
                 <div className="flex items-center gap-2">
