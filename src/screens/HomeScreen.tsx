@@ -19,6 +19,7 @@ import JoinOrCreateGame from '../components/JoinOrCreateGame';
 import { getImage } from '../utils/imageMap';
 import { isLobbySocketConnected } from '../services/lobby';
 import { isGameSocketConnected } from '../services/game';
+import Leaderboard from '@/components/Leaderboard';
 
 const HomeScreen: React.FC = () => {
   const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
@@ -50,16 +51,6 @@ const HomeScreen: React.FC = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location, showPopup]);
-
-  const leaderboardData = [
-    { place: 1, pfp_path: avatar1, name: 'PlayerOne', rating: 1500 },
-    { place: 2, pfp_path: avatar2, name: 'PlayerTwo', rating: 1400 },
-    { place: 3, pfp_path: avatar3, name: 'cool_usersdfsfsdfsdf', rating: 1300 },
-    { place: 4, pfp_path: avatar4, name: 'Cipicipi', rating: 1200 },
-    { place: 5, pfp_path: avatar4, name: 'cidsof', rating: 1150 },
-  ];
-
-  const topPlayers = leaderboardData.slice(0, 5);
 
   // Generate top picks and featured games from available games
   const topPicksImages = availableGames.length > 0
@@ -146,18 +137,7 @@ const HomeScreen: React.FC = () => {
         </div>
 
         {/* Right Column: Leaderboard */}
-        <div className="flex flex-col gap-4 w-full md:w-[30%] min-w-[300px]">
-          <h2 className="text-2xl font-bold text-headline mb-4">Top rated players</h2>
-          {topPlayers.map((player) => (
-            <LeaderboardCard
-              key={player.place}
-              place={player.place}
-              pfp_path={player.pfp_path}
-              name={player.name}
-              rating={player.rating}
-            />
-          ))}
-        </div>
+        <Leaderboard/>
       </div>
 
       {/* Game Lobbies Section */}
