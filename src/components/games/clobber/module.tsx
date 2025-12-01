@@ -40,6 +40,11 @@ const ClobberView: GameClientModule["GameView"] = ({
   const turnStartTime = timing?.turn_start_time;
 
   useEffect(() => {
+    setSelectedCell(null);
+    setHoveredCell(null);
+  }, [board]);
+
+  useEffect(() => {
     const updateContainerWidth = () => {
       if (containerRef.current) {
         setContainerWidth(containerRef.current.offsetWidth);
