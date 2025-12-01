@@ -43,7 +43,7 @@ const InviteFriendsModal: React.FC<InviteFriendsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl border border-separator bg-background-secondary p-6 shadow-2xl">
+      <div className="relative w-full max-w-md mx-4 sm:mx-0 rounded-2xl border border-separator bg-background-secondary p-6 shadow-2xl">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">Invite Friends</h2>

@@ -9,6 +9,7 @@ import InGameUserTile from '../components/InGameUserTile';
 import GameResultModal from '../components/GameResultModal';
 import KickPlayerModal from '../components/KickPlayerModal';
 import LeaveModal from '../components/LeaveModal';
+import PassHostModal from '../components/PassHostModal';
 import { emitMakeMove } from '../services/game';
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 import { FaSignOutAlt } from 'react-icons/fa';
@@ -35,6 +36,8 @@ const LobbyInGameScreen = () => {
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isPassHostModalOpen, setIsPassHostModalOpen] = useState(false);
+  const [passHostUsername, setPassHostUsername] = useState('');
 
     // Map game names to their respective modules
     const gameModules: Record<string, any> = {
@@ -127,7 +130,20 @@ const LobbyInGameScreen = () => {
   };
 
   const handlePassHost = (userId: number | string) => {
-    transferHost(userId);
+    const targetMember = members.find(m => String(m.identifier) === String(userId));
+    if (targetMember) {
+      setPassHostUsername(targetMember.nickname);
+      setIsPassHostModalOpen(true);
+    }
+  };
+
+  const confirmPassHost = () => {
+    const targetMember = members.find(m => m.nickname === passHostUsername);
+    if (targetMember) {
+      transferHost(targetMember.identifier);
+    }
+    setIsPassHostModalOpen(false);
+    setPassHostUsername('');
   };
 
   const handleKickOut = (username: string) => {
@@ -223,6 +239,12 @@ const LobbyInGameScreen = () => {
         winnerName={winnerName}
         result={result}
         onReturnToLobby={() => navigate("/lobby")}
+      />
+      <PassHostModal
+        username={passHostUsername}
+        isOpen={isPassHostModalOpen}
+        onConfirm={confirmPassHost}
+        onCancel={() => setIsPassHostModalOpen(false)}
       />
       <KickPlayerModal
         isOpen={isKickModalOpen}

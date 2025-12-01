@@ -23,7 +23,7 @@ const KickPlayerModal: React.FC<KickPlayerModalProps> = ({ isOpen, username, onC
   return (
     <Modal isOpen={isOpen} onClose={onCancel}>
       <div
-        className="bg-background p-6 rounded-lg shadow-lg text-center"
+        className="bg-background p-6 rounded-lg shadow-lg text-center mx-4 sm:mx-0"
         style={{
           outline: '2px solid var(--color-highlight)',
         }}
