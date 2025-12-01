@@ -132,7 +132,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [publicLobbies, setPublicLobbies] = useState<LobbyState[]>([])
   const [availableGames, setAvailableGames] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<LobbyError | null>(null)
   const [gameState, setGameState] = useState<any | null>(null)
   const { showPopup } = usePopup();

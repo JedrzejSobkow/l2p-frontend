@@ -4,15 +4,12 @@ import GameTile from '../components/GameTile';
 import { ticTacToeImage, clobberImage, noGameImage } from '@assets/images';
 import { useLobby } from '../components/lobby/LobbyContext';
 import { getImage } from '../utils/imageMap';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 const FindGamesScreen: React.FC = () => {
   const { searchPhrase } = useParams<{ searchPhrase?: string }>();
   const navigate = useNavigate();
-  const { availableGames, getAvailableGames } = useLobby();
-
-  useEffect(() => {
-    getAvailableGames();
-  }, [getAvailableGames]);
+  const { availableGames, isLoading } = useLobby();
 
   const handleTileClick = (gameName: string) => {
     navigate(`/game/${gameName}`);
@@ -31,7 +28,10 @@ const FindGamesScreen: React.FC = () => {
           ? `Searching for games matching the phrase '${searchPhrase}'`
           : 'Displaying all available games'}
       </h1>
-      {filteredGames.length > 0 ? (
+      
+      {isLoading ? (
+        <LoadingSpinner size="h-12 w-12" />
+      ) : filteredGames.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredGames.map((game: any, index: number) => (
             <GameTile

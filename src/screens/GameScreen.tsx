@@ -8,6 +8,7 @@ import { ticTacToeImage, avatar1, avatar2, avatar3, avatar4, avatar7, avatar12, 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLobby } from '../components/lobby/LobbyContext';
 import { getImage } from '../utils/imageMap';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface Game {
     game_name: string;
@@ -58,7 +59,7 @@ const GameScreen: React.FC = () => {
     };
 
     if (!currentGame) {
-        return <div className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">Loading...</div>;
+        return <LoadingSpinner className='min-h-[50vh]' />;
     }
 
     return (

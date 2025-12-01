@@ -2,6 +2,7 @@ import { getLeaderBoard, type LeaderBoardEntry } from "@/services/users"
 import LeaderboardCard from "./LeaderboardCard"
 import { useCallback, useEffect, useState } from "react"
 import { FiRefreshCw } from "react-icons/fi"
+import LoadingSpinner from "./LoadingSpinner"
 
 const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderBoardEntry[]>([])
@@ -42,9 +43,7 @@ const Leaderboard = () => {
       </div>
 
       {isLoading && leaderboard.length === 0 ? (
-        <div className="flex flex-col gap-3 opacity-50">
-           <p className="text-sm text-white/50">Loading rankings...</p>
-        </div>
+        <LoadingSpinner size="h-12 w-12" />
       ) : leaderboard.length > 0 ? (
         <div className={isLoading ? 'opacity-50 transition-opacity' : 'opacity-100 transition-opacity'}>
           {leaderboard.map((player, index) => (
