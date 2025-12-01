@@ -458,20 +458,22 @@ export const LobbyScreen = () => {
           <div className="w-full lg:hidden p-3 sm:p-4 rounded-lg shadow-md flex flex-col items-center justify-center gap-3">
             <button
               onClick={toggleReady}
-              className={`w-full px-4 py-2 text-white font-bold text-sm rounded-lg focus:outline-none ${
-                isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              className={`w-full px-4 py-3 text-white font-bold text-base rounded-lg focus:outline-none ${
+                !isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
               }`}
             >
-              {isReady ? 'Ready' : 'Not Ready'}
+              {!isReady ? 'Ready' : 'Not Ready'}
             </button>
 
-            <button 
-              disabled={!canStartGame} 
-              onClick={handleStartGame}
-              className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
-            >
-              Start
-            </button>
+            {isUserHost && (
+              <button 
+                disabled={!canStartGame} 
+                onClick={handleStartGame}
+                className="w-full px-4 py-3 bg-blue-500 text-white font-bold text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+              >
+                Start
+              </button>
+            )}
           </div>
 
           {/* Chat Section */}
@@ -589,23 +591,25 @@ export const LobbyScreen = () => {
           </div>
 
           {/* Action Buttons - Desktop */}
-          <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={toggleReady}
-              className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-white font-bold text-sm sm:text-base rounded-lg focus:outline-none ${
-                isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              className={`w-full px-4 py-3 text-white font-bold text-base rounded-lg focus:outline-none ${
+                !isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
               }`}
             >
-              {isReady ? 'Ready' : 'Not Ready'}
+              {!isReady ? 'Ready' : 'Not Ready'}
             </button>
 
-            <button 
-              disabled={!canStartGame} 
-              onClick={handleStartGame}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
-            >
-              Start
-            </button>
+            {isUserHost && (
+              <button 
+                disabled={!canStartGame} 
+                onClick={handleStartGame}
+                className="w-full px-4 py-3 bg-blue-500 text-white font-bold text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+              >
+                Start
+              </button>
+            )}
           </div>
         </div>
       </div>
