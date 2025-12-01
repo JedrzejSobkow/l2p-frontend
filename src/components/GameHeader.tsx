@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLobby } from './lobby/LobbyContext';
-import { usePopup } from './PopupContext';
 import JoinCodeInput from "./JoinCodeInput";
 
 interface GameHeaderProps {
@@ -15,8 +14,7 @@ interface GameHeaderProps {
 const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, path }) => {
     const navigate = useNavigate();
     const { gameName } = useParams<{ gameName: string }>();
-    const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby();
-    const { showPopup } = usePopup();
+    const { createLobby, joinLobby, currentLobby, isLoading} = useLobby();
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
     const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
@@ -70,16 +68,6 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     };
 
     const isJoinCodeComplete = joinCodeParts.every((part) => part !== '');
-
-    useEffect(() => {
-        if (error) {
-            showPopup({
-                type: 'error',
-                message: error.message,
-            });
-            clearError();
-        }
-    }, [error, clearError, showPopup]);
 
     useEffect(() => {
         if (currentLobby) {

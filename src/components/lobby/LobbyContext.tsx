@@ -150,7 +150,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   // Setup event listeners
   useEffect(() => {
     const handleLobbyCreated = (data: { lobby_code: string }) => {
-      //console('Lobby created:', data)
+      showPopup({ type: 'confirmation', message: `Lobby created successfully!` })
       setIsLoading(false)
     }
 
@@ -262,28 +262,28 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     const handleLobbyError = (data: LobbyError) => {
       console.error('Lobby error:', data);
       
-      // 1. KICKED - Użytkownik został wyrzucony
+      // 1. KICKED
       if (data.error_code === 'KICKED') {
           setCurrentLobby(null);
           navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } });
           return;
       }
 
-      // 2. NOT FOUND - Krytyczny błąd nawigacji
+      // 2. NOT FOUND
       if (data.error_code === 'NOT_FOUND' || data.error_code === 'LOBBY_NOT_FOUND') {
           triggerError("Lobby Not Found", "The lobby you are trying to join does not exist.", 404);
           setCurrentLobby(null);
           return;
       }
 
-      // 3. ALREADY IN LOBBY - Przekierowanie "naprawcze"
+      // 3. ALREADY IN LOBBY
       if (data.error_code === 'BAD_REQUEST' && data.message === 'You are already in another lobby') {
           navigate('/lobby');
           showPopup({ type: 'informative', message: 'You are already in a lobby.' });
           return;
       }
 
-      // 4. LOBBY FULL - Błąd operacyjny (zostań na Home, pokaż popup)
+      // 4. LOBBY FULL
       if (data.message === 'Lobby is full') {
           showPopup({ type: 'error', message: 'This lobby is full.' });
           // Opcjonalnie cofnij do home jeśli był w trakcie joinowania
