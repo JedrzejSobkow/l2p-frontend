@@ -1,13 +1,13 @@
-import Header from './Header';
-import Footer from './Footer';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Outlet } from 'react-router';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import FriendsSlide from './friends/FriendsSlide';
-import ChatDock from './chat/ChatDock';
-import { useAuth } from './AuthContext';
-import { useLobby } from './lobby/LobbyContext';
-import { usePopup } from './PopupContext';
+import FriendsSlide from '@/components/friends/FriendsSlide';
+import ChatDock from '@/components/chat/ChatDock';
+import { useAuth } from '@/components/AuthContext';
+import { useLobby } from '@/components/lobby/LobbyContext';
+import { usePopup } from '@/components/PopupContext';
 
 const Layout = () => {
     const [isFriendsOpen,setFriendsOpen] = useState(false)
