@@ -3,7 +3,7 @@ import { FiCheck, FiChevronDown, FiLoader, FiSearch, FiUserPlus, FiX } from 'rea
 import FriendCard from './FriendCard'
 import { useChatDock } from '../chat/ChatDockContext'
 import { useFriends, type Friend } from './FriendsContext'
-import type { Friendship, FriendResult } from '../../services/friends'
+import { type Friendship, type FriendResult } from '../../services/friends'
 import { usePopup } from '../PopupContext'
 import { useChat } from '../chat/ChatProvider'
 import { pfpImage } from '@assets/images'
@@ -34,13 +34,13 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
     incomingRequests,
     outgoingRequests,
     searchUsers,
+    isLoading,
+    processingMap,
     sendRequest,
     acceptRequest,
     declineRequest,
-    isLoading,
   } = useFriends()
-  const {showPopup} = usePopup();
-  const {getUnread} = useChat()
+  const {getUnread,clearState} = useChat()
 
   const [mode, setMode] = useState<'friends' | 'discover'>('friends')
   const [searchTerm, setSearchTerm] = useState('')
@@ -49,7 +49,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   const [showFriendsList, setShowFriendsList] = useState(true)
   const [showIncoming, setShowIncoming] = useState(true)
   const [showOutgoing, setShowOutgoing] = useState(false)
-  const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({})
   
   const runSearch = useCallback(
     async (input: string) => {
@@ -105,55 +104,6 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
   }, [friends, mode, searchTerm])
 
   const selectedKey = normalizeId(selectedFriendId)
-
-  const markProcessing = (id: string, value: boolean) => {
-    setProcessingMap((prev) => ({ ...prev, [id]: value }))
-  }
-
-  const handleAcceptRequest = async (friend: Friend) => {
-    const id = friend.id
-    if (!id) return
-    markProcessing(id, true)
-    try {
-      await acceptRequest(id)
-      showPopup({type: 'confirmation', message: `Friend request from ${friend.nickname} accepted.`})
-    } catch (error) {
-      console.error('Failed to accept friend request', error)
-      showPopup({type: 'error', message: 'Failed to accept friend request. Please try again later.'})
-    } finally {
-      markProcessing(id, false)
-    }
-  }
-
-  const handleDeclineRequest = async (friend: Friend) => {
-    const id = normalizeId(friend.id)
-    if (!id) return
-    markProcessing(id, true)
-    try {
-      await declineRequest(friend.id)
-    } catch (error) {
-      console.error('Failed to decline friend request', error)
-    } finally {
-      markProcessing(id, false)
-    }
-  }
-
-  const handleSendRequest = async (user: FriendResult) => {
-    const id = normalizeId(user.user_id)
-    if (!id) return
-    markProcessing(id, true)
-    try {
-      await sendRequest(user.user_id, user.nickname, user.pfp_path || '',user.description || '')
-      showPopup({type: 'confirmation', message: `Friend request sent to ${user.nickname}.`})
-      setSearchResults((prev) => prev.filter((item) => normalizeId(item.user_id) !== id))
-    } catch (error: any) {
-      console.error('Failed to send friend request', error)
-      showPopup({type: 'error', message: error.message || 'Failed to send friend request. Please try again later.'})
-    } finally {
-      markProcessing(id, false)
-    }
-  }
-
 
   const renderFriend = (friend: Friend) => {
     const isSelected = selectedKey ? friend.id === selectedKey : false
@@ -236,7 +186,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
               <div className="space-y-3">
                 {searchResults.map((user) => {
                   const id = normalizeId(user.user_id) ?? user.nickname
-                  const processing = !!(id && processingMap[id])
+                  const processing = !!(id && processingMap && processingMap[id])
                   return (
                     <div
                       key={id}
@@ -258,7 +208,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                       <button
                         type="button"
                         className="rounded-full bg-button px-4 py-1.5 text-xs font-semibold text-button-text-dark transition hover:-translate-y-0.5 hover:shadow-[0_5px_10px_rgba(255,108,0,0.45)] disabled:opacity-60 disabled:hover:translate-y-0"
-                        onClick={() => handleSendRequest(user)}
+                        onClick={() => sendRequest(user)}
                         disabled={processing}
                       >
                         {processing ? 'Sending...' : 'Add'}
@@ -327,7 +277,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                   (incomingRequests.length > 0 ? (
                     incomingRequests.map((request) => {
                       const id = request.id
-                      const processing = !!(id && processingMap[id])
+                      const processing = !!(id && processingMap && processingMap[id])
                       return (
                         <div
                           key={id}
@@ -349,7 +299,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                           <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              onClick={() => handleAcceptRequest(request)}
+                              onClick={() => acceptRequest(request.id)}
                               disabled={processing}
                               className={cn(
                                 "grid h-9 w-9 place-items-center rounded-full transition-all",
@@ -368,7 +318,10 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleDeclineRequest(request)}
+                              onClick={() => {
+                                declineRequest(request.id)
+                                clearState(request.id)
+                              }}
                               disabled={processing}
                               className={cn(
                                 "grid h-9 w-9 place-items-center rounded-full border transition-all",
@@ -412,7 +365,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                   (outgoingRequests.length > 0 ? (
                     outgoingRequests.map((request) => {
                       const id = request.id
-                      const processing = !!(id && processingMap[id])
+                      const processing = !!(id && processingMap && processingMap[id])
                       console.log(request)
                       return (
                         <div
@@ -435,7 +388,7 @@ const FriendsPanel: FC<FriendsPanelProps> = ({
                           <button
                             type="button"
                             className="rounded-full border border-white/15 px-4 py-1.5 text-xs font-semibold text-white/80 transition hover:border-white/40 hover:text-white disabled:opacity-60"
-                            onClick={() => handleDeclineRequest(request)}
+                            onClick={() => declineRequest(request.id)}
                             disabled={processing}
                           >
                             Cancel

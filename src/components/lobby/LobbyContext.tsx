@@ -89,6 +89,8 @@ import {
 } from '../../services/game'
 
 import { usePopup } from '../PopupContext';
+import { useGlobalError } from '../GlobalErrorContext';
+import { useNavigate } from 'react-router';
 
 type LobbyContextValue = {
   isLoading: boolean
@@ -97,7 +99,6 @@ type LobbyContextValue = {
   messages: LobbyMessage[]
   typingUsers: string[]
   publicLobbies: LobbyState[]
-  error: LobbyError | null
   availableGames: any[]
   gameState: any | null
   createLobby: (maxPlayers?: number, isPublic?: boolean, name?: string, gameName?: string) => void
@@ -112,7 +113,6 @@ type LobbyContextValue = {
   getPublicLobbies: () => void
   getPublicLobbiesByGame: (gameName: string) => void
   getLobbyState: () => void
-  clearError: () => void
   startGame: (gameName: string) => void
   getAvailableGames: () => void
   selectGame: (gameName: string) => void
@@ -136,6 +136,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<LobbyError | null>(null)
   const [gameState, setGameState] = useState<any | null>(null)
   const { showPopup } = usePopup();
+  const { triggerError } = useGlobalError();
+  const navigate = useNavigate();
 
   // Initialize socket connection
   useEffect(() => {
@@ -166,7 +168,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setMembers([])
       setMessages([])
       setTypingUsers([])
-      setIsLoading(false)
     }
 
     const handleLobbyState = (data: LobbyState) => {
@@ -251,6 +252,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     const handleKickedFromLobby = (data: { lobby_code: string; message: string }) => {
       //console('Kicked from lobby:', data)
       setCurrentLobby(null)
+      navigate('/', { state: { message: data.message, type: 'error' } });
       setMembers([])
       setMessages([])
       setGameState(null)
@@ -258,10 +260,45 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const handleLobbyError = (data: LobbyError) => {
-      console.error('Lobby error:', data)
-      setError(data)
-      setIsLoading(false)
-    }
+      console.error('Lobby error:', data);
+      
+      // 1. KICKED - Użytkownik został wyrzucony
+      if (data.error_code === 'KICKED') {
+          setCurrentLobby(null);
+          navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } });
+          return;
+      }
+
+      // 2. NOT FOUND - Krytyczny błąd nawigacji
+      if (data.error_code === 'NOT_FOUND' || data.error_code === 'LOBBY_NOT_FOUND') {
+          triggerError("Lobby Not Found", "The lobby you are trying to join does not exist.", 404);
+          setCurrentLobby(null);
+          return;
+      }
+
+      // 3. ALREADY IN LOBBY - Przekierowanie "naprawcze"
+      if (data.error_code === 'BAD_REQUEST' && data.message === 'You are already in another lobby') {
+          navigate('/lobby');
+          showPopup({ type: 'informative', message: 'You are already in a lobby.' });
+          return;
+      }
+
+      // 4. LOBBY FULL - Błąd operacyjny (zostań na Home, pokaż popup)
+      if (data.message === 'Lobby is full') {
+          showPopup({ type: 'error', message: 'This lobby is full.' });
+          // Opcjonalnie cofnij do home jeśli był w trakcie joinowania
+          if (!currentLobby) navigate('/'); 
+          return;
+      }
+
+      // 5. Inne błędy - Pokaż popup i wyczyść błąd po chwili
+      setError(data);
+      showPopup({ type: 'error', message: data.message || 'An error occurred' });
+      
+      // Automatyczne czyszczenie błędu w stanie (opcjonalne, bo popup znika sam)
+      setTimeout(() => setError(null), 3500);
+      setIsLoading(false);
+  }
 
     const handleAvailableGames = (data: { games: any[]; total: number }) => {
       //console('Available games:', data)
@@ -391,6 +428,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const leaveLobbyHandler = useCallback(() => {
     if (!currentLobby) return
     setIsLoading(true)
+    navigate('/')
     emitLeaveLobby(currentLobby.lobby_code)
     setGameState(null)
   }, [currentLobby])
@@ -499,7 +537,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       messages,
       typingUsers,
       publicLobbies,
-      error,
       availableGames,
       gameState,
       createLobby: createLobbyHandler,
@@ -515,7 +552,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getPublicLobbies: getPublicLobbiesHandler,
       getPublicLobbiesByGame: getPublicLobbiesByGameHandler,
       getLobbyState: getLobbyStateHandler,
-      clearError: clearErrorHandler,
       startGame: startGameHandler,
       getAvailableGames: getAvailableGamesHandler,
       selectGame: selectGameHandler,
@@ -531,7 +567,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       messages,
       typingUsers,
       publicLobbies,
-      error,
       availableGames,
       gameState,
       createLobbyHandler,
@@ -547,7 +582,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getPublicLobbiesHandler,
       getPublicLobbiesByGameHandler,
       getLobbyStateHandler,
-      clearErrorHandler,
       startGameHandler,
       getAvailableGamesHandler,
       selectGameHandler,

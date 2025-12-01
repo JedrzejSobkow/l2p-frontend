@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router-dom";
-import Layout from "./components/Layout";
 import HomeScreen from "./screens/HomeScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import LoginPage from "./screens/LoginPage";
@@ -14,11 +13,14 @@ import FriendsScreen from "./screens/FriendsScreen";
 import VerifyEmailPage from './screens/VerifyEmailPage';
 import { LobbyScreen } from "./screens/LobbyScreen";
 import LobbyInGameScreen from "./screens/LobbyInGameScreen";
+import ErrorPage from "./components/ErrorPage";
+import { RootProviders } from "./layouts/RootProviders";
 
 export const router = createBrowserRouter([
     {
         path: '/',
-        Component: Layout,
+        element: <RootProviders/>,
+        errorElement: <ErrorPage/>,
         children: [
             {
                 index: true,
@@ -75,6 +77,10 @@ export const router = createBrowserRouter([
             {
                 path: 'verify-email',
                 element: <VerifyEmailPage />,
+            },
+            {
+                path: '*',
+                element: <ErrorPage customCode={404} customTitle="Page not found" customMessage="The page you are looking for does not exist." />
             }
         ] 
     }

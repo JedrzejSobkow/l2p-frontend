@@ -35,7 +35,6 @@ export const LobbyScreen = () => {
     currentLobby,
     members,
     messages,
-    error,
     createLobby,
     joinLobby,
     leaveLobby,
@@ -46,7 +45,6 @@ export const LobbyScreen = () => {
     sendMessage,
     getMessages,
     startGame,
-    clearError,
     availableGames,
     getAvailableGames,
     selectGame,
@@ -112,82 +110,6 @@ export const LobbyScreen = () => {
       setCurrentGameRules(currentLobby.game_rules)
     }
   }, [currentLobby?.game_rules])
-
-  useEffect(() => {
-    if (error?.error_code === 'KICKED') {
-      clearError()
-      navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })
-    } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'Lobby is full') {
-      clearError()
-      showPopup({ type: 'error', message: error.message })
-    } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
-      clearError()
-      showPopup({ type: 'error', message: error.message })
-    } else if (error?.error_code === 'NOT_FOUND') {
-      clearError()
-      showPopup({ type: 'error', message: 'Lobby not found' })
-    } else if (error) {
-      showPopup({ type: 'error', message: error.message || 'An error occurred' })
-      const timer = setTimeout(() => {
-        clearError()
-      }, 3500)
-      return () => clearTimeout(timer)
-    }
-  }, [error, navigate, clearError, showPopup])
-
-  // Auto-join or redirect based on lobby status
-  useEffect(() => {
-    if (!lobbyCode) return
-
-    if (currentLobby) {
-      if (currentLobby.lobby_code === lobbyCode) {
-        // User is already in the requested lobby
-        navigate('/lobby')
-      } else {
-        // User is in a different lobby
-        navigate('/lobby', {
-          state: { message: 'You are already a member of another lobby.', type: 'info' },
-        })
-      }
-      return
-    }
-
-    // Normalize lobby code: remove dashes if present
-    const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase()
-
-    // Validate format: should be 6 alphanumeric characters
-    if (!/^[A-Z0-9]{6}$/.test(normalizedCode)) {
-      navigate('/', { state: { message: 'Invalid lobby code format.', type: 'error' } })
-      return
-    }
-
-    // Attempt to join the lobby
-    joinLobby(normalizedCode)
-
-    // Listen for errors or success
-    const handleLobbyError = (error: { error_code: string; message: string }) => {
-      if (error.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
-        navigate('/lobby', {
-          state: { message: 'You are already a member of another lobby.', type: 'info' },
-        })
-      } 
-      else {
-        navigate('/', { state: { message: error.message || 'Failed to join the lobby.', type: 'error' } })
-      }
-    }
-
-    const handleLobbyJoined = () => {
-      navigate('/lobby')
-    }
-
-    onLobbyError(handleLobbyError)
-    onLobbyJoined(handleLobbyJoined)
-
-    return () => {
-      offLobbyError(handleLobbyError)
-      offLobbyJoined(handleLobbyJoined)
-    }
-  }, [lobbyCode, currentLobby, joinLobby, navigate])
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {

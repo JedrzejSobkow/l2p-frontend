@@ -125,7 +125,6 @@ const FriendsScreen: FC = () => {
       setActiveMobileTab('friends')
       clearState(selectedFriendId)
     } catch (error) {
-      console.error('Failed to remove friend', error)
     } finally {
       setRemoving(false)
     }

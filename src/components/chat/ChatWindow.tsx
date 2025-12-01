@@ -74,7 +74,6 @@ const ChatWindow: FC<ChatWindowProps> = ({
   onLoadMore,
   onJoinLobby
 }) => {
-  const { showPopup } = usePopup()
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File>()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -156,24 +155,12 @@ const ChatWindow: FC<ChatWindowProps> = ({
     if (!draft.trim() && !attachment) {
       return
     }
-    try {
       setSending(true)
       await onSend({ text: draft.trim(), attachment })
       setDraft('')
       setAttachment(undefined)
       fileInputRef.current?.form?.reset()
-    } 
-    catch (error: any) {
-      if(error.message === 'Invalid image type'){
-        showPopup({type: 'error', message: 'Provide a valid image type'})
-      }
-      else {
-        showPopup({type: 'error', message: 'Failed to send message'})
-      }
-    }
-    finally {
       setSending(false)
-    }
   }
 
   const handleScroll = () => {
