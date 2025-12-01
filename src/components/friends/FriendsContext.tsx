@@ -221,6 +221,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         }
       },
     }))
+    showPopup({ type: 'informative', message: `New friend request from ${payload.sender_nickname}.` })
   }, [])
 
   const handleFriendStatusUpdated = useCallback((payload: FriendStatusUpdatePayload) => {
@@ -370,7 +371,6 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         },
       }))
     } catch (error) {
-      console.error('Error fetching friend status after request accepted:', error)
       setState((prev) => ({
         friendsById: {
           ...prev.friendsById,
@@ -384,6 +384,8 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
           }
         },
       }))
+    } finally {
+      showPopup({ type: 'confirmation', message: `${payload.accepter_nickname} accepted your friend request.` })
     }
   }, [])
 
