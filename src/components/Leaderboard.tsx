@@ -2,6 +2,7 @@ import { getLeaderBoard, type LeaderBoardEntry } from "@/services/users"
 import LeaderboardCard from "./LeaderboardCard"
 import { useCallback, useEffect, useState } from "react"
 import { FiRefreshCw } from "react-icons/fi"
+import RefreshButton from "./RefreshButton"
 
 const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<LeaderBoardEntry[]>([])
@@ -29,16 +30,10 @@ const Leaderboard = () => {
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-2xl font-bold text-headline">Top players</h2>
         
-        <button
+        <RefreshButton
           onClick={fetchLeaderboard}
-          disabled={isLoading}
-          className="group rounded-full p-2 text-white/50 transition-all hover:bg-white/10 hover:text-orange-400 disabled:opacity-50"
-          title="Refresh leaderboard"
-        >
-          <FiRefreshCw 
-            className={`h-5 w-5 transition-transform ${isLoading ? 'animate-spin text-orange-400' : 'group-hover:rotate-180'}`} 
-          />
-        </button>
+          isLoading={isLoading}
+          title="Refresh leaderboard"/>
       </div>
 
       {isLoading && leaderboard.length === 0 ? (
@@ -46,7 +41,7 @@ const Leaderboard = () => {
            <p className="text-sm text-white/50">Loading rankings...</p>
         </div>
       ) : leaderboard.length > 0 ? (
-        <div className={isLoading ? 'opacity-50 transition-opacity' : 'opacity-100 transition-opacity'}>
+        <div className={"gap-1 flex-col flex" + (isLoading ? ' opacity-50 transition-opacity' : ' opacity-100 transition-opacity')}>
           {leaderboard.map((player, index) => (
             <LeaderboardCard
               key={player.nickname}

@@ -20,9 +20,10 @@ import { getImage } from '../utils/imageMap';
 import { isLobbySocketConnected } from '../services/lobby';
 import { isGameSocketConnected } from '../services/game';
 import Leaderboard from '@/components/Leaderboard';
+import RefreshButton from '@/components/RefreshButton';
 
 const HomeScreen: React.FC = () => {
-  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
+  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies,isLoading } = useLobby();
   const location = useLocation();
   const { showPopup } = usePopup();
 
@@ -32,8 +33,8 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (isLobbySocketConnected() && isGameSocketConnected()) {
-        await getAvailableGames();
-        await getPublicLobbies();
+        getAvailableGames();
+        getPublicLobbies();
       } else {
         setTimeout(fetchData, 200); // Retry after 200ms
       }
@@ -144,6 +145,11 @@ const HomeScreen: React.FC = () => {
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
+          <RefreshButton
+            onClick={getPublicLobbies}
+            isLoading={isLoading}
+            title="Refresh lobbies"
+          />
         </div>
         {currentLobbies.length > 0 ? (
           <>
