@@ -1,8 +1,9 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { User, LoginPayload, RegisterPayload } from '../services/auth'
 import * as auth from '../services/auth'
 import { onUnauthorized } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
+import { useGlobalError } from '../components/GlobalErrorContext' // Importujemy nasz kontekst błędów
 import { deleteMe, getMe, patchMe } from '@/services/users'
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated'
 
@@ -24,7 +25,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>('checking')
   const [googleWindow, setGoogleWindow] = useState<Window | null>(null)
-  const {showPopup} = usePopup()
+  
+  const { showPopup } = usePopup()
+  const { triggerError } = useGlobalError() // Używamy Global Error Context
 
   const refreshUser = async () => {
     try {
@@ -56,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setGoogleWindow(null)
       window.location.reload(); //REFRESH SOCKETS AFTER GOOGLE AUTH
     } 
-  }, [user, googleWindow])
+  }, [user, googleWindow, status])
 
   useEffect(() => {
     if (!googleWindow)return
@@ -80,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     },1000)
     return () => clearInterval(iv)
-  },[googleWindow, showPopup,refreshUser])
+  }, [googleWindow, showPopup])
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
@@ -149,45 +152,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
           console.log("No logged-in user detected, keeping guest session.");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error during session initialization:", error);
         if (!cancelled) {
-          setUser(null);
-          setStatus('unauthenticated');
+           triggerError(
+             "Session Initialization Failed", 
+             "We couldn't connect to the server to start your session. Please check your internet connection.",
+             503
+           );
+           setUser(null);
+           setStatus('unauthenticated');
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  // Revalidate session on tab focus/visibility change (throttled)
-  // const lastCheckRef = useRef(0)
-  // useEffect(() => {
-  //   const revalidate = async () => {
-  //     if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-  //     const now = Date.now()
-  //     if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
-  //     lastCheckRef.current = now
-  //     await refreshUser()
-  //   }
-  //   const onFocus = () => void revalidate()
-  //   const onVisibility = () => {
-  //     if (typeof document !== 'undefined' && document.visibilityState === 'visible') void revalidate()
-  //   }
-  //   if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
-  //   if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
-  //   return () => {
-  //     if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
-  //     if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
-  //   }
-  // }, [status,refreshUser])
+  }, [triggerError]);
 
   const login = async (payload: LoginPayload) => {
-    const me = await auth.login(payload)
-    setUser(me)
-    setStatus('authenticated')
+    try {
+        const me = await auth.login(payload)
+        setUser(me)
+        setStatus('authenticated')
+    } catch (err: any) {
+        throw err;
+    }
   }
 
   const register = async (payload: RegisterPayload) => {
@@ -224,7 +214,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       deleteAccount,
       handleGoogleSignIn
     }),
-    [user, status],
+    [user, status, handleGoogleSignIn],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

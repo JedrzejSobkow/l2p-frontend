@@ -43,7 +43,7 @@ import {
   type FriendRequestAccepted,
   offFriendRequestAccepted
 } from '@/services/chat'
-import { off } from 'process'
+import { useGlobalError } from '../GlobalErrorContext'
 
 export type Friend = {
   id: string,
@@ -86,6 +86,7 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
   const {isAuthenticated} = useAuth()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [state, setState] = useState<FriendsState>({ friendsById: {} })
+  const { triggerError } = useGlobalError()
 
   const handleInitialFriendStatuses = useCallback((payload:{statuses:  FriendStatusUpdatePayload[]}) => {
     if (!Array.isArray(payload.statuses)) return
@@ -374,8 +375,17 @@ export const FriendsProvider = ({ children }: { children: ReactNode }) => {
         onInitialFriendStatuses(handleInitialFriendStatuses)
         onFriendRequestAccepted(handleFriendRequestAccepted)
       }
-      catch (error) {
+      catch (error: any) {
         console.error('Error initializing friends context:', error)
+        if (error.status >= 500 || error.detail.message === 'Network Error') {
+          if (active) {
+            triggerError(
+              "Friends Service Unavailable", 
+              "We couldn't load your friends list at the moment. Please try refreshing.", 
+              503
+            )
+          }
+        }
       }
       finally {
         if (active) {
