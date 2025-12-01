@@ -24,15 +24,11 @@ interface Game {
 const GameScreen: React.FC = () => {
     const { gameName } = useParams<{ gameName: string }>();
     const navigate = useNavigate();
-    const { availableGames, getAvailableGames, getPublicLobbiesByGame, publicLobbies, isLoading, joinLobby } = useLobby();
+    const { availableGames, getPublicLobbiesByGame, publicLobbies, isLoading, joinLobby } = useLobby();
     
     const [selectedSection, setSelectedSection] = useState<string>('Available Lobbies');
     const [playerCount, setPlayerCount] = useState<number>(2);
     const [currentGame, setCurrentGame] = useState<Game | null>(null);
-
-    useEffect(() => {
-        getAvailableGames();
-    }, [getAvailableGames]);
 
     useEffect(() => {
         if (gameName) {

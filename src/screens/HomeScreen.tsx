@@ -22,7 +22,7 @@ import { isGameSocketConnected } from '../services/game';
 import Leaderboard from '@/components/Leaderboard';
 
 const HomeScreen: React.FC = () => {
-  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies } = useLobby();
+  const { availableGames, publicLobbies, getPublicLobbies } = useLobby();
   const location = useLocation();
   const { showPopup } = usePopup();
 
@@ -32,15 +32,11 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (isLobbySocketConnected() && isGameSocketConnected()) {
-        await getAvailableGames();
-        await getPublicLobbies();
-      } else {
-        setTimeout(fetchData, 200); // Retry after 200ms
+         getPublicLobbies();
       }
     };
-
     fetchData();
-  }, [getAvailableGames, getPublicLobbies]);
+  }, [getPublicLobbies]);
 
   useEffect(() => {
     if (location.state?.message) {

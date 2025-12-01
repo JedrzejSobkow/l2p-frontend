@@ -142,6 +142,8 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   // Initialize socket connection
   useEffect(() => {
     connectLobbySocket()
+    emitGetAvailableGames()
+    emitGetPublicLobbies()
     return () => {
       // Don't disconnect on unmount, keep connection alive
     }
@@ -491,10 +493,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true)
     setError(null)
     emitGetLobby()
-  }, [])
-
-  const clearErrorHandler = useCallback(() => {
-    setError(null)
   }, [])
 
   const startGameHandler = useCallback((gameName: string) => {
