@@ -3,6 +3,7 @@ import type { User, LoginPayload, RegisterPayload } from '../services/auth'
 import * as auth from '../services/auth'
 import { onUnauthorized } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
+import { deleteMe, getMe, patchMe } from '@/services/users'
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated'
 
 type AuthContextValue = {
@@ -27,7 +28,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshUser = async () => {
     try {
-      const me = await auth.getMe()
+      const me = await getMe()
       me.id = `user:${me.id}`;
       setUser(me)
       setStatus('authenticated')
@@ -104,10 +105,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedGuest = localStorage.getItem('guestUser');
         if (storedGuest) {
           const guest = JSON.parse(storedGuest);
-          guest.id = `guest:${guest.id}`;
-          if (!cancelled) {
-            setUser(guest);
-            setStatus('unauthenticated');
+          const now = Math.floor(Date.now() / 1000);
+          
+          // Check if guest session has expired
+          if (guest.expiration_timestamp && now >= guest.expiration_timestamp) {
+            console.log("Guest session expired, creating new one");
+            localStorage.removeItem('guestUser');
+            const newGuest = await auth.createGuestSession();
+            localStorage.setItem('guestUser', JSON.stringify(newGuest));
+            newGuest.id = `guest:${newGuest.id}`;
+            if (!cancelled) {
+              setUser(newGuest);
+              setStatus('unauthenticated');
+            }
+            window.location.reload();
+          } else {
+            guest.id = `guest:${guest.id}`;
+            if (!cancelled) {
+              setUser(guest);
+              setStatus('unauthenticated');
+            }
           }
         } else {
           const guest = await auth.createGuestSession();
@@ -123,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
   
         try {
-          const me = await auth.getMe();
+          const me = await getMe();
           if (!cancelled && me) {
             me.id = `user:${me.id}`;
             setUser(me); 
@@ -178,13 +195,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateProfile = async (updates: Partial<User>) => {
-    const updated = await auth.patchMe(updates)
+    const updated = await patchMe(updates)
     setUser(updated)
     return updated
   }
 
   const deleteAccount = async () => {
-    await auth.deleteMe()
+    await deleteMe()
     setUser(null)
     setStatus('unauthenticated')
   }

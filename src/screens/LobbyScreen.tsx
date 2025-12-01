@@ -298,6 +298,20 @@ export const LobbyScreen = () => {
   const currentPlayerCount = members.length
   const canStartGame = isUserHost && allMembersReady && currentPlayerCount === selectedPlayerCount && !!currentLobby?.selected_game
 
+  // Generate tooltip for start button
+  const getStartButtonTooltip = () => {
+    if (!isUserHost) return ''
+    
+    // Check conditions in priority order and return first unmet condition
+    if (!currentLobby?.selected_game) return 'Select a game'
+    if (currentPlayerCount !== selectedPlayerCount) return `Need ${selectedPlayerCount} players (current: ${currentPlayerCount})`
+    if (!allMembersReady) return 'All players must be ready'
+    
+    return ''
+  }
+
+  const startButtonTooltip = getStartButtonTooltip()
+
   const disabledPlayerCounts = ['2', '4', '6'].filter(
     value => parseInt(value) < currentPlayerCount
   )
@@ -458,20 +472,25 @@ export const LobbyScreen = () => {
           <div className="w-full lg:hidden p-3 sm:p-4 rounded-lg shadow-md flex flex-col items-center justify-center gap-3">
             <button
               onClick={toggleReady}
-              className={`w-full px-4 py-2 text-white font-bold text-sm rounded-lg focus:outline-none ${
-                isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              className={`w-full px-4 py-3 text-white font-bold text-base rounded-lg focus:outline-none ${
+                !isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
               }`}
             >
-              {isReady ? 'Ready' : 'Not Ready'}
+              {!isReady ? 'Ready' : 'Not Ready'}
             </button>
 
-            <button 
-              disabled={!canStartGame} 
-              onClick={handleStartGame}
-              className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
-            >
-              Start
-            </button>
+            {isUserHost && (
+              <button 
+                disabled={!canStartGame} 
+                onClick={handleStartGame}
+                className="w-full px-4 py-3 bg-blue-500 text-white font-bold text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 flex flex-col items-center gap-1"
+              >
+                <span>Start</span>
+                {!canStartGame && startButtonTooltip && (
+                  <span className="text-xs font-normal opacity-90">{startButtonTooltip}</span>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Chat Section */}
@@ -589,23 +608,33 @@ export const LobbyScreen = () => {
           </div>
 
           {/* Action Buttons - Desktop */}
-          <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={toggleReady}
-              className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-white font-bold text-sm sm:text-base rounded-lg focus:outline-none ${
-                isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              className={`w-full px-4 py-3 text-white font-bold text-base rounded-lg focus:outline-none ${
+                !isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
               }`}
             >
-              {isReady ? 'Ready' : 'Not Ready'}
+              {!isReady ? 'Ready' : 'Not Ready'}
             </button>
 
-            <button 
-              disabled={!canStartGame} 
-              onClick={handleStartGame}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
-            >
-              Start
-            </button>
+            {isUserHost && (
+              <div className="w-full relative group">
+                <button 
+                  disabled={!canStartGame} 
+                  onClick={handleStartGame}
+                  className="w-full px-4 py-3 bg-blue-500 text-white font-bold text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+                >
+                  Start
+                </button>
+                {!canStartGame && startButtonTooltip && (
+                  <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-10 shadow-lg">
+                    {startButtonTooltip}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

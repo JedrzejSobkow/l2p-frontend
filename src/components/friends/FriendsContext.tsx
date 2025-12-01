@@ -14,7 +14,6 @@ import {
   deleteFriend,
   getFriendsList,
   getFriendStatus,
-  getUser,
   searchFriends,
   sendFriendRequest,
   type Friendship,
