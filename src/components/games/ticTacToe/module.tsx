@@ -1,12 +1,7 @@
-import { useMemo, useState, useEffect } from "react";
-import { Application, extend } from "@pixi/react";
-import { Container, Graphics, Text, TextStyle, type Graphics as PixiGraphics } from "pixi.js";
+import { useMemo, useState, useEffect, useRef } from "react";
+import * as PIXI from "pixi.js";
 import type { GameClientModule } from "../GameClientModule";
-
-extend({ Container, Graphics, Text });
-
-const CELL_SIZE = 120;
-const BORDER_RADIUS = 24;
+import { GameBoard } from "../GameBoard";
 
 const parseBoard = (raw: unknown): (string | null)[] => {
   if (Array.isArray(raw)) {
@@ -24,27 +19,40 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   onProposeMove,
 }) => {
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically calculate cell size based on screen width
-  const cellSize = useMemo(() => {
-    const screenWidth = window.innerWidth;
-    if (screenWidth < 640) return 60; // Small screens (e.g., mobile)
-    if (screenWidth < 1024) return 90; // Medium screens (e.g., tablets)
-    return CELL_SIZE; // Default size for larger screens
-  }, []);
-
-  const board = useMemo(() => parseBoard((rawState as any)?.board), [rawState]);
+  const gameState = useMemo(() => rawState as any, [rawState]);
+  const board = useMemo(() => parseBoard(gameState?.board), [gameState]);
   const dim = useMemo(() => Math.max(1, Math.floor(Math.sqrt(board.length))), [board.length]);
 
-  const timing = (rawState as any)?.timing;
+  const timing = gameState?.timing;
   const timeoutSeconds = timing?.timeout_seconds;
   const turnStartTime = timing?.turn_start_time;
+
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateContainerWidth();
+    const resizeObserver = new ResizeObserver(updateContainerWidth);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     if (timing?.timeout_type === "per_turn" && timeoutSeconds && turnStartTime) {
       const calculateRemainingTime = () => {
         const startTime = new Date(turnStartTime).getTime();
-        const elapsedTime = (Date.now() - startTime) / 1000; // elapsed time in seconds
+        const elapsedTime = (Date.now() - startTime) / 1000;
         const timeLeft = Math.max(0, timeoutSeconds - elapsedTime);
         setRemainingTime(timeLeft);
       };
@@ -59,7 +67,6 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   }, [timing, timeoutSeconds, turnStartTime]);
 
   const status = useMemo(() => {
-    const gameState = rawState as any;
     if (gameState?.result === "draw") {
       return "Draw!";
     }
@@ -85,41 +92,41 @@ const TicTacToeView: GameClientModule["GameView"] = ({
         {" "}{nextPlayer?.nickname ?? " Waiting..."}'s turn
       </>
     );
-  }, [rawState, players, localPlayerId]);
+  }, [gameState, players, localPlayerId]);
 
-  const handleCellClick = (index: number) => {
+  const handleCellClick = (row: number, col: number) => {
+    const index = row * dim + col;
     if (!isMyTurn || board[index] !== null) return;
-    const row = Math.floor(index / dim);
-    const col = index % dim;
     const moveData = { row, col };
     onProposeMove(moveData);
   };
 
-  const drawGrid = (g: PixiGraphics) => {
-    g.clear();
-    g.setStrokeStyle({ width: 6, color: 0xffffff, alpha: 0.35 });
-    g.roundRect(0, 0, cellSize * dim, cellSize * dim, BORDER_RADIUS);
-    g.stroke();
+  const renderTokens = ({ cellSize, container, lineWidth }: { cellSize: number; container: PIXI.Container; lineWidth: number }) => {
+    const markStyles = {
+      X: new PIXI.TextStyle({ fill: 0xffa94d, fontSize: cellSize * 0.6, fontWeight: "700" }),
+      O: new PIXI.TextStyle({ fill: 0x74c0fc, fontSize: cellSize * 0.6, fontWeight: "700" }),
+    };
 
-    g.setStrokeStyle({ width: 4, color: 0xffffff, alpha: 0.25 });
-    for (let i = 1; i < dim; i++) {
-      const pos = i * cellSize;
-      g.moveTo(pos, 0).lineTo(pos, cellSize * dim);
-      g.moveTo(0, pos).lineTo(cellSize * dim, pos);
-    }
-    g.stroke();
+    board.forEach((cell, index) => {
+      if (!cell || (cell !== "X" && cell !== "O")) return;
+      const row = Math.floor(index / dim);
+      const col = index % dim;
+      const x = col * (cellSize + lineWidth) + lineWidth + cellSize / 2;
+      const y = row * (cellSize + lineWidth) + lineWidth + cellSize / 2;
+
+      const text = new PIXI.Text({
+        text: cell,
+        style: markStyles[cell],
+      });
+      text.anchor.set(0.5);
+      text.x = x;
+      text.y = y;
+      container.addChild(text);
+    });
   };
 
-  const markStyles = useMemo(
-    () => ({
-      X: new TextStyle({ fill: 0xffa94d, fontSize: cellSize * 0.6, fontWeight: "700" }),
-      O: new TextStyle({ fill: 0x74c0fc, fontSize: cellSize * 0.6, fontWeight: "700" }),
-    }),
-    [cellSize]
-  );
-
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
       <div className="text-center text-lg font-semibold text-white">
         {status}
         <br />
@@ -129,40 +136,14 @@ const TicTacToeView: GameClientModule["GameView"] = ({
           </span>
         )}
       </div>
-      <div className="relative">
-        <Application width={cellSize * dim} height={cellSize * dim} backgroundAlpha={0}>
-          <pixiContainer>
-            <pixiGraphics draw={drawGrid} />
-            {board.map((cell, index) => {
-              const row = Math.floor(index / dim);
-              const col = index % dim;
-              return (
-                <pixiContainer key={index} x={col * cellSize} y={row * cellSize}>
-                  {cell && (cell === "X" || cell === "O") && (
-                    <pixiText
-                      text={cell}
-                      anchor={0.5}
-                      x={cellSize / 2}
-                      y={cellSize / 2}
-                      style={markStyles[cell]}
-                    />
-                  )}
-                </pixiContainer>
-              );
-            })}
-          </pixiContainer>
-        </Application>
-        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${dim}, 1fr)` }}>
-          {board.map((_, index) => (
-            <button
-              key={index}
-              type="button"
-              onClick={() => handleCellClick(index)}
-              className="w-full h-full bg-transparent"
-            />
-          ))}
-        </div>
-      </div>
+      <GameBoard
+        rows={dim}
+        cols={dim}
+        containerWidth={containerWidth}
+        onCellClick={handleCellClick}
+      >
+        {renderTokens}
+      </GameBoard>
     </div>
   );
 };
