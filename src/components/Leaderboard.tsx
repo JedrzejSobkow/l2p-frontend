@@ -41,7 +41,7 @@ const Leaderboard = () => {
            <p className="text-sm text-white/50">Loading rankings...</p>
         </div>
       ) : leaderboard.length > 0 ? (
-        <div className={isLoading ? 'opacity-50 transition-opacity' : 'opacity-100 transition-opacity'}>
+        <div className={"gap-1 flex-col flex" + (isLoading ? ' opacity-50 transition-opacity' : ' opacity-100 transition-opacity')}>
           {leaderboard.map((player, index) => (
             <LeaderboardCard
               key={player.nickname}
