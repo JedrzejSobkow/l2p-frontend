@@ -19,7 +19,7 @@ import ClobberModule from '@/components/games/clobber/module';
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { gameState, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby, clearError, error } = useLobby();
+  const { gameState, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby,} = useLobby();
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
@@ -42,24 +42,6 @@ const LobbyInGameScreen = () => {
       clobber: ClobberModule,
     };
 
-  useEffect(() => {
-    if (error?.error_code === 'KICKED') {
-      clearError();
-      navigate('/', { state: { message: 'You have been kicked from the game', type: 'error' } });
-    }
-  }, [error, navigate, clearError]);
-
-  useEffect(() => {
-    const handleKickedFromLobby = (data: { lobby_code: string; message: string }) => {
-      console.log('Kicked from lobby:', data);
-      navigate('/', { state: { message: data.message || 'You have been kicked from the game', type: 'error' } });
-    };
-
-    onKickedFromLobby(handleKickedFromLobby);
-    return () => {
-      offKickedFromLobby(handleKickedFromLobby);
-    };
-  }, [navigate]);
 
   useEffect(() => {
     if (gameState) {
