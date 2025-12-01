@@ -12,7 +12,7 @@ const GameInfoModal: React.FC<GameInfoModalProps> = ({ isOpen, gameName, gameRul
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <div
-                className="bg-background p-6 rounded-lg shadow-lg text-center max-w-md max-h-96 overflow-y-auto"
+                className="bg-background p-6 rounded-lg shadow-lg text-center max-w-md max-h-96 overflow-y-auto mx-4 sm:mx-0"
                 style={{
                     outline: '2px solid var(--color-highlight)',
                 }}
