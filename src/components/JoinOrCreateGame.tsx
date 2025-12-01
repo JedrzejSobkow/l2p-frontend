@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLobby } from './lobby/LobbyContext';
-import { usePopup } from './PopupContext';
 import { useNavigate } from 'react-router-dom'; // Assuming react-router-dom is used for navigation
 import JoinCodeInput from "./JoinCodeInput";
 
 const JoinOrCreateGame: React.FC = () => {
-  const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby(); // Dodano currentLobby
+  const { createLobby, joinLobby, currentLobby, isLoading } = useLobby(); // Dodano currentLobby
   const navigate = useNavigate(); // Add navigation hook
-  const { showPopup } = usePopup(); // Use the usePopup hook
   const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
 
   const handlePartChange = (index: number, value: string | string[]) => {
@@ -32,16 +30,6 @@ const JoinOrCreateGame: React.FC = () => {
     setJoinCodeParts(['', '', '', '', '', '']);
   };
 
-  const handleCreateLobby = async () => {
-    try {
-      await createLobby(2, false, undefined);
-      // navigate(`/lobby/`); // Navigate to the newly created lobby
-      showPopup({ type: 'confirmation', message: 'Lobby created successfully!' });
-    } catch (err: any) {
-      showPopup({ type: 'error', message: err.message || 'Failed to create lobby.' });
-    }
-  };
-
   const isJoinCodeComplete = joinCodeParts.every((part) => part !== '');
 
   useEffect(() => {
@@ -50,12 +38,6 @@ const JoinOrCreateGame: React.FC = () => {
     }
   }, [currentLobby, navigate]);
 
-  useEffect(() => {
-    if (error) {
-      showPopup({ type: 'error', message: error.message || 'An error occurred.' });
-      clearError();
-    }
-  }, [error, clearError, showPopup]);
 
   return (
     <div className="bg-background rounded-2xl shadow-lg text-center w-auto max-w-2xl mx-auto">
@@ -81,7 +63,7 @@ const JoinOrCreateGame: React.FC = () => {
             {isLoading ? 'Joining...' : 'Join'}
           </button>
           <button
-            onClick={handleCreateLobby}
+            onClick={() => createLobby(2, false, undefined)}
             disabled={isLoading}
             className={`px-4 py-2 rounded transform transition-transform duration-200 ${
               !isLoading
