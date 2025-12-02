@@ -24,6 +24,7 @@ import { emitCreateGame, emitGetGameState } from '../services/game'
 import { getImage } from '../utils/imageMap';
 import { diceIcon } from '@assets/icons';
 import { pfpImage, noGameImage } from '@assets/images';
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 
 export const LobbyScreen = () => {
@@ -49,7 +50,8 @@ export const LobbyScreen = () => {
     getAvailableGames,
     selectGame,
     clearGameSelection,
-    sendInvite
+    sendInvite,
+    isLoading
   } = useLobby()
 
   // Redirect user to home if they are not in a lobby
@@ -58,7 +60,7 @@ export const LobbyScreen = () => {
     if (!lobbySocket || !lobbySocket.connected) {
         return;
     }
-
+    console.log("Checking lobby connection for lobby code:", lobbyCode);
     const delayCheck = setTimeout(() => {
         if (!currentLobby) {
             navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } });
@@ -66,7 +68,16 @@ export const LobbyScreen = () => {
     }, 100);
 
     return () => clearTimeout(delayCheck); // Cleanup timeout on unmount or dependency change
-}, [currentLobby, navigate])
+  }, [currentLobby, navigate])
+
+  useEffect(() => {
+    if (!lobbyCode) return
+
+    if (currentLobby?.lobby_code === lobbyCode) return
+
+    const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase();
+    joinLobby(normalizedCode)
+  }, [lobbyCode, currentLobby, joinLobby])
 
   const [messageInput, setMessageInput] = useState('')
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -319,12 +330,10 @@ export const LobbyScreen = () => {
 
   if (!currentLobby) {
     return (
-        <main className="flex items-center justify-center min-h-screen bg-background-primary">
-          <div className="text-red-500 text-xl">
-            {lobbyCode ? 'Joining lobby...' : 'You are not in any lobby.'}
-          </div>
-        </main>
-      )
+      <main className="flex h-screen items-center justify-center bg-background-primary">
+         <LoadingSpinner size="h-16 w-16" />
+      </main>
+    );
   }
 
   return (
