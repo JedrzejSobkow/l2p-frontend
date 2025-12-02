@@ -28,8 +28,40 @@ const ChatDockContext = createContext<ChatDockContextValue | undefined>(undefine
 
 export const ChatDockProvider = ({ children }: { children: ReactNode }) => {
   const {subscribeToIncomingMessages,sendMessage,clearUnread,ensureConversation,loadMessages} = useChat()
-  const { isAuthenticated } = useAuth()
+  const { user,isAuthenticated } = useAuth()
   const [state, setState] = useState<ChatDockState>({ sessions: {} })
+  const storageKey = useMemo(() => {
+    return isAuthenticated && user ? `chat-dock-sessions_${user.id}` : null
+  }, [isAuthenticated, user?.id])
+
+  useEffect(() => {
+    if (!storageKey) {
+      setState({ sessions: {} })
+      return
+    }
+    const stored = window.localStorage.getItem(storageKey)
+    if (stored) {
+      try {
+        const parsed: Record<string, ChatSession> = JSON.parse(stored)
+        setState({ sessions: parsed })
+      } catch (e) {
+        console.error('Failed to parse stored chat sessions', e)
+      }
+    }
+  }, [storageKey])
+
+  useEffect(() => {
+    if (!storageKey) return
+    window.localStorage.setItem(storageKey, JSON.stringify(state.sessions))
+  }, [state.sessions, storageKey])
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    Object.values(state.sessions).forEach((session) => {
+      ensureConversation(session.id)
+      loadMessages(session.id)
+    })
+  }, [isAuthenticated, state.sessions, ensureConversation, loadMessages])
 
   useEffect(() => {
     if (!isAuthenticated) {

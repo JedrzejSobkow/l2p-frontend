@@ -14,7 +14,7 @@ import { FaWifi } from 'react-icons/fa';
 
 
 const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, user, logout, status } = useAuth();
     const { currentLobby } = useLobby(); // Dodano currentLobby
     const location = useLocation();
     const navigate = useNavigate();
@@ -107,47 +107,46 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                     <span className="hide-on-small">Just you and people you share passion with</span>
                 </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0 pr-4">
-                {isAuthenticated ? (
-                    <>
-                        {/* Authenticated User Info */}
-                        <div 
-                            className="flex items-center gap-2"
-                        >
-                            {/* Profile Picture with Hover Scale */}
-                            <img
-                                src={user?.pfp_path || pfpImage}
-                                alt="User Icon"
-                                onClick={() => handleNavigation('/profile')}
-                                className="w-10 h-10 rounded-full transition-transform duration-200 hover:scale-105 cursor-pointer"
-                            />
-                            
-                            <div className="user-info flex flex-col items-start">
-                                <span className="hide-on-mobile text-base font-light text-headline">
-                                    Hello, 
-                                    {/* Przejście do profilu po kliknięciu na nick, który też się lekko skaluje */}
-                                    <span 
-                                        onClick={() => handleNavigation('/profile')}
-                                        className="text-base cursor-pointer font-medium pl-1 text-headline transition-transform duration-200 hover:text-highlight">
-                                        {user?.nickname}
-                                    </span>
-                                </span>
-                                <button
-                                    type="button"
-                                    // Użycie lokalnego stanu do otwarcia Modalu/Dialogu
-                                    // Zastąp 'true' funkcją ustawiającą stan np. setShowLogoutConfirm(true)
-                                    onClick={() => setShowLogoutConfirm(true)}
-                                    className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer transition-colors hover:text-red-400"
-                                >
-                                    logout
-                                </button>
-                            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 pr-4 min-w-[140px] justify-end">
+                {status === 'checking' ? (
+                    <div className="flex items-center gap-3 animate-pulse">
+                        <div className="h-10 w-10 rounded-full bg-white/10" />
+                        <div className="flex flex-col gap-1">
+                            <div className="h-3 w-16 bg-white/10 rounded" />
+                            <div className="h-3 w-12 bg-white/10 rounded" />
                         </div>
-                    </>
+                    </div>
+                ) : isAuthenticated ? (
+                    <div className="flex items-center gap-2">
+                        <img
+                            src={user?.pfp_path || pfpImage}
+                            alt="User Icon"
+                            onClick={() => handleNavigation('/profile')}
+                            className="w-10 h-10 rounded-full object-cover cursor-pointer transition-transform duration-200 hover:scale-105"
+                        />
+                        <div className="user-info flex flex-col items-start">
+                            <span className="hide-on-mobile text-base font-light text-headline">
+                                Hello, 
+                                <span 
+                                    onClick={() => handleNavigation('/profile')}
+                                    className="text-base font-medium pl-1 text-headline cursor-pointer transition-colors duration-200 hover:text-highlight"
+                                >
+                                    {user?.nickname}
+                                </span>
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowLogoutConfirm(true)}
+                                className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer transition-colors hover:text-red-400"
+                            >
+                                logout
+                            </button>
+                        </div>
+                    </div>
                 ) : (
                     <>
                         {/* Guest/Unauthenticated User Info */}
-                        {!isAuthScreen && (
+                        {(
                             <div className="user-info flex flex-col items-start">
                                 <span className="hide-on-mobile text-base font-light text-headline">
                                     Hello, 
@@ -156,22 +155,24 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                             </div>
                         )}
                         
-                        { !isAuthScreen && <div className="flex items-center gap-3">
-                            <button
-                                type="button"
-                                onClick={() => handleNavigation('/login')}
-                                className="rounded-full bg-highlight px-4 py-2 text-xs font-semibold text-background-secondary transition-transform duration-200 hover:scale-105"
-                            >
-                                Log in
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleNavigation('/register')}
-                                className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-transform duration-200 hover:scale-105 hide-on-mobile"
-                            >
-                                Register
-                            </button>
-                        </div>}
+                        {!isAuthScreen && (
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleNavigation('/login')}
+                                    className="cursor-pointer rounded-full bg-highlight px-4 py-2 text-xs font-semibold text-background-secondary transition-transform duration-200 hover:scale-105"
+                                >
+                                    Log in
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleNavigation('/register')}
+                                    className="cursor-pointer rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-transform duration-200 hover:scale-105 hide-on-mobile"
+                                >
+                                    Register
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>

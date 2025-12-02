@@ -132,7 +132,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [publicLobbies, setPublicLobbies] = useState<LobbyState[]>([])
   const [availableGames, setAvailableGames] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<LobbyError | null>(null)
   const [gameState, setGameState] = useState<any | null>(null)
   const { showPopup } = usePopup();
@@ -142,6 +142,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   // Initialize socket connection
   useEffect(() => {
     connectLobbySocket()
+    emitGetAvailableGames()
     return () => {
       // Don't disconnect on unmount, keep connection alive
     }
@@ -261,7 +262,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
 
     const handleLobbyError = (data: LobbyError) => {
       console.error('Lobby error:', data);
-      
+      setIsLoading(false);
       // 1. KICKED
       if (data.error_code === 'KICKED') {
           setCurrentLobby(null);
@@ -271,7 +272,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
 
       // 2. NOT FOUND
       if (data.error_code === 'NOT_FOUND' || data.error_code === 'LOBBY_NOT_FOUND') {
-          triggerError("Lobby Not Found", "The lobby you are trying to join does not exist.", 404);
+          navigate('/', { state: { message: 'Lobby not found', type: 'error' } });
           setCurrentLobby(null);
           return;
       }
@@ -290,15 +291,16 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
           if (!currentLobby) navigate('/'); 
           return;
       }
-
-      // 5. Inne błędy - Pokaż popup i wyczyść błąd po chwili
+      if (data.error_code === 'VALIDATION_ERROR') {
+        showPopup({ type: 'error', message: 'Invalid code.' });
+        if (!currentLobby) navigate('/'); 
+        return;
+      }
       setError(data);
       showPopup({ type: 'error', message: data.message || 'An error occurred' });
       
-      // Automatyczne czyszczenie błędu w stanie (opcjonalne, bo popup znika sam)
       setTimeout(() => setError(null), 3500);
-      setIsLoading(false);
-  }
+    }
 
     const handleAvailableGames = (data: { games: any[]; total: number }) => {
       //console('Available games:', data)
@@ -411,7 +413,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offGameEnded(handleGameEnded)
       offLobbyInviteSent(handleInviteSent)
     }
-  }, [currentLobby?.lobby_code,showPopup])
+  }, [currentLobby?.lobby_code,showPopup,setIsLoading,navigate])
 
   const createLobbyHandler = useCallback((maxPlayers: number = 6, isPublic: boolean = false, name?: string, gameName?: string) => {
     setIsLoading(true)
@@ -491,10 +493,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true)
     setError(null)
     emitGetLobby()
-  }, [])
-
-  const clearErrorHandler = useCallback(() => {
-    setError(null)
   }, [])
 
   const startGameHandler = useCallback((gameName: string) => {

@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Flip to unauthenticated immediately on global 401
   useEffect(() => {
     onUnauthorized(() => {
-      // setUser(null)
       setStatus('unauthenticated')
     })
     return () => {
@@ -57,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (status === 'authenticated' && googleWindow && !googleWindow.closed) {
       googleWindow.close()
       setGoogleWindow(null)
-      window.location.reload(); //REFRESH SOCKETS AFTER GOOGLE AUTH
+      window.location.reload();
     } 
   }, [user, googleWindow, status])
 
@@ -126,7 +125,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             guest.id = `guest:${guest.id}`;
             if (!cancelled) {
               setUser(guest);
-              setStatus('unauthenticated');
             }
           }
         } else {
@@ -151,6 +149,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (error) {
           console.log("No logged-in user detected, keeping guest session.");
+          if (!cancelled) {
+             setStatus('unauthenticated'); 
+          }
         }
       } catch (error: any) {
         console.error("Error during session initialization:", error);

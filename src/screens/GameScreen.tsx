@@ -8,6 +8,7 @@ import { ticTacToeImage, avatar1, avatar2, avatar3, avatar4, avatar7, avatar12, 
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLobby } from '../components/lobby/LobbyContext';
 import { getImage } from '../utils/imageMap';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 interface Game {
     game_name: string;
@@ -24,21 +25,17 @@ interface Game {
 const GameScreen: React.FC = () => {
     const { gameName } = useParams<{ gameName: string }>();
     const navigate = useNavigate();
-    const { availableGames, getAvailableGames, getPublicLobbiesByGame, publicLobbies, isLoading, joinLobby } = useLobby();
+    const { availableGames, isLobbySocketConnected,getPublicLobbiesByGame, publicLobbies, isLoading, joinLobby } = useLobby();
     
     const [selectedSection, setSelectedSection] = useState<string>('Available Lobbies');
     const [playerCount, setPlayerCount] = useState<number>(2);
     const [currentGame, setCurrentGame] = useState<Game | null>(null);
 
     useEffect(() => {
-        getAvailableGames();
-    }, [getAvailableGames]);
-
-    useEffect(() => {
-        if (gameName) {
+        if (gameName && isLobbySocketConnected) {
             getPublicLobbiesByGame(gameName);
         }
-    }, [gameName, getPublicLobbiesByGame]);
+    }, [gameName, getPublicLobbiesByGame,isLobbySocketConnected]);
 
     useEffect(() => {
         if (availableGames.length > 0 && gameName) {
@@ -62,7 +59,7 @@ const GameScreen: React.FC = () => {
     };
 
     if (!currentGame) {
-        return <div className="w-full max-w-screen-lg mx-auto py-8 px-10 sm:px-20">Loading...</div>;
+        return <LoadingSpinner className='min-h-[50vh]' />;
     }
 
     return (

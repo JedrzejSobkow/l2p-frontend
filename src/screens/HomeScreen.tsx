@@ -17,13 +17,12 @@ import { usePopup } from '../components/PopupContext';
 import { useLobby } from '../components/lobby/LobbyContext';
 import JoinOrCreateGame from '../components/JoinOrCreateGame';
 import { getImage } from '../utils/imageMap';
-import { isLobbySocketConnected } from '../services/lobby';
-import { isGameSocketConnected } from '../services/game';
 import Leaderboard from '@/components/Leaderboard';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import RefreshButton from '@/components/RefreshButton';
 
 const HomeScreen: React.FC = () => {
-  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies,isLoading } = useLobby();
+  const { availableGames, isLobbySocketConnected, publicLobbies, getPublicLobbies,isLoading } = useLobby();
   const location = useLocation();
   const { showPopup } = usePopup();
 
@@ -31,17 +30,10 @@ const HomeScreen: React.FC = () => {
   const itemsPerPage = 3;
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (isLobbySocketConnected() && isGameSocketConnected()) {
-        getAvailableGames();
-        getPublicLobbies();
-      } else {
-        setTimeout(fetchData, 200); // Retry after 200ms
-      }
-    };
-
-    fetchData();
-  }, [getAvailableGames, getPublicLobbies]);
+    if (isLobbySocketConnected ) {
+      getPublicLobbies();
+    }
+  }, [getPublicLobbies,isLobbySocketConnected]);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -53,7 +45,6 @@ const HomeScreen: React.FC = () => {
     }
   }, [location, showPopup]);
 
-  // Generate top picks and featured games from available games
   const topPicksImages = availableGames.length > 0
     ? availableGames.slice(0, 2).map((game: any) => ({
         src: getImage('games', game.game_name) || noGameImage,
@@ -129,12 +120,9 @@ const HomeScreen: React.FC = () => {
       <div className="flex flex-col md:flex-row justify-between gap-8">
         {/* Left Column: Top Picks and Featured Games */}
         <div className="w-full md:w-[70%] flex flex-col gap-8">
-          {topPicksImages.length > 0 && (
-            <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
-          )}
-          {featuredGamesImages.length > 0 && (
-            <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
-          )}
+          <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
+          <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
+
         </div>
 
         {/* Right Column: Leaderboard */}
@@ -151,7 +139,10 @@ const HomeScreen: React.FC = () => {
             title="Refresh lobbies"
           />
         </div>
-        {currentLobbies.length > 0 ? (
+        
+        {isLoading ? (
+          <LoadingSpinner size="h-12 w-12" />
+        ) : currentLobbies.length > 0 ? (
           <>
             {currentLobbies.map((lobby, index) => (
               <GameLobbyCard
