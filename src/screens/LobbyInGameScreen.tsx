@@ -148,10 +148,7 @@ const LobbyInGameScreen = () => {
 
     // Dynamically select the module based on the selected game
   const module = useMemo(() => {
-    console.warn("CURRENTLOBBY:")
-    console.warn(currentLobby)
     if (!currentLobby?.selected_game) {
-      console.log("DUPSKO TROCHE")
       return null; // Fallback if no game is selected
     }
     return gameModules[currentLobby.selected_game] || null; // Use the mapped module or fallback

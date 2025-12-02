@@ -60,9 +60,10 @@ export const LobbyScreen = () => {
     }
 
     const delayCheck = setTimeout(() => {
-        if (!currentLobby) {
-            navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } });
-        }
+      if (!currentLobby) {
+        navigate('/');
+        showPopup({ message: 'You are not in a lobby.', type: 'error' } )
+      }
     }, 100);
 
     return () => clearTimeout(delayCheck); // Cleanup timeout on unmount or dependency change
@@ -94,9 +95,8 @@ export const LobbyScreen = () => {
   })
 
   useEffect(() => {
-    emitGetGameState();
-
     if (currentLobby) {
+      emitGetGameState();
       getMessages(50)
       setSelectedPlayerCount(currentLobby.max_players)
       setIsPublic(currentLobby.is_public)
