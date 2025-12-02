@@ -17,6 +17,13 @@ const EditLobbyNameModal: React.FC<EditLobbyNameModalProps> = ({ isOpen, current
         }
     }, [isOpen, currentName]);
 
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Filter out invalid characters and limit to 20 characters
+        const filtered = value.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 20);
+        setEditedName(filtered);
+    };
+
     const handleSave = () => {
         if (editedName.trim()) {
             onSave(editedName);
@@ -43,9 +50,10 @@ const EditLobbyNameModal: React.FC<EditLobbyNameModalProps> = ({ isOpen, current
                 <input
                     type="text"
                     value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-400 rounded mb-4 text-headline"
                     placeholder="Lobby Name"
+                    maxLength={20}
                 />
                 <div className="flex justify-center gap-4">
                     <button
