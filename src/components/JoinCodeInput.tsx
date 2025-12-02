@@ -34,33 +34,58 @@ const JoinCodeInput: React.FC<JoinCodeInputProps> = ({
     sel?.addRange(range);
   };
 
+  const handleInput = (e: React.FormEvent<HTMLDivElement>, index: number) => {
+    if (isDisabled) return;
+
+    const target = e.currentTarget;
+    const text = target.textContent || "";
+    const cleaned = text.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    if (cleaned.length > 0) {
+      const char = cleaned[cleaned.length - 1];
+      onPartChange(index, char);
+      target.textContent = char;
+      focusCell(index + 1);
+    } else {
+      target.textContent = "";
+    }
+
+    e.preventDefault();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, index: number) => {
     if (isDisabled) return;
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
       return;
     }
-    const key = e.key.toUpperCase();    
+
+    const key = e.key.toUpperCase();
+    
     if (/^[A-Z0-9]$/.test(key)) {
       e.preventDefault();
       onPartChange(index, key);
+      const target = e.currentTarget;
+      target.textContent = key;
       focusCell(index + 1);
     }
-
     else if (e.key === "Backspace") {
       e.preventDefault();
       onPartChange(index, "");
+      const target = e.currentTarget;
+      target.textContent = "";
       focusCell(index - 1);
     }
-
     else if (e.key === "ArrowLeft") {
       e.preventDefault();
       focusCell(index - 1);
     }
-
     else if (e.key === "ArrowRight") {
       e.preventDefault();
       focusCell(index + 1);
+    }
+    else if (!/^(Shift|Control|Alt|Meta|CapsLock|Tab|Enter)$/.test(e.key)) {
+      e.preventDefault();
     }
   };
 
@@ -116,6 +141,7 @@ const JoinCodeInput: React.FC<JoinCodeInputProps> = ({
             className={`join-code-cell w-10 h-10 border border-gray-300 rounded text-highlight bg-transparent font-bold flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-highlight caret-transparent ${
               isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
             }`}
+            onInput={(e) => handleInput(e, index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             onPaste={(e) => handlePaste(e, index)}
             onClick={() => handleClick(index)}
