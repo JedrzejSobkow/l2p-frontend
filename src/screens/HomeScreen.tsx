@@ -21,9 +21,10 @@ import { isLobbySocketConnected } from '../services/lobby';
 import { isGameSocketConnected } from '../services/game';
 import Leaderboard from '@/components/Leaderboard';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import RefreshButton from '@/components/RefreshButton';
 
 const HomeScreen: React.FC = () => {
-  const { availableGames, publicLobbies, getPublicLobbies,isLoading } = useLobby();
+  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies,isLoading } = useLobby();
   const location = useLocation();
   const { showPopup } = usePopup();
 
@@ -33,7 +34,8 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (isLobbySocketConnected() && isGameSocketConnected()) {
-         getPublicLobbies();
+        //getAvailableGames(); i think we dont need to get avaibleGames every time we go to homeScreen
+        getPublicLobbies();
       }
     };
     fetchData();
@@ -137,6 +139,11 @@ const HomeScreen: React.FC = () => {
       <div className="flex flex-col gap-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-headline">Active lobbies</h2>
+          <RefreshButton
+            onClick={getPublicLobbies}
+            isLoading={isLoading}
+            title="Refresh lobbies"
+          />
         </div>
         
         {isLoading ? (

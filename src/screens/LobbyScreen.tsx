@@ -15,7 +15,7 @@ import EditLobbyNameModal from '../components/EditLobbyNameModal'
 import { usePopup } from '../components/PopupContext';
 import { useGameSettings } from '../hooks/useGameSettings'
 import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined, emitToggleReady, getLobbySocket } from '../services/lobby'
-import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
+import { FaSignOutAlt, FaRegEdit, FaRegCopy } from 'react-icons/fa'
 import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
@@ -296,6 +296,18 @@ export const LobbyScreen = () => {
     }
   }) : []
 
+  const handleCopyCode = () => {
+    if (!currentLobby?.lobby_code) return;
+    
+    navigator.clipboard.writeText(currentLobby.lobby_code)
+      .then(() => {
+        showPopup({ type: 'confirmation', message: 'Lobby code copied to clipboard!' })
+      })
+      .catch(() => {
+        showPopup({ type: 'error', message: 'Failed to copy code.' });
+      })
+  }
+
   const lobbySettings = [
     {
       label: 'Visibility',
@@ -367,9 +379,17 @@ export const LobbyScreen = () => {
                 <FaRegEdit className="text-highlight" size={20} />
               </button>
             </div>
-            <span className="text-sm sm:text-base font-mono text-gray-600 bg-background-primary/40 px-2 sm:px-3 py-1 rounded flex-shrink-0">
-              {currentLobby.lobby_code.substring(0, 3)}-{currentLobby.lobby_code.substring(3, 6)}
-            </span>
+            <button
+              onClick={handleCopyCode}
+              title="Click to copy lobby code"
+              className="group flex items-center gap-2 text-sm sm:text-base font-mono text-white/60 bg-background-primary/40 px-3 py-1.5 rounded-lg transition-all hover:bg-background-primary/80 hover:text-white cursor-pointer active:scale-95"
+            >
+              <span className="tracking-wider">
+                {currentLobby.lobby_code.substring(0, 3)}-{currentLobby.lobby_code.substring(3, 6)}
+              </span>
+              {/* Ikona widoczna tylko na hover (desktop) lub zawsze delikatnie widoczna */}
+              <FaRegCopy className="opacity-50 group-hover:opacity-100 transition-opacity text-highlight" size={14} />
+            </button>
           </div>
 
           {/* Players Grid */}
