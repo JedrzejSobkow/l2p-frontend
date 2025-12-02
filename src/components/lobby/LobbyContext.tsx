@@ -143,7 +143,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     connectLobbySocket()
     emitGetAvailableGames()
-    emitGetPublicLobbies()
     return () => {
       // Don't disconnect on unmount, keep connection alive
     }

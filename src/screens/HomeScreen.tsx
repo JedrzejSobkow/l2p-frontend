@@ -17,14 +17,12 @@ import { usePopup } from '../components/PopupContext';
 import { useLobby } from '../components/lobby/LobbyContext';
 import JoinOrCreateGame from '../components/JoinOrCreateGame';
 import { getImage } from '../utils/imageMap';
-import { isLobbySocketConnected } from '../services/lobby';
-import { isGameSocketConnected } from '../services/game';
 import Leaderboard from '@/components/Leaderboard';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import RefreshButton from '@/components/RefreshButton';
 
 const HomeScreen: React.FC = () => {
-  const { availableGames, getAvailableGames, publicLobbies, getPublicLobbies,isLoading } = useLobby();
+  const { availableGames, isLobbySocketConnected, publicLobbies, getPublicLobbies,isLoading } = useLobby();
   const location = useLocation();
   const { showPopup } = usePopup();
 
@@ -32,14 +30,10 @@ const HomeScreen: React.FC = () => {
   const itemsPerPage = 3;
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (isLobbySocketConnected() && isGameSocketConnected()) {
-        //getAvailableGames(); i think we dont need to get avaibleGames every time we go to homeScreen
-        getPublicLobbies();
-      }
-    };
-    fetchData();
-  }, [getPublicLobbies]);
+    if (isLobbySocketConnected ) {
+      getPublicLobbies();
+    }
+  }, [getPublicLobbies,isLobbySocketConnected]);
 
   useEffect(() => {
     if (location.state?.message) {
