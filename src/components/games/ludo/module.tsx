@@ -11,12 +11,12 @@ import type { GameClientModule } from "../GameClientModule";
 
 extend({ Container, Graphics, Text });
 
-// Player colors
+// Player colors - vibrant for dark mode
 const PLAYER_COLORS = {
-  0: 0xef4444, // Red
-  1: 0x22c55e, // Green
-  2: 0xeab308, // Yellow
-  3: 0x3b82f6, // Blue
+  0: 0xff5555, // Red (brighter)
+  1: 0x55ff55, // Green (brighter)
+  2: 0xffdd55, // Yellow (brighter)
+  3: 0x5599ff, // Blue (brighter)
 };
 
 const PLAYER_COLOR_NAMES = {
@@ -758,12 +758,12 @@ const LudoView: GameClientModule["GameView"] = ({
     g.clear();
     const squareSize = boardSize / 15;
 
-    // Draw background (white)
-    g.setFillStyle({ color: 0xffffff });
+    // Draw background (dark but not too dark)
+    g.setFillStyle({ color: 0x2d2d2d });
     g.rect(0, 0, boardSize, boardSize);
     g.fill();
 
-    // Draw 4 Yards (Colored 6x6 squares)
+    // Draw 4 Yards (Colored 6x6 squares with reduced opacity)
     const yards = [
       { x: 0, y: 9, color: PLAYER_COLORS[0] }, // Red (Bottom-Left)
       { x: 0, y: 0, color: PLAYER_COLORS[1] }, // Green (Top-Left)
@@ -772,7 +772,7 @@ const LudoView: GameClientModule["GameView"] = ({
     ];
 
     yards.forEach((yard) => {
-      g.setFillStyle({ color: yard.color });
+      g.setFillStyle({ color: yard.color, alpha: 0.6 });
       g.rect(
         yard.x * squareSize,
         yard.y * squareSize,
@@ -781,8 +781,8 @@ const LudoView: GameClientModule["GameView"] = ({
       );
       g.fill();
 
-      // Inner white box for pieces
-      g.setFillStyle({ color: 0xffffff });
+      // Inner dark box for pieces
+      g.setFillStyle({ color: 0x2d2d2d });
       g.rect(
         (yard.x + 1) * squareSize,
         (yard.y + 1) * squareSize,
@@ -799,7 +799,7 @@ const LudoView: GameClientModule["GameView"] = ({
         { dx: 4.5, dy: 4.5 },
       ];
 
-      g.setFillStyle({ color: yard.color });
+      g.setFillStyle({ color: yard.color, alpha: 0.7 });
       spotPositions.forEach((pos) => {
         g.circle(
           (yard.x + pos.dx) * squareSize,
@@ -815,21 +815,36 @@ const LudoView: GameClientModule["GameView"] = ({
       const pos = getSquarePosition(i, boardSize);
       const isSafe = SAFE_SQUARES.includes(i);
 
-      let color = 0xffffff; // Default white
+      let color = 0x3a3a3a; // Default lighter grey
       let alpha = 1;
 
       // Color safe squares / start squares
-      if (i === 0) color = PLAYER_COLORS[0]; // Red Start
-      else if (i === 13) color = PLAYER_COLORS[1]; // Green Start
-      else if (i === 26) color = PLAYER_COLORS[2]; // Yellow Start
-      else if (i === 39) color = PLAYER_COLORS[3]; // Blue Start
-      else if (isSafe) color = 0xdddddd; // Other safe squares grey
+      if (i === 0) {
+        color = PLAYER_COLORS[0];
+        alpha = 0.7;
+      } // Red Start
+      else if (i === 13) {
+        color = PLAYER_COLORS[1];
+        alpha = 0.7;
+      } // Green Start
+      else if (i === 26) {
+        color = PLAYER_COLORS[2];
+        alpha = 0.7;
+      } // Yellow Start
+      else if (i === 39) {
+        color = PLAYER_COLORS[3];
+        alpha = 0.7;
+      } // Blue Start
+      else if (isSafe) {
+        color = 0x4a4a4a;
+        alpha = 1;
+      } // Other safe squares lighter grey
 
       g.setFillStyle({ color, alpha });
       g.rect(pos.x, pos.y, squareSize, squareSize);
       g.fill();
 
-      g.setStrokeStyle({ width: 1, color: 0x000000, alpha: 0.2 });
+      g.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.12 });
       g.rect(pos.x, pos.y, squareSize, squareSize);
       g.stroke();
     }
@@ -839,10 +854,10 @@ const LudoView: GameClientModule["GameView"] = ({
       const color = PLAYER_COLORS[playerIdx as keyof typeof PLAYER_COLORS];
       for (let homeIdx = 0; homeIdx < HOME_PATH_LENGTH; homeIdx++) {
         const pos = getHomePosition(playerIdx, homeIdx, boardSize);
-        g.setFillStyle({ color });
+        g.setFillStyle({ color, alpha: 0.8 });
         g.rect(pos.x, pos.y, squareSize, squareSize);
         g.fill();
-        g.setStrokeStyle({ width: 1, color: 0x000000, alpha: 0.2 });
+        g.setStrokeStyle({ width: 1, color: 0xffffff, alpha: 0.12 });
         g.rect(pos.x, pos.y, squareSize, squareSize);
         g.stroke();
       }
@@ -855,7 +870,7 @@ const LudoView: GameClientModule["GameView"] = ({
     const centerY = boardSize / 2;
 
     // Red (Bottom)
-    g.setFillStyle({ color: PLAYER_COLORS[0] });
+    g.setFillStyle({ color: PLAYER_COLORS[0], alpha: 0.8 });
     g.moveTo(centerStart, centerStart + centerSize); // Bottom-Left
     g.lineTo(centerStart + centerSize, centerStart + centerSize); // Bottom-Right
     g.lineTo(centerX, centerY); // Center
@@ -863,7 +878,7 @@ const LudoView: GameClientModule["GameView"] = ({
     g.fill();
 
     // Green (Left)
-    g.setFillStyle({ color: PLAYER_COLORS[1] });
+    g.setFillStyle({ color: PLAYER_COLORS[1], alpha: 0.8 });
     g.moveTo(centerStart, centerStart); // Top-Left
     g.lineTo(centerStart, centerStart + centerSize); // Bottom-Left
     g.lineTo(centerX, centerY); // Center
@@ -871,7 +886,7 @@ const LudoView: GameClientModule["GameView"] = ({
     g.fill();
 
     // Yellow (Top)
-    g.setFillStyle({ color: PLAYER_COLORS[2] });
+    g.setFillStyle({ color: PLAYER_COLORS[2], alpha: 0.8 });
     g.moveTo(centerStart, centerStart); // Top-Left
     g.lineTo(centerStart + centerSize, centerStart); // Top-Right
     g.lineTo(centerX, centerY); // Center
@@ -879,7 +894,7 @@ const LudoView: GameClientModule["GameView"] = ({
     g.fill();
 
     // Blue (Right)
-    g.setFillStyle({ color: PLAYER_COLORS[3] });
+    g.setFillStyle({ color: PLAYER_COLORS[3], alpha: 0.8 });
     g.moveTo(centerStart + centerSize, centerStart); // Top-Right
     g.lineTo(centerStart + centerSize, centerStart + centerSize); // Bottom-Right
     g.lineTo(centerX, centerY); // Center
@@ -887,10 +902,10 @@ const LudoView: GameClientModule["GameView"] = ({
     g.fill();
 
     // Draw Central "Home" Circle
-    g.setFillStyle({ color: 0xffffff });
+    g.setFillStyle({ color: 0x2d2d2d });
     g.circle(centerX, centerY, squareSize * 0.8); // Big central spot
     g.fill();
-    g.setStrokeStyle({ width: 2, color: 0x000000, alpha: 0.1 });
+    g.setStrokeStyle({ width: 2, color: 0xffffff, alpha: 0.25 });
     g.circle(centerX, centerY, squareSize * 0.8);
     g.stroke();
   };
