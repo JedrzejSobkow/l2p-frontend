@@ -10,6 +10,7 @@ import GameResultModal from '../components/GameResultModal';
 import KickPlayerModal from '../components/KickPlayerModal';
 import LeaveModal from '../components/LeaveModal';
 import PassHostModal from '../components/PassHostModal';
+import { usePopup } from '../components/PopupContext';
 import { emitMakeMove } from '../services/game';
 import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
 import { FaSignOutAlt } from 'react-icons/fa';
@@ -20,12 +21,14 @@ import ClobberModule from '@/components/games/clobber/module';
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { showPopup } = usePopup()
   const { gameState, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby,} = useLobby();
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
     if (!currentLobby) {
-      navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } });
+      navigate('/');
+      showPopup({ message: 'You are not in a lobby.', type: 'error' });
     }
   }, [currentLobby, navigate]);
 

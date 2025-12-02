@@ -428,7 +428,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const leaveLobbyHandler = useCallback(() => {
     if (!currentLobby) return
     setIsLoading(true)
-    navigate('/')
+    // navigate('/')
     emitLeaveLobby(currentLobby.lobby_code)
     setGameState(null)
   }, [currentLobby])
