@@ -1,6 +1,7 @@
 import { type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
+import LoadingSpinner from './LoadingSpinner'
 
 export default function RequireGuest({ children }: { children: ReactNode }) {
   const { isAuthenticated, status } = useAuth()
@@ -8,9 +9,7 @@ export default function RequireGuest({ children }: { children: ReactNode }) {
 
   if (status === 'checking') {
     return (
-      <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
-        <div className="text-white/70">Loading…</div>
-      </div>
+      <LoadingSpinner className="min-h-[calc(100vh-12rem)]" />
     )
   }
 

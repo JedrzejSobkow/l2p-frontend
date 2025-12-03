@@ -4,12 +4,6 @@ import { StrictMode } from "react";
 
 import { router } from './router'
 import './index.css'
-import { AuthProvider } from "./components/AuthContext";
-import { ChatDockProvider } from "./components/chat/ChatDockContext";
-import { ChatProvider } from "./components/chat/ChatProvider";
-import { FriendsProvider } from "./components/friends/FriendsContext";
-import { PopupProvider } from "./components/PopupContext";
-import { LobbyProvider } from "./components/lobby/LobbyContext";
 
 const root = document.getElementById("root");
 if (!root) {
@@ -18,18 +12,6 @@ if (!root) {
 
 ReactDOM.createRoot(root).render(
   <StrictMode>
-    <PopupProvider>
-      <AuthProvider>
-        <FriendsProvider>
-          <LobbyProvider>
-              <ChatProvider>
-                <ChatDockProvider>
-                  <RouterProvider router={router} />
-                </ChatDockProvider>
-              </ChatProvider>
-          </LobbyProvider>
-        </FriendsProvider>
-      </AuthProvider>
-    </PopupProvider>
+    <RouterProvider router={router} />
   </StrictMode>
 );

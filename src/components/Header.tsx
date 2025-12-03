@@ -1,18 +1,30 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { logoImage, pfpImage } from '@assets/images';
 import { wifiIcon, playIcon, globeIcon, peopleIcon, menuIcon } from '@assets/icons';
 import { useLobby } from './lobby/LobbyContext';
 import { usePopup } from './PopupContext';
+import { useFriends } from './friends/FriendsContext';
+import ConfirmDialog from './ConfirmDialog';
+import { useChat } from './chat/ChatProvider';
+import { useOnlineCount } from '@/hooks/useOnlineCount';
+import { FiLoader } from 'react-icons/fi';
+import { FaWifi } from 'react-icons/fa';
 
 
 const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
-    const { isAuthenticated, user, logout } = useAuth();
+    const { isAuthenticated, user, logout, status } = useAuth();
     const { currentLobby } = useLobby(); // Dodano currentLobby
     const location = useLocation();
     const navigate = useNavigate();
     const { showPopup } = usePopup()
+    const {incomingRequests} = useFriends()
+    const {hasAnyUnread} = useChat()
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    
+    const {count, loading} = useOnlineCount()
+    
 
     const handleNavigation = (path: string) => {
         if (currentLobby) {
@@ -46,24 +58,35 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                 />
             </div>
             {/* Header Elements */}
-            <div className="header-elements flex gap-6 items-center pr-2 flex-1 justify-start">
+            <div className="header-elements flex gap-6 items-center pr-2 flex-1 justify-start text-sm font-normal">
                 {/* WiFi Section */}
                 <div className="flex items-center gap-2 hide-on-smaller">
-                    <img
-                        src={wifiIcon}
-                        alt="WiFi Icon"
-                        className="w-9 h-9"
-                    />
-                    <span>524 players online</span>
+                    <FaWifi className='w-9 h-9 text-active'/>
+                    <span className="min-w-[100px]">
+                        {loading ? (
+                            <span className="flex items-center gap-2 text-white/50">
+                                <FiLoader className="h-4 w-4 animate-spin" />
+                                <span>Connecting...</span>
+                            </span>
+                        ) : count !== null ? (
+                            <span className="text-white/90">
+                                {count} {count === 1 ? 'player' : 'players'} online
+                            </span>
+                        ) : (
+                            <span className="text-white/30 italic">
+                                Server offline
+                            </span>
+                        )}
+                    </span>
                 </div>
                 {/* Element 2 */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 hide-on-small">
                     <img
                         src={playIcon}
                         alt="Play Icon"
                         className="w-9 h-9 hide-on-small"
                     />
-                    <span className="hide-on-small">No need for creating account</span>
+                    <span >No need for creating account</span>
                 </div>
                 {/* Element 3 */}
                 <div className="flex items-center gap-2">
@@ -84,60 +107,97 @@ const Header = ({ onToggleFriends }: { onToggleFriends?: () => void }) => {
                     <span className="hide-on-small">Just you and people you share passion with</span>
                 </div>
             </div>
-            {/* User Info */}
-            <div className="flex items-center gap-2 flex-shrink-0 pr-4">
-                {isAuthenticated ? (
-                    <>
+            <div className="flex items-center gap-2 flex-shrink-0 pr-4 min-w-[140px] justify-end">
+                {status === 'checking' ? (
+                    <div className="flex items-center gap-3 animate-pulse">
+                        <div className="h-10 w-10 rounded-full bg-white/10" />
+                        <div className="flex flex-col gap-1">
+                            <div className="h-3 w-16 bg-white/10 rounded" />
+                            <div className="h-3 w-12 bg-white/10 rounded" />
+                        </div>
+                    </div>
+                ) : isAuthenticated ? (
+                    <div className="flex items-center gap-2">
                         <img
                             src={user?.pfp_path || pfpImage}
                             alt="User Icon"
-                            className="w-10 h-10 rounded-full cursor-pointer"
                             onClick={() => handleNavigation('/profile')}
+                            className="w-10 h-10 rounded-full object-cover cursor-pointer transition-transform duration-200 hover:scale-105"
                         />
                         <div className="user-info flex flex-col items-start">
-                            <span className="hide-on-mobile text-base font-light text-headline cursor-pointer">
+                            <span className="hide-on-mobile text-base font-light text-headline">
                                 Hello, 
-                                <span className="text-base font-medium pl-1 text-headline">{user?.nickname}</span>
+                                <span 
+                                    onClick={() => handleNavigation('/profile')}
+                                    className="text-base font-medium pl-1 text-headline cursor-pointer transition-colors duration-200 hover:text-highlight"
+                                >
+                                    {user?.nickname}
+                                </span>
                             </span>
                             <button
                                 type="button"
-                                onClick={logout}
-                                className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer"
+                                onClick={() => setShowLogoutConfirm(true)}
+                                className="text-xs font-bold text-highlight no-underline bg-transparent border-0 cursor-pointer transition-colors hover:text-red-400"
                             >
                                 logout
                             </button>
                         </div>
-                    </>
+                    </div>
                 ) : (
                     <>
-                        {!isAuthScreen && (
+                        {/* Guest/Unauthenticated User Info */}
+                        {(
                             <div className="user-info flex flex-col items-start">
                                 <span className="hide-on-mobile text-base font-light text-headline">
                                     Hello, 
-                                    <span className="text-base font-medium pl-1 text-headline">Guest</span>
+                                    <span className="text-base font-medium pl-1 text-headline">{user?.nickname}</span>
                                 </span>
                             </div>
                         )}
-                        <Link
-                            to="/login"
-                            className="rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-colors duration-200 hover:bg-highlight hover:text-button-text-dark"
-                        >
-                            Log in
-                        </Link>
+                        
+                        {!isAuthScreen && (
+                            <div className="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => handleNavigation('/login')}
+                                    className="cursor-pointer rounded-full bg-highlight px-4 py-2 text-xs font-semibold text-background-secondary transition-transform duration-200 hover:scale-105"
+                                >
+                                    Log in
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleNavigation('/register')}
+                                    className="cursor-pointer rounded-full border border-highlight px-4 py-2 text-xs font-semibold text-highlight transition-transform duration-200 hover:scale-105 hide-on-mobile"
+                                >
+                                    Register
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
             {/* Menu Button */}
             {isAuthenticated && (
-                <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                <img
-                    onClick={onToggleFriends}
-                    src={menuIcon}
-                    alt="Menu Icon"
-                    className="w-9 h-9"
-                />
-            </div>
+                <div className="w-12 h-12 flex items-center justify-center flex-shrink-0 cursor-pointer relative group"
+                    onClick={onToggleFriends}>
+                    <img
+                        src={menuIcon}
+                        alt="Menu Icon"
+                        className="w-9 h-9 transition-transform group-hover:scale-105"
+                    />
+                    {(incomingRequests.length > 0 || hasAnyUnread) && (
+                        <span className="absolute top-2 right-2 h-3 w-3 rounded-full bg-button border-2 border-background animate-bounce" />
+                    )}
+                </div>
             )}
+            <ConfirmDialog
+            open={showLogoutConfirm}
+            title="Log out?"
+            description="Are you sure you want to log out?"
+            confirmLabel="Log Out"
+            onConfirm={logout}
+            onCancel={() => setShowLogoutConfirm(false)}
+        />
         </header>
     );
 };

@@ -1,9 +1,7 @@
-import { io, type Socket } from 'socket.io-client'
+import { type Socket } from 'socket.io-client'
+import { disconnectNamespaceSocket, getNamespaceSocket } from './socket'
 
-const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
-const TRIMMED_BASE = API_BASE_URL.replace(/\/$/, '')
-const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/game` : '/game'
-const SOCKET_PATH = '/socket.io'
+const GAME_NAMESPACE = '/game'
 
 export type EngineConfig = {
   game_name: string
@@ -24,7 +22,7 @@ export type GameStartedEvent = {
   game_name: string
   game_state: any
   game_info?: any
-  current_turn_player_id?: number
+  current_turn_identifier?: number
 }
 
 export type MoveMadeEvent = {
@@ -38,14 +36,14 @@ export type MoveMadeEvent = {
 export type GameEndedEvent = {
   lobby_code: string
   result: string
-  winner_id: number | null
+  winner_identifier: number | null
   game_state: any
 }
 
 export type PlayerForfeitedEvent = {
   lobby_code: string
   player_id: number
-  winner_id: number | null
+  winner_identifier: number | null
   game_state: any
 }
 
@@ -55,30 +53,22 @@ export type GameErrorEvent = {
 }
 
 let gameSocket: Socket | null = null
+let gameListenersRegistered = false
 
 export const connectGameSocket = (): Socket => {
-  if (gameSocket) {
-    if (!gameSocket.connected) gameSocket.connect()
-    return gameSocket
+  gameSocket = getNamespaceSocket(GAME_NAMESPACE)
+
+  if (!gameListenersRegistered) {
+    gameSocket.on('connect', () => {
+      console.log('Game socket connected')
+    })
+    gameListenersRegistered = true
   }
-  gameSocket = io(SOCKET_URL, {
-    path: SOCKET_PATH,
-    transports: ['websocket'],
-    withCredentials: true,
-    reconnection: true,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    reconnectionAttempts: 5,
-    forceNew: false,
-  })
 
-  gameSocket.on('connect_error', (err: any) => {
-    console.error('Game socket connect_error:', err)
-  })
+  if (!gameSocket.connected) {
+    gameSocket.connect()
+  }
 
-  gameSocket.on('connect', () => {
-    console.log("Game socket connected ")
-  })
   return gameSocket
 }
 
@@ -86,8 +76,9 @@ export const getGameSocket = () => gameSocket
 
 export const disconnectGameSocket = () => {
   if (gameSocket) {
-    gameSocket.disconnect()
+    disconnectNamespaceSocket(GAME_NAMESPACE)
     gameSocket = null
+    gameListenersRegistered = false
   }
 }
 

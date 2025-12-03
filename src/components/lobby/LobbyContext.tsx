@@ -70,6 +70,9 @@ import {
   offGameRulesUpdated,
   emitGetPublicLobbiesByGame,
   isLobbySocketConnected,
+  emitInviteFriend,
+  offLobbyInviteSent,
+  onLobbyInviteSent,
 } from '../../services/lobby'
 
 import {
@@ -85,6 +88,10 @@ import {
     onGameStarted,
 } from '../../services/game'
 
+import { usePopup } from '../PopupContext';
+import { useGlobalError } from '../GlobalErrorContext';
+import { useNavigate } from 'react-router';
+
 type LobbyContextValue = {
   isLoading: boolean
   currentLobby: LobbyState | null
@@ -92,7 +99,6 @@ type LobbyContextValue = {
   messages: LobbyMessage[]
   typingUsers: string[]
   publicLobbies: LobbyState[]
-  error: LobbyError | null
   availableGames: any[]
   gameState: any | null
   createLobby: (maxPlayers?: number, isPublic?: boolean, name?: string, gameName?: string) => void
@@ -107,12 +113,12 @@ type LobbyContextValue = {
   getPublicLobbies: () => void
   getPublicLobbiesByGame: (gameName: string) => void
   getLobbyState: () => void
-  clearError: () => void
   startGame: (gameName: string) => void
   getAvailableGames: () => void
   selectGame: (gameName: string) => void
   clearGameSelection: () => void
   setGameState: (state: any) => void
+  sendInvite: (friendId: string, lobbyCode: string) => void
   isLobbySocketConnected: boolean
   isGameSocketConnected: boolean
 }
@@ -126,13 +132,17 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [publicLobbies, setPublicLobbies] = useState<LobbyState[]>([])
   const [availableGames, setAvailableGames] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<LobbyError | null>(null)
   const [gameState, setGameState] = useState<any | null>(null)
+  const { showPopup } = usePopup();
+  const { triggerError } = useGlobalError();
+  const navigate = useNavigate();
 
   // Initialize socket connection
   useEffect(() => {
     connectLobbySocket()
+    emitGetAvailableGames()
     return () => {
       // Don't disconnect on unmount, keep connection alive
     }
@@ -141,7 +151,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   // Setup event listeners
   useEffect(() => {
     const handleLobbyCreated = (data: { lobby_code: string }) => {
-      //console('Lobby created:', data)
+      showPopup({ type: 'confirmation', message: `Lobby created successfully!` })
       setIsLoading(false)
     }
 
@@ -159,7 +169,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setMembers([])
       setMessages([])
       setTypingUsers([])
-      setIsLoading(false)
     }
 
     const handleLobbyState = (data: LobbyState) => {
@@ -172,28 +181,25 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     const handleMemberJoined = (data: { member: LobbyMember; current_players: number }) => {
       //console('Member joined:', data)
       setMembers(prev => {
-        // Sprawdź, czy użytkownik już istnieje w tablicy `members`
-        const exists = prev.some(m => m.user_id === data.member.user_id);
+        const exists = prev.some(m => m.identifier === data.member.identifier);
       
-        // Jeśli użytkownik już istnieje, zwróć niezmienioną tablicę
         if (exists) {
           return prev;
         }
       
-        // Jeśli użytkownika nie ma, dodaj go do tablicy
         return [...prev, data.member];
       });      setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
-    const handleMemberLeft = (data: { user_id: number | string; nickname: string; current_players: number }) => {
+    const handleMemberLeft = (data: { identifier: number | string; nickname: string; current_players: number }) => {
       //console('Member left:', data)
-      setMembers(prev => prev.filter(m => m.user_id !== data.user_id))
+      setMembers(prev => prev.filter(m => m.identifier !== data.identifier))
       setCurrentLobby(prev => prev ? { ...prev, current_players: data.current_players } : null)
     }
 
-    const handleHostTransferred = (data: { old_host_id: number | string; new_host_id: number | string; new_host_nickname: string }) => {
+    const handleHostTransferred = (data: { old_host_identifier: number | string; new_host_identifier: number | string; new_host_nickname: string }) => {
       //console('Host transferred:', data)
-      setCurrentLobby(prev => prev ? { ...prev, host_id: data.new_host_id } : null)
+      setCurrentLobby(prev => prev ? { ...prev, host_identifier: data.new_host_identifier } : null)
     }
 
     const handleSettingsUpdated = (data: { max_players: number; is_public: boolean; name?: string }) => {
@@ -206,14 +212,14 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       } : null)
     }
 
-    const handleMemberKicked = (data: { user_id: number | string; nickname: string; kicked_by_id: number | string }) => {
+    const handleMemberKicked = (data: { identifier: number | string; nickname: string; kicked_by_identifier: number | string }) => {
       //console('Member kicked:', data)
-      setMembers(prev => prev.filter(m => m.user_id !== data.user_id))
+      setMembers(prev => prev.filter(m => m.identifier !== data.identifier))
     }
 
-    const handleMemberReadyChanged = (data: { user_id: number | string; nickname: string; is_ready: boolean }) => {
+    const handleMemberReadyChanged = (data: { identifier: number | string; nickname: string; is_ready: boolean }) => {
       //console('Member ready changed:', data)
-      setMembers(prev => prev.map(m => m.user_id === data.user_id ? { ...m, is_ready: data.is_ready } : m))
+      setMembers(prev => prev.map(m => m.identifier === data.identifier ? { ...m, is_ready: data.is_ready } : m))
     }
 
     const handlePublicLobbies = (data: { lobbies: LobbyState[]; total: number }) => {
@@ -247,15 +253,53 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     const handleKickedFromLobby = (data: { lobby_code: string; message: string }) => {
       //console('Kicked from lobby:', data)
       setCurrentLobby(null)
+      navigate('/', { state: { message: data.message, type: 'error' } });
       setMembers([])
       setMessages([])
+      setGameState(null)
       setError({ message: data.message, error_code: 'KICKED' })
     }
 
     const handleLobbyError = (data: LobbyError) => {
-      console.error('Lobby error:', data)
-      setError(data)
-      setIsLoading(false)
+      console.error('Lobby error:', data);
+      setIsLoading(false);
+      // 1. KICKED
+      if (data.error_code === 'KICKED') {
+          setCurrentLobby(null);
+          navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } });
+          return;
+      }
+
+      // 2. NOT FOUND
+      if (data.error_code === 'NOT_FOUND' || data.error_code === 'LOBBY_NOT_FOUND') {
+          navigate('/', { state: { message: 'Lobby not found', type: 'error' } });
+          setCurrentLobby(null);
+          return;
+      }
+
+      // 3. ALREADY IN LOBBY
+      if (data.error_code === 'BAD_REQUEST' && data.message === 'You are already in another lobby') {
+          navigate('/lobby');
+          showPopup({ type: 'informative', message: 'You are already in a lobby.' });
+          return;
+      }
+
+      // 4. LOBBY FULL
+      if (data.message === 'Lobby is full') {
+          showPopup({ type: 'error', message: 'This lobby is full.' });
+          // Opcjonalnie cofnij do home jeśli był w trakcie joinowania
+          if (!currentLobby) navigate('/'); 
+          return;
+      }
+      if (data.error_code === 'VALIDATION_ERROR') {
+        showPopup({ type: 'error', message: 'Invalid code.' });
+        if (!currentLobby) navigate('/'); 
+        return;
+      }
+      setError(data);
+      showPopup({ type: 'error', message: data.message || 'An error occurred' });
+      
+      setTimeout(() => setError(null), 3500);
     }
 
     const handleAvailableGames = (data: { games: any[]; total: number }) => {
@@ -312,6 +356,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setGameState(data.game_state)
     }
 
+    const handleInviteSent = () => {
+      showPopup({ type: 'confirmation', message: `Invitation succesfully sent.` })
+    }
+
     onLobbyCreated(handleLobbyCreated)
     onLobbyJoined(handleLobbyJoined)
     onLobbyLeft(handleLobbyLeft)
@@ -336,6 +384,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onGameStarted(handleGameStarted)
     onMoveMade(handleMoveMade)
     onGameEnded(handleGameEnded)
+    onLobbyInviteSent(handleInviteSent)
 
     return () => {
       offLobbyCreated(handleLobbyCreated)
@@ -362,8 +411,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offGameStarted(handleGameStarted)
       offMoveMade(handleMoveMade)
       offGameEnded(handleGameEnded)
+      offLobbyInviteSent(handleInviteSent)
     }
-  }, [currentLobby?.lobby_code])
+  }, [currentLobby?.lobby_code,showPopup,setIsLoading,navigate])
 
   const createLobbyHandler = useCallback((maxPlayers: number = 6, isPublic: boolean = false, name?: string, gameName?: string) => {
     setIsLoading(true)
@@ -380,7 +430,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const leaveLobbyHandler = useCallback(() => {
     if (!currentLobby) return
     setIsLoading(true)
+    // navigate('/')
     emitLeaveLobby(currentLobby.lobby_code)
+    setGameState(null)
   }, [currentLobby])
 
   const updateSettingsHandler = useCallback((maxPlayers: number, isPublic: boolean, lobbyName?: string) => {
@@ -443,10 +495,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     emitGetLobby()
   }, [])
 
-  const clearErrorHandler = useCallback(() => {
-    setError(null)
-  }, [])
-
   const startGameHandler = useCallback((gameName: string) => {
     if (!currentLobby) return
     setIsLoading(true)
@@ -475,6 +523,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     setGameState(state);
   }, []);
 
+  const sendIviteHandler = useCallback((friendId: string, lobbyCode: string) => {
+    emitInviteFriend(lobbyCode, friendId)
+  }, [])
+
   const value: LobbyContextValue = useMemo(
     () => ({
       isLoading,
@@ -483,10 +535,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       messages,
       typingUsers,
       publicLobbies,
-      error,
       availableGames,
       gameState,
       createLobby: createLobbyHandler,
+      sendInvite: sendIviteHandler,
       joinLobby: joinLobbyHandler,
       leaveLobby: leaveLobbyHandler,
       updateSettings: updateSettingsHandler,
@@ -498,7 +550,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getPublicLobbies: getPublicLobbiesHandler,
       getPublicLobbiesByGame: getPublicLobbiesByGameHandler,
       getLobbyState: getLobbyStateHandler,
-      clearError: clearErrorHandler,
       startGame: startGameHandler,
       getAvailableGames: getAvailableGamesHandler,
       selectGame: selectGameHandler,
@@ -514,10 +565,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       messages,
       typingUsers,
       publicLobbies,
-      error,
       availableGames,
       gameState,
       createLobbyHandler,
+      sendIviteHandler,
       joinLobbyHandler,
       leaveLobbyHandler,
       updateSettingsHandler,
@@ -529,7 +580,6 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       getPublicLobbiesHandler,
       getPublicLobbiesByGameHandler,
       getLobbyStateHandler,
-      clearErrorHandler,
       startGameHandler,
       getAvailableGamesHandler,
       selectGameHandler,

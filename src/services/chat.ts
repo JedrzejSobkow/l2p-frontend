@@ -1,10 +1,43 @@
 import { request } from '../lib/http'
-import { io, type Socket } from 'socket.io-client'
+import { type Socket } from 'socket.io-client'
+import { connectNamespaceSocket, disconnectNamespaceSocket, getNamespaceSocket } from './socket'
 
-const API_BASE_URL = (import.meta.env?.VITE_SOCKET_IO_URL ?? '') as string
-const TRIMMED_BASE = API_BASE_URL.replace(/\/$/, '')
-const SOCKET_URL = TRIMMED_BASE ? `${TRIMMED_BASE}/chat` : '/chat'
-const SOCKET_PATH = '/socket.io'
+const CHAT_NAMESPACE = '/chat'
+
+export type UserStatus = 'online' | 'offline' | 'in_lobby' | 'in_game'
+
+
+export type FriendRequestAccepted = {
+  accepter_id: string, 
+  accepter_nickname: string, 
+  accepter_pfp_path?: string | null
+}
+
+export type LobbyInvite = {
+  lobby_code: string
+  lobby_name: string
+  inviter_id: string
+  inviter_nickname: string
+  inviter_pfp_path: string
+  game_name: string
+  current_players: number
+  max_players: number
+}
+
+export type FriendStatusUpdatePayload = { 
+  user_id: string; 
+  status: UserStatus, 
+  game_name?: string, 
+  lobby_code?: string,
+  lobby_filled_slots?: number,
+  lobby_max_slots?: number
+}
+
+export type FriendRequestReceivedPayload = {
+  sender_id: string, 
+  sender_nickname: string, 
+  sender_pfp_path?: string
+}
 
 export type ChatMessageDTO = {
   id: string | number
@@ -14,6 +47,7 @@ export type ChatMessageDTO = {
   created_at: string
   is_mine: boolean
   image_url?: string
+  temp_id?: string
 }
 
 export type ConversationHistoryPayload = {
@@ -42,6 +76,7 @@ export type SendChatMessagePayload = {
   friend_user_id: number | string
   content?: string
   image_path?: string
+  temp_id: string
 }
 
 export type TypingIndicatorPayload = {
@@ -81,32 +116,111 @@ export type SocketErrorEvent = {
 }
 
 let socket: Socket | null = null
+let listenersRegistered = false
 
 export const connectChatSocket = (auth?: Record<string, unknown>) => {
-  if (socket) {
-    if (!socket.connected) {
-      socket.auth = auth ?? socket.auth
-      socket.connect()
-    }
-    return socket
+  socket = getNamespaceSocket(CHAT_NAMESPACE)
+  if (!listenersRegistered) {
+    socket.on('connect', () => {
+      console.log('Chat socket connected')
+    })
+    listenersRegistered = true
+  }
+  if (!socket.connected) {
+    socket.connect()
   }
 
-  socket = io(SOCKET_URL, {
-    path: SOCKET_PATH,
-    transports: ['websocket'],
-    withCredentials: true,
-    auth,
-  })
   return socket
 }
 
-export const getChatSocket = () => socket
+export const getChatSocket = () => {
+  socket = socket ?? getNamespaceSocket(CHAT_NAMESPACE)
+  return socket
+}
 
 export const disconnectChatSocket = () => {
   if (socket) {
-    socket.disconnect()
+    disconnectNamespaceSocket(CHAT_NAMESPACE)
     socket = null
   }
+}
+export const onConnect = (callback: () => void) => {
+  socket?.on('connect', callback)
+}
+export const offConnect = (callback: () => void) => {
+  if (!socket) return
+  socket?.off('connect', callback)
+}
+export const onDisconnect = (callback: () => void) => {
+  socket?.on('disconnect', callback)
+}
+export const offDisconnect = (callback: () => void) => {
+  if (!socket) return
+  socket?.off('disconnect', callback)
+}
+export const onFriendRemoved = (callback: (payload: { friend_id: string }) => void) => {
+  socket?.on('friend_removed', callback)
+}
+export const offFriendRemoved = (callback: (payload: { friend_id: string }) => void) => {
+  if (!socket) return
+  socket?.off('friend_removed', callback)
+}
+export const onFriendRequestReceived = (callback: (payload: FriendRequestReceivedPayload ) => void) => {
+  socket?.on('friend_request_received', callback)
+}
+export const offFriendRequestReceived = (callback: (payload: FriendRequestReceivedPayload ) => void) => {
+  if (!socket) return
+  socket?.off('friend_request_received', callback)
+}
+
+export const onFriendStatusUpdated = (callback: (payload: FriendStatusUpdatePayload) => void) => {
+  socket?.on('friend_status_update', callback)
+}
+export const offFriendStatusUpdated = (callback: (payload: FriendStatusUpdatePayload) => void) => {
+  if (!socket) return
+  socket?.off('friend_status_update', callback)
+}
+
+export const onInitialFriendStatuses = (callback: (payload: {statuses: FriendStatusUpdatePayload[]}) => void) => {
+  socket?.on('initial_friend_statuses', callback)
+}
+export const offInitialFriendStatuses = (callback: (payload: {statuses: FriendStatusUpdatePayload[]}) => void) => {
+  if (!socket) return
+  socket?.off('initial_friend_statuses', callback)
+}
+export const onMessage = (callback: (payload: ChatMessageDTO) => void) => {
+  socket?.on('message', callback)
+}
+export const offMessage = (callback: (payload: ChatMessageDTO) => void) => {
+  if (!socket) return
+  socket?.off('message', callback)
+}
+export const onUserTyping = (callback: (payload: UserTypingEvent) => void) => {
+  socket?.on('user_typing', callback)
+}
+export const offUserTyping = (callback: (payload: UserTypingEvent) => void) => {
+  if (!socket) return
+  socket?.off('user_typing', callback)
+}
+export const onConversationUpdated = (callback: (payload: ConversationUpdatedEvent) => void) => {
+  socket?.on('conversation_updated', callback)
+}
+export const offConversationUpdated = (callback: (payload: ConversationUpdatedEvent) => void) => {
+  if (!socket) return
+  socket?.off('conversation_updated', callback)
+}
+export const onLobbyInviteReceived = (cb: (data: LobbyInvite) => void) => 
+  socket?.on('lobby_invite_received', cb)
+export const offLobbyInviteReceived = (cb?: (data: LobbyInvite) => void) => {
+  if (!socket) return
+  cb ? socket.off('lobby_invite_received', cb) : socket.off('lobby_invite_received')
+}
+
+export const onFriendRequestAccepted = (cb: (data: FriendRequestAccepted ) => void) =>
+  socket?.on('friend_request_accepted', cb)
+export const offFriendRequestAccepted = (cb?: (data: FriendRequestAccepted) => void) => {
+  if (!socket) return
+  cb ? socket.off('friend_request_accepted', cb) : socket.off('friend_request_accepted')
 }
 
 export const sendMessage = (payload: SendChatMessagePayload) => {
@@ -134,7 +248,7 @@ export async function getMessages(
   return await request<ConversationHistoryPayload>(path, { method: 'GET', auth: true })
 }
 
-export async function getConversations(limit?: number): Promise<{ conversations: Conversation[] }> {
+export async function getInitialChats(limit?: number): Promise<{ conversations: Conversation[] }> {
   const params = new URLSearchParams()
   if (limit) params.set('limit', String(limit))
   const query = params.toString()

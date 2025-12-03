@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { FaLink, FaPlus } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLobby } from './lobby/LobbyContext';
-import { usePopup } from './PopupContext';
 import JoinCodeInput from "./JoinCodeInput";
 
 interface GameHeaderProps {
@@ -15,8 +14,7 @@ interface GameHeaderProps {
 const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, path }) => {
     const navigate = useNavigate();
     const { gameName } = useParams<{ gameName: string }>();
-    const { createLobby, joinLobby, currentLobby, isLoading, error, clearError } = useLobby();
-    const { showPopup } = usePopup();
+    const { createLobby, joinLobby, currentLobby, isLoading} = useLobby();
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinCodeParts, setJoinCodeParts] = useState(['', '', '', '', '', '']);
     const [showNewLobbyModal, setShowNewLobbyModal] = useState(false);
@@ -72,16 +70,6 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
     const isJoinCodeComplete = joinCodeParts.every((part) => part !== '');
 
     useEffect(() => {
-        if (error) {
-            showPopup({
-                type: 'error',
-                message: error.message,
-            });
-            clearError();
-        }
-    }, [error, clearError, showPopup]);
-
-    useEffect(() => {
         if (currentLobby) {
             navigate(`/lobby`);
         }
@@ -122,31 +110,31 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
 
             {showJoinModal && (
                 <div
-                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
+                    className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 px-2 sm:px-0"
                     style={{ backdropFilter: 'blur(8px)' }}
                     onClick={handleCloseModal}
                 >
                     <div
-                        className="bg-background p-6 rounded-lg shadow-lg text-center"
+                        className="bg-background p-4 sm:p-6 rounded-lg shadow-lg text-center max-w-md w-full"
                         style={{
                             outline: '2px solid var(--color-highlight)',
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <h2 className="text-highlight text-xl font-bold mb-4">Enter Join Code</h2>
-                        <p className="text-paragraph mb-4">Please enter the join code to proceed.</p>
-                        <div className="flex justify-center items-center gap-2 mb-4">
+                        <h2 className="text-highlight text-lg sm:text-xl font-bold mb-3 sm:mb-4">Enter Join Code</h2>
+                        <p className="text-paragraph text-sm sm:text-base mb-3 sm:mb-4">Please enter the join code to proceed.</p>
+                        <div className="flex justify-center items-center gap-2 mb-3 sm:mb-4">
                             <JoinCodeInput
                                 joinCodeParts={joinCodeParts}
                                 onPartChange={handlePartChange}
                                 isDisabled={isLoading}
                             />
                         </div>
-                        <p className="text-xs text-gray-500 mb-4">Format: XXX-XXX (6 alphanumeric characters)</p>
-                        <div className="flex justify-center gap-4">
+                        <p className="text-xs text-gray-500 mb-3 sm:mb-4">Format: XXX-XXX (6 alphanumeric characters)</p>
+                        <div className="flex justify-center gap-3 sm:gap-4">
                             <button
                                 onClick={handleConfirmJoin}
-                                className={`px-4 py-2 rounded transform transition-transform duration-200 ${
+                                className={`px-3 sm:px-4 py-2 rounded transform transition-transform duration-200 text-sm sm:text-base ${
                                     isJoinCodeComplete && !isLoading
                                         ? 'bg-highlight text-white cursor-pointer hover:scale-105'
                                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -157,7 +145,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
                             </button>
                             <button
                                 onClick={handleCloseModal}
-                                className="px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50"
+                                className="px-3 sm:px-4 py-2 bg-gray-300 text-black rounded transform transition-transform duration-200 hover:scale-105 disabled:opacity-50 text-sm sm:text-base"
                                 disabled={isLoading}
                             >
                                 Cancel

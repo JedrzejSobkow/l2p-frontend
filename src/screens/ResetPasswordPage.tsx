@@ -37,7 +37,7 @@ const ResetPasswordPage: React.FC = () => {
   }
 
   return (
-    <div className="grid min-h-[calc(100vh-12rem)] place-items-center">
+    <div className="auth-screen">
       <div className="auth-card">
         <BackButton className="mb-6" label="Back to home" />
         <div className="mb-6 space-y-2 text-center">

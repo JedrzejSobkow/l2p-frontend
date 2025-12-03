@@ -1,4 +1,5 @@
 import { request } from '../lib/http'
+import { getMe } from './users'
 
 export type User = {
   id?: string
@@ -8,6 +9,7 @@ export type User = {
   is_verified: boolean,
   pfp_path?: string
   description?: string
+  expiration_timestamp?: number
 }
 
 export type LoginPayload = {
@@ -106,16 +108,26 @@ export async function verifyUser(payload: ActivateUserPayload): Promise<string |
   return res
 }
 
-// /users/ endpoints
+export async function createGuestSession(): Promise<User> {
+  const response = await request<{ guest_id: string; nickname: string; expires_in: number }>(
+    '/auth/guest/session',
+    {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+      },
+      auth: false,
+    }
+  );
 
-export async function getMe(): Promise<User> {
-  return await request<User>('/users/me', { method: 'GET' })
-}
+  const now = Math.floor(Date.now() / 1000); // current timestamp in seconds
+  const expirationTimestamp = now + response.expires_in;
 
-export async function patchMe(payload: Partial<User>): Promise<User> {
-  return  await request<User>('/users/me', { method: 'PATCH', body: payload })
-}
-
-export async function deleteMe(): Promise<void> {
-  await request('/users/me', { method: 'DELETE' })
+  return {
+    id: response.guest_id,
+    nickname: response.nickname,
+    expiration_timestamp: expirationTimestamp,
+    is_active: true,
+    is_verified: false,
+  };
 }

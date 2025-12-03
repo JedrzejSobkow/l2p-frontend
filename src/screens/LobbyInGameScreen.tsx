@@ -20,25 +20,14 @@ import LudoModule from "@/components/games/ludo/module";
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const {
-    gameState,
-    members,
-    currentLobby,
-    messages,
-    sendMessage,
-    transferHost,
-    kickMember,
-    leaveLobby,
-    clearError,
-    error,
-  } = useLobby();
+  const { showPopup } = usePopup()
+  const { gameState, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby,} = useLobby();
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
     if (!currentLobby) {
-      navigate("/", {
-        state: { message: "You are not in a lobby.", type: "error" },
-      });
+      navigate('/');
+      showPopup({ message: 'You are not in a lobby.', type: 'error' });
     }
   }, [currentLobby, navigate]);
 
@@ -51,6 +40,8 @@ const LobbyInGameScreen = () => {
   const [isKickModalOpen, setIsKickModalOpen] = useState(false);
   const [kickTarget, setKickTarget] = useState<string | null>(null);
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isPassHostModalOpen, setIsPassHostModalOpen] = useState(false);
+  const [passHostUsername, setPassHostUsername] = useState('');
 
   // Map game names to their respective modules
   const gameModules: Record<string, any> = {
@@ -59,34 +50,6 @@ const LobbyInGameScreen = () => {
     ludo: LudoModule,
   };
 
-  useEffect(() => {
-    if (error?.error_code === "KICKED") {
-      clearError();
-      navigate("/", {
-        state: { message: "You have been kicked from the game", type: "error" },
-      });
-    }
-  }, [error, navigate, clearError]);
-
-  useEffect(() => {
-    const handleKickedFromLobby = (data: {
-      lobby_code: string;
-      message: string;
-    }) => {
-      console.log("Kicked from lobby:", data);
-      navigate("/", {
-        state: {
-          message: data.message || "You have been kicked from the game",
-          type: "error",
-        },
-      });
-    };
-
-    onKickedFromLobby(handleKickedFromLobby);
-    return () => {
-      offKickedFromLobby(handleKickedFromLobby);
-    };
-  }, [navigate]);
 
   useEffect(() => {
     if (gameState) {
@@ -115,10 +78,8 @@ const LobbyInGameScreen = () => {
       setResult("draw");
       setWinnerName(null);
       setIsModalOpen(true);
-    } else if (gameState?.winner_id) {
-      const winner = members.find(
-        (member) => String(member.user_id) === String(gameState.winner_id)
-      );
+    } else if (gameState?.winner_identifier) {
+      const winner = members.find((member) => String(member.identifier) === String(gameState.winner_identifier));
       setResult("win");
       setWinnerName(winner?.nickname ?? "Unknown player");
       setIsModalOpen(true);
@@ -131,14 +92,12 @@ const LobbyInGameScreen = () => {
       gameState?.player_symbols;
     if (playerSymbols) {
       const withSymbols = members
-        .filter((m) => String(m.user_id) in playerSymbols)
-        .map((m) => ({
-          userId: String(m.user_id),
+        .filter(m => String(m.identifier) in playerSymbols)
+        .map(m => ({
+          userId: String(m.identifier),
           nickname: m.nickname,
-          symbol: playerSymbols[String(m.user_id)],
-          timeRemaining:
-            gameState?.timing?.player_time_remaining?.[String(m.user_id)] ??
-            null,
+          symbol: playerSymbols[String(m.identifier)],
+          timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.identifier)] ?? null,
         }));
       withSymbols.sort(
         (a, b) => (a.symbol === "X" ? -1 : 1) - (b.symbol === "X" ? -1 : 1)
@@ -149,17 +108,16 @@ const LobbyInGameScreen = () => {
         timeRemaining,
       }));
     }
-    return members.map((m) => ({
-      userId: String(m.user_id),
+    return members.map(m => ({
+      userId: String(m.identifier),
       nickname: m.nickname,
-      timeRemaining:
-        gameState?.timing?.player_time_remaining?.[String(m.user_id)] ?? null,
+      timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.identifier)] ?? null,
     }));
   }, [members, gameState]);
 
   const isMyTurn = useMemo(() => {
     if (!user || !gameState) return false;
-    const cur = (gameState as any).current_turn_player_id;
+    const cur = (gameState as any).current_turn_identifier;
     return String(cur) === String(user.id);
   }, [user, gameState]);
 
@@ -174,7 +132,20 @@ const LobbyInGameScreen = () => {
   };
 
   const handlePassHost = (userId: number | string) => {
-    transferHost(userId);
+    const targetMember = members.find(m => String(m.identifier) === String(userId));
+    if (targetMember) {
+      setPassHostUsername(targetMember.nickname);
+      setIsPassHostModalOpen(true);
+    }
+  };
+
+  const confirmPassHost = () => {
+    const targetMember = members.find(m => m.nickname === passHostUsername);
+    if (targetMember) {
+      transferHost(targetMember.identifier);
+    }
+    setIsPassHostModalOpen(false);
+    setPassHostUsername('');
   };
 
   const handleKickOut = (username: string) => {
@@ -185,7 +156,7 @@ const LobbyInGameScreen = () => {
   const confirmKickOut = () => {
     const targetMember = members.find((m) => m.nickname === kickTarget);
     if (targetMember) {
-      kickMember(targetMember.user_id);
+      kickMember(targetMember.identifier);
     }
     setIsKickModalOpen(false);
     setKickTarget(null);
@@ -193,15 +164,11 @@ const LobbyInGameScreen = () => {
 
   const handleConfirmLeave = () => {
     leaveLobby();
-    navigate("/");
   };
 
   // Dynamically select the module based on the selected game
   const module = useMemo(() => {
-    console.warn("CURRENTLOBBY:");
-    console.warn(currentLobby);
     if (!currentLobby?.selected_game) {
-      console.log("DUPSKO TROCHE");
       return null; // Fallback if no game is selected
     }
     return gameModules[currentLobby.selected_game] || null; // Use the mapped module or fallback
@@ -243,7 +210,7 @@ const LobbyInGameScreen = () => {
           <div className="flex flex-col gap-2">
             {members.map((member, index) => (
               <InGameUserTile
-                key={member.user_id}
+                key={member.identifier}
                 avatar={
                   getImage(
                     "avatars",
@@ -252,25 +219,13 @@ const LobbyInGameScreen = () => {
                 }
                 username={member.nickname}
                 place={index + 1}
-                isHost={currentLobby?.host_id === member.user_id}
-                displayPassHost={
-                  currentLobby?.host_id === user?.id &&
-                  user?.id !== member.user_id
-                }
-                displayKickOut={
-                  currentLobby?.host_id === user?.id &&
-                  user?.id !== member.user_id
-                }
-                isYou={String(user?.id) === String(member.user_id)}
-                isCurrentTurn={
-                  String(gameState?.current_turn_player_id) ===
-                  String(member.user_id)
-                }
-                timeRemaining={
-                  players.find((p) => p.userId === String(member.user_id))
-                    ?.timeRemaining ?? null
-                }
-                onPassHost={() => handlePassHost(member.user_id)}
+                isHost={currentLobby?.host_identifier === member.identifier}
+                displayPassHost={currentLobby?.host_identifier === user?.id && user?.id !== member.identifier}
+                displayKickOut={currentLobby?.host_identifier === user?.id && user?.id !== member.identifier}
+                isYou={String(user?.id) === String(member.identifier)}
+                isCurrentTurn={String(gameState?.current_turn_identifier) === String(member.identifier)}
+                timeRemaining={players.find(p => p.userId === String(member.identifier))?.timeRemaining ?? null}
+                onPassHost={() => handlePassHost(member.identifier)}
                 onKickOut={() => handleKickOut(member.nickname)}
               />
             ))}
@@ -293,6 +248,12 @@ const LobbyInGameScreen = () => {
         winnerName={winnerName}
         result={result}
         onReturnToLobby={() => navigate("/lobby")}
+      />
+      <PassHostModal
+        username={passHostUsername}
+        isOpen={isPassHostModalOpen}
+        onConfirm={confirmPassHost}
+        onCancel={() => setIsPassHostModalOpen(false)}
       />
       <KickPlayerModal
         isOpen={isKickModalOpen}

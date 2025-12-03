@@ -15,7 +15,7 @@ import EditLobbyNameModal from '../components/EditLobbyNameModal'
 import { usePopup } from '../components/PopupContext';
 import { useGameSettings } from '../hooks/useGameSettings'
 import { emitUpdateGameRules, onLobbyError, offLobbyError, onLobbyJoined, offLobbyJoined, emitToggleReady, getLobbySocket } from '../services/lobby'
-import { FaSignOutAlt, FaRegEdit } from 'react-icons/fa'
+import { FaSignOutAlt, FaRegEdit, FaRegCopy } from 'react-icons/fa'
 import { AiOutlineInfoCircle } from 'react-icons/ai'
 import { LuUsers } from 'react-icons/lu'
 import { FiLock } from 'react-icons/fi'
@@ -24,6 +24,7 @@ import { emitCreateGame, emitGetGameState } from '../services/game'
 import { getImage } from '../utils/imageMap';
 import { diceIcon } from '@assets/icons';
 import { pfpImage, noGameImage } from '@assets/images';
+import LoadingSpinner from '@/components/LoadingSpinner'
 
 
 export const LobbyScreen = () => {
@@ -35,7 +36,6 @@ export const LobbyScreen = () => {
     currentLobby,
     members,
     messages,
-    error,
     createLobby,
     joinLobby,
     leaveLobby,
@@ -46,29 +46,39 @@ export const LobbyScreen = () => {
     sendMessage,
     getMessages,
     startGame,
-    clearError,
     availableGames,
     getAvailableGames,
     selectGame,
     clearGameSelection,
+    sendInvite,
+    isLoading
   } = useLobby()
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
     const lobbySocket = getLobbySocket();
-    console.log("HALOOOOOO")
     if (!lobbySocket || !lobbySocket.connected) {
         return;
     }
-
+    console.log("Checking lobby connection for lobby code:", lobbyCode);
     const delayCheck = setTimeout(() => {
-        if (!currentLobby) {
-            navigate('/', { state: { message: 'You are not in a lobby.', type: 'error' } });
-        }
+      if (!currentLobby) {
+        navigate('/');
+        showPopup({ message: 'You are not in a lobby.', type: 'error' } )
+      }
     }, 100);
 
     return () => clearTimeout(delayCheck); // Cleanup timeout on unmount or dependency change
-}, [currentLobby, navigate])
+  }, [currentLobby, navigate])
+
+  useEffect(() => {
+    if (!lobbyCode) return
+
+    if (currentLobby?.lobby_code === lobbyCode) return
+
+    const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase();
+    joinLobby(normalizedCode)
+  }, [lobbyCode, currentLobby, joinLobby])
 
   const [messageInput, setMessageInput] = useState('')
   const [typingUsers, setTypingUsers] = useState<string[]>([])
@@ -96,9 +106,8 @@ export const LobbyScreen = () => {
   })
 
   useEffect(() => {
-    emitGetGameState();
-
     if (currentLobby) {
+      emitGetGameState();
       getMessages(50)
       setSelectedPlayerCount(currentLobby.max_players)
       setIsPublic(currentLobby.is_public)
@@ -112,82 +121,6 @@ export const LobbyScreen = () => {
       setCurrentGameRules(currentLobby.game_rules)
     }
   }, [currentLobby?.game_rules])
-
-  useEffect(() => {
-    if (error?.error_code === 'KICKED') {
-      clearError()
-      navigate('/', { state: { message: 'You have been kicked from the lobby', type: 'error' } })
-    } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'Lobby is full') {
-      clearError()
-      showPopup({ type: 'error', message: error.message })
-    } else if (error?.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
-      clearError()
-      showPopup({ type: 'error', message: error.message })
-    } else if (error?.error_code === 'NOT_FOUND') {
-      clearError()
-      showPopup({ type: 'error', message: 'Lobby not found' })
-    } else if (error) {
-      showPopup({ type: 'error', message: error.message || 'An error occurred' })
-      const timer = setTimeout(() => {
-        clearError()
-      }, 3500)
-      return () => clearTimeout(timer)
-    }
-  }, [error, navigate, clearError, showPopup])
-
-  // Auto-join or redirect based on lobby status
-  useEffect(() => {
-    if (!lobbyCode) return
-
-    if (currentLobby) {
-      if (currentLobby.lobby_code === lobbyCode) {
-        // User is already in the requested lobby
-        navigate('/lobby')
-      } else {
-        // User is in a different lobby
-        navigate('/lobby', {
-          state: { message: 'You are already a member of another lobby.', type: 'info' },
-        })
-      }
-      return
-    }
-
-    // Normalize lobby code: remove dashes if present
-    const normalizedCode = lobbyCode.replace(/-/g, '').toUpperCase()
-
-    // Validate format: should be 6 alphanumeric characters
-    if (!/^[A-Z0-9]{6}$/.test(normalizedCode)) {
-      navigate('/', { state: { message: 'Invalid lobby code format.', type: 'error' } })
-      return
-    }
-
-    // Attempt to join the lobby
-    joinLobby(normalizedCode)
-
-    // Listen for errors or success
-    const handleLobbyError = (error: { error_code: string; message: string }) => {
-      if (error.error_code === 'BAD_REQUEST' && error.message === 'You are already in another lobby') {
-        navigate('/lobby', {
-          state: { message: 'You are already a member of another lobby.', type: 'info' },
-        })
-      } 
-      else {
-        navigate('/', { state: { message: error.message || 'Failed to join the lobby.', type: 'error' } })
-      }
-    }
-
-    const handleLobbyJoined = () => {
-      navigate('/lobby')
-    }
-
-    onLobbyError(handleLobbyError)
-    onLobbyJoined(handleLobbyJoined)
-
-    return () => {
-      offLobbyError(handleLobbyError)
-      offLobbyJoined(handleLobbyJoined)
-    }
-  }, [lobbyCode, currentLobby, joinLobby, navigate])
 
   const handleSendMessage = (message: string) => {
     if (message.trim() && currentLobby) {
@@ -207,14 +140,14 @@ export const LobbyScreen = () => {
   const handlePassHost = (username: string) => {
     const targetMember = members.find(m => m.nickname === username)
     if (targetMember) {
-      transferHost(targetMember.user_id)
+      transferHost(targetMember.identifier)
     }
   }
 
   const handleKickOut = (username: string) => {
     const targetMember = members.find(m => m.nickname === username)
     if (targetMember) {
-      kickMember(targetMember.user_id)
+      kickMember(targetMember.identifier)
     }
   }
 
@@ -236,19 +169,6 @@ export const LobbyScreen = () => {
   const handleConfirmLeave = () => {
     leaveLobby()
     // navigate('/')
-  }
-
-  const handleInviteFriend = (friendUserId: number | string, friendNickname: string) => {
-    if (!currentLobby) return
-    const lobbyUrl = `${window.location.origin}/lobby/${currentLobby.lobby_code}`
-    const inviteMessage = `Hey! Join my game lobby with this code: ${currentLobby.lobby_code} or by this link: ${lobbyUrl}`
-
-    sendPrivateMessage({
-      friend_user_id: friendUserId,
-      content: inviteMessage,
-    })
-
-    showPopup({ type: 'confirmation', message: `Invitation sent to ${friendNickname}.` });
   }
 
   const handleSelectGame = (gameName: string) => {
@@ -304,12 +224,26 @@ export const LobbyScreen = () => {
     }
   }
 
-  const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.user_id === currentLobby.host_id))
-  const userMember = members.find(m => m.user_id === user?.id)
+  const isUserHost = !!(currentLobby && members.some(u => u.nickname === myUsername && u.identifier === currentLobby.host_identifier))
+  const userMember = members.find(m => m.identifier === user?.id)
   const isReady = userMember?.is_ready || false
   const allMembersReady = members.length > 0 && members.every(m => m.is_ready)
   const currentPlayerCount = members.length
   const canStartGame = isUserHost && allMembersReady && currentPlayerCount === selectedPlayerCount && !!currentLobby?.selected_game
+
+  // Generate tooltip for start button
+  const getStartButtonTooltip = () => {
+    if (!isUserHost) return ''
+    
+    // Check conditions in priority order and return first unmet condition
+    if (!currentLobby?.selected_game) return 'Select a game'
+    if (currentPlayerCount !== selectedPlayerCount) return `Need ${selectedPlayerCount} players (current: ${currentPlayerCount})`
+    if (!allMembersReady) return 'All players must be ready'
+    
+    return ''
+  }
+
+  const startButtonTooltip = getStartButtonTooltip()
 
   const disabledPlayerCounts = ['2', '4', '6'].filter(
     value => parseInt(value) < currentPlayerCount
@@ -320,8 +254,9 @@ export const LobbyScreen = () => {
     username: member.nickname,
     place: index + 1,
     isReady: member.is_ready || false,
-    isHost: currentLobby?.host_id === member.user_id,
+    isHost: currentLobby?.host_identifier === member.identifier,
   }))
+
 
   const gameInfo = currentLobby?.selected_game_info ? {
     display_name: currentLobby.selected_game_info.display_name,
@@ -361,6 +296,18 @@ export const LobbyScreen = () => {
     }
   }) : []
 
+  const handleCopyCode = () => {
+    if (!currentLobby?.lobby_code) return;
+    
+    navigator.clipboard.writeText(currentLobby.lobby_code)
+      .then(() => {
+        showPopup({ type: 'confirmation', message: 'Lobby code copied to clipboard!' })
+      })
+      .catch(() => {
+        showPopup({ type: 'error', message: 'Failed to copy code.' });
+      })
+  }
+
   const lobbySettings = [
     {
       label: 'Visibility',
@@ -395,12 +342,10 @@ export const LobbyScreen = () => {
 
   if (!currentLobby) {
     return (
-        <main className="flex items-center justify-center min-h-screen bg-background-primary">
-          <div className="text-red-500 text-xl">
-            {lobbyCode ? 'Joining lobby...' : 'You are not in any lobby.'}
-          </div>
-        </main>
-      )
+      <main className="flex h-screen items-center justify-center bg-background-primary">
+         <LoadingSpinner size="h-16 w-16" />
+      </main>
+    );
   }
 
   return (
@@ -434,9 +379,17 @@ export const LobbyScreen = () => {
                 <FaRegEdit className="text-highlight" size={20} />
               </button>
             </div>
-            <span className="text-sm sm:text-base font-mono text-gray-600 bg-background-primary/40 px-2 sm:px-3 py-1 rounded flex-shrink-0">
-              {currentLobby.lobby_code.substring(0, 3)}-{currentLobby.lobby_code.substring(3, 6)}
-            </span>
+            <button
+              onClick={handleCopyCode}
+              title="Click to copy lobby code"
+              className="group flex items-center gap-2 text-sm sm:text-base font-mono text-white/60 bg-background-primary/40 px-3 py-1.5 rounded-lg transition-all hover:bg-background-primary/80 hover:text-white cursor-pointer active:scale-95"
+            >
+              <span className="tracking-wider">
+                {currentLobby.lobby_code.substring(0, 3)}-{currentLobby.lobby_code.substring(3, 6)}
+              </span>
+              {/* Ikona widoczna tylko na hover (desktop) lub zawsze delikatnie widoczna */}
+              <FaRegCopy className="opacity-50 group-hover:opacity-100 transition-opacity text-highlight" size={14} />
+            </button>
           </div>
 
           {/* Players Grid */}
@@ -470,20 +423,25 @@ export const LobbyScreen = () => {
           <div className="w-full lg:hidden p-3 sm:p-4 rounded-lg shadow-md flex flex-col items-center justify-center gap-3">
             <button
               onClick={toggleReady}
-              className={`w-full px-4 py-2 text-white font-bold text-sm rounded-lg focus:outline-none ${
-                isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              className={`w-full px-4 py-3 text-white font-bold text-base rounded-lg focus:outline-none ${
+                !isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
               }`}
             >
-              {isReady ? 'Ready' : 'Not Ready'}
+              {!isReady ? 'Ready' : 'Not Ready'}
             </button>
 
-            <button 
-              disabled={!canStartGame} 
-              onClick={handleStartGame}
-              className="w-full px-4 py-2 bg-blue-500 text-white font-bold text-sm rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
-            >
-              Start
-            </button>
+            {isUserHost && (
+              <button 
+                disabled={!canStartGame} 
+                onClick={handleStartGame}
+                className="w-full px-4 py-3 bg-blue-500 text-white font-bold text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500 flex flex-col items-center gap-1"
+              >
+                <span>Start</span>
+                {!canStartGame && startButtonTooltip && (
+                  <span className="text-xs font-normal opacity-90">{startButtonTooltip}</span>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Chat Section */}
@@ -601,23 +559,33 @@ export const LobbyScreen = () => {
           </div>
 
           {/* Action Buttons - Desktop */}
-          <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <div className="hidden lg:flex w-full p-3 sm:p-4 rounded-lg shadow-md flex-col items-center justify-center gap-3 sm:gap-4">
             <button
               onClick={toggleReady}
-              className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 text-white font-bold text-sm sm:text-base rounded-lg focus:outline-none ${
-                isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
+              className={`w-full px-4 py-3 text-white font-bold text-base rounded-lg focus:outline-none ${
+                !isReady ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'
               }`}
             >
-              {isReady ? 'Ready' : 'Not Ready'}
+              {!isReady ? 'Ready' : 'Not Ready'}
             </button>
 
-            <button 
-              disabled={!canStartGame} 
-              onClick={handleStartGame}
-              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
-            >
-              Start
-            </button>
+            {isUserHost && (
+              <div className="w-full relative group">
+                <button 
+                  disabled={!canStartGame} 
+                  onClick={handleStartGame}
+                  className="w-full px-4 py-3 bg-blue-500 text-white font-bold text-base rounded-lg hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+                >
+                  Start
+                </button>
+                {!canStartGame && startButtonTooltip && (
+                  <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-10 shadow-lg">
+                    {startButtonTooltip}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -660,7 +628,7 @@ export const LobbyScreen = () => {
       <InviteFriendsModal
         isOpen={isInviteFriendsModalOpen}
         onClose={() => setIsInviteFriendsModalOpen(false)}
-        onInvite={handleInviteFriend}
+        onInvite={sendInvite}
         lobbyCode={currentLobby.lobby_code || ''}
       />
 

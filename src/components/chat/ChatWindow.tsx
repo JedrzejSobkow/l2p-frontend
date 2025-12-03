@@ -13,10 +13,9 @@ import { FiPaperclip, FiSend, FiX } from 'react-icons/fi'
 import Lightbox from '../Lightbox'
 import { usePopup } from '../PopupContext'
 import type { ChatMessage, ConversationTarget } from './ChatProvider'
-import { useAuth } from '../AuthContext'
 
 import { pfpImage } from '@assets/images'
-
+import LobbyInviteMessage from './LobbyInviteMessage'
 
 export interface ChatWindowProps {
   friendData: ConversationTarget
@@ -26,11 +25,13 @@ export interface ChatWindowProps {
   onSend: (payload: { text: string; attachment?: File }) => Promise<void> | void
   onTyping?: (friend_user_id: string) => void
   onLoadMore: () => Promise<void>
+  onJoinLobby?: (lobbyCode: string) => void
   className?: string
 }
 
 const cn = (...classes: Array<string | false | null | undefined>) => classes.filter(Boolean).join(' ')
 
+// ... (Keep formatTime and isSameMinute helper functions here) ...
 const formatTime = (timestamp: ChatMessage['createdAt']) => {
   try {
     const date = new Date(timestamp)
@@ -70,10 +71,9 @@ const ChatWindow: FC<ChatWindowProps> = ({
   hasMore,
   onSend,
   onTyping,
-  onLoadMore
+  onLoadMore,
+  onJoinLobby
 }) => {
-  const { showPopup} = usePopup()
-  const {user} = useAuth()
   const [draft, setDraft] = useState('')
   const [attachment, setAttachment] = useState<File>()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -90,57 +90,57 @@ const ChatWindow: FC<ChatWindowProps> = ({
   const isAtBottomRef = useRef(true)
   const [showTopLoader, setShowTopLoader] = useState(false)
 
-useEffect(() => {
-  if (!isLoadingMore) {
-    setShowTopLoader(false)
-    return
-  }
-
-  const t = setTimeout(() => {
-    if (isLoadingMoreRef.current) {
-      setShowTopLoader(true)
+  useEffect(() => {
+    if (!isLoadingMore) {
+      setShowTopLoader(false)
+      return
     }
-  }, 200)
 
-  return () => clearTimeout(t)
-}, [isLoadingMore])
+    const t = setTimeout(() => {
+      if (isLoadingMoreRef.current) {
+        setShowTopLoader(true)
+      }
+    }, 200)
+
+    return () => clearTimeout(t)
+  }, [isLoadingMore])
 
   useEffect(() => {
-  isLoadingMoreRef.current = isLoadingMore
-}, [isLoadingMore])
+    isLoadingMoreRef.current = isLoadingMore
+  }, [isLoadingMore])
 
   useLayoutEffect(() => {
-  const el = scrollRef.current
-  if (!el) return
+    const el = scrollRef.current
+    if (!el) return
 
-  const prevConv = prevConversationIdRef.current
-  const prevLen = prevMsgLenRef.current
-  const newLen = messages.length
+    const prevConv = prevConversationIdRef.current
+    const prevLen = prevMsgLenRef.current
+    const newLen = messages.length
 
-  const isNewConversation = prevConv !== friendData.id
-  const firstLoadForThisConv = prevLen === 0 && newLen > 0
-  const hasMoreMessages = newLen > prevLen
+    const isNewConversation = prevConv !== friendData.id
+    const firstLoadForThisConv = prevLen === 0 && newLen > 0
+    const hasMoreMessages = newLen > prevLen
 
-  if (isNewConversation || firstLoadForThisConv) {
-    el.scrollTop = el.scrollHeight
+    if (isNewConversation || firstLoadForThisConv) {
+      el.scrollTop = el.scrollHeight
 
-    prevScrollHeightRef.current = 0
-    prevScrollTopRef.current = 0
-  } else if (prevScrollHeightRef.current && hasMoreMessages) {
-    const newScrollHeight = el.scrollHeight
-    const diff = newScrollHeight - prevScrollHeightRef.current
-    el.scrollTop = prevScrollTopRef.current + diff
-
-    prevScrollHeightRef.current = 0
-    prevScrollTopRef.current = 0
+      prevScrollHeightRef.current = 0
+      prevScrollTopRef.current = 0
+    } else if (prevScrollHeightRef.current && hasMoreMessages) {
+      const newScrollHeight = el.scrollHeight
+      const diff = newScrollHeight - prevScrollHeightRef.current
+      el.scrollTop = prevScrollTopRef.current + diff
+      
+      prevScrollHeightRef.current = 0
+      prevScrollTopRef.current = 0
   }
   else if (hasMoreMessages && isAtBottomRef.current){
-    el.scrollTop = el.scrollHeight
-  }
+      el.scrollTop = el.scrollHeight
+    }
 
-  prevConversationIdRef.current = friendData.id
-  prevMsgLenRef.current = newLen
-}, [friendData.id, messages.length])
+    prevConversationIdRef.current = friendData.id
+    prevMsgLenRef.current = newLen
+  }, [friendData.id, messages.length])
 
 
   const isComposerDisabled = sending
@@ -149,30 +149,18 @@ useEffect(() => {
     if (isTyping) {
       return `${friendData.nickname} is typing...`
     }
-  }, [isTyping])
+  }, [isTyping, friendData.nickname])
 
   const handleSend = async () => {
     if (!draft.trim() && !attachment) {
       return
     }
-    try {
       setSending(true)
       await onSend({ text: draft.trim(), attachment })
       setDraft('')
       setAttachment(undefined)
       fileInputRef.current?.form?.reset()
-    } 
-    catch (error: any) {
-      if(error.message === 'Invalid image type'){
-        showPopup({type: 'error', message: 'Provide a valid image type'})
-      }
-      else {
-        showPopup({type: 'error', message: 'Failed to send message'})
-      }
-    }
-    finally {
       setSending(false)
-    }
   }
 
   const handleScroll = () => {
@@ -231,21 +219,7 @@ useEffect(() => {
   }
 
   return (
-    <div
-      className={cn(
-        'flex flex-1 h-full min-h-0 w-full flex-col overflow-visible rounded-2xl border border-separator bg-background-secondary',
-        className
-      )}
-    >
-      {friendData.nickname && (
-        <header className="border-b border-separator flex flex-row gap-5 px-3 py-2">
-          <img
-            className='w-12 h-12 rounded-full'
-            src={friendData.avatarUrl || pfpImage}></img>
-          <h2 className="text-s font-semibold text-headline">{friendData.nickname}</h2>
-          
-        </header>
-      )}
+    <div className={cn('flex h-full min-h-0 w-full flex-col overflow-visible bg-background-secondary', className)}>
 
       <div
         className="relative flex-1 min-h-0 space-y-4 overflow-y-auto px-6 py-6 scrollbar-default"
@@ -253,12 +227,12 @@ useEffect(() => {
         onScroll={handleScroll}
       >
         {showTopLoader && hasMore && (
-          <div className="flex justify-center mb-2 text-xs text-white/60">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
-              <span className="h-2 w-2 animate-spin rounded-full border border-white/50 border-t-transparent" />
-              Loading messages...
-            </span>
-          </div>
+           <div className="flex justify-center mb-2 text-xs text-white/60">
+             <span className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1">
+               <span className="h-2 w-2 animate-spin rounded-full border border-white/50 border-t-transparent" />
+               Loading messages...
+             </span>
+           </div>
         )}
         {!hasMore && messages.length > 0 && (
           <div className="flex justify-center mb-2 text-[11px] uppercase tracking-wide text-white/40">
@@ -270,36 +244,46 @@ useEffect(() => {
           const next = index > 0 ? messages[index + 1] : undefined
           const showTimestamp = !next || next.isMine !== message.isMine || !isSameMinute(message.createdAt, next.createdAt)
           // const showAvatar = !next || (next.isMine === false && message.isMine === false)
-          return (
-            <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
-              {!isOwn && (
-                <img
-                  src={friendData.avatarUrl || pfpImage}
-                  alt={message.senderNickname}
-                  className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
-                />
-              )}
-               <div className={cn('flex max-w-[75%] flex-col gap-1', isOwn ? 'items-end text-left' : 'items-start text-left')}>
-                {message.content && 
-                  <div
-                    className={cn(
-                      'inline-flex max-w-full flex-col gap-2 rounded-2xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]',
-                      isOwn ? 'bg-gradient-to-r bg-button text-white' : 'bg-[rgba(35,34,49,0.95)]'
-                    )}
-                  >
-                    <span className="whitespace-pre-wrap break-words leading-relaxed text-sm text-white">{message.content}</span>
-                  </div>
-                }
-                {message.imageUrl && (
-                    <img
-                      src={message.imageUrl}
-                      onClick={() => setSelectedImage(message.imageUrl || null)}
-                      alt="Attachment"
-                      className="max-h-56 w-full rounded-2xl object-cover"
-                    />
-                  )}
-                {showTimestamp && <span className="block text-xs font-medium text-white/40">{formatTime(message.createdAt)}</span>}
+          if (message.type === 'LOBBY_INVITE') {
+            return (
+              <div key={message.id} className={cn('flex gap-3 items-center justify-around')}>
+                  <LobbyInviteMessage 
+                    message={message} 
+                    onJoin={(code) => onJoinLobby?.(code)}
+                  />
               </div>
+            )
+          }
+          return (
+             <div key={message.id} className={cn('flex items-end gap-3', isOwn ? 'justify-end' : 'justify-start')}>
+               {!isOwn && (
+                 <img
+                   src={friendData.avatarUrl || pfpImage}
+                   alt={message.senderNickname}
+                   className="h-10 w-10 flex-shrink-0 rounded-full border border-white/10 object-cover"
+                 />
+               )}
+               <div className={cn('flex max-w-[75%] flex-col gap-1', isOwn ? 'items-end text-left' : 'items-start text-left')}>
+                 {message.content && 
+                   <div 
+                    className={cn(
+                      'inline-flex max-w-full flex-col gap-2 rounded-2xl px-4 py-3 text-sm text-white shadow-[0_10px_25px_rgba(0,0,0,0.25)]', 
+                      isOwn ? 'bg-gradient-to-r bg-button text-white' : 'bg-[rgba(35,34,49,0.95)]'
+                      )}
+                    >
+                     <span className="whitespace-pre-wrap break-words leading-relaxed text-sm text-white">{message.content}</span>
+                   </div>
+                 }
+                 {message.imageUrl && (
+                   <img
+                     src={message.imageUrl}
+                     onClick={() => setSelectedImage(message.imageUrl || null)}
+                     alt="Attachment"
+                     className="max-h-56 w-full rounded-2xl object-cover cursor-pointer hover:opacity-90 transition"
+                   />
+                 )}
+                 {showTimestamp && <span className="block text-xs font-medium text-white/40">{formatTime(message.createdAt)}</span>}
+               </div>
               {/* {isOwn && (
                 <img
                   src={user?.pfp_path || pfpImage}
@@ -307,27 +291,27 @@ useEffect(() => {
                   className="h-10 w-10 flex-shrink-0 rounded-full border border-transparent object-cover ring-2 ring-orange-400/40"
                 />
               )} */}
-            </div>
+             </div>
           )
         })}
         {displayedTyping && (
-          <div className="flex justify-start text-xs text-white/60">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
-              <span className="h-2 w-2 animate-bounce rounded-full bg-white/70" />
-              <span>{displayedTyping}</span>
-            </div>
-          </div>
+           <div className="flex justify-start text-xs text-white/60">
+             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1">
+               <span className="h-2 w-2 animate-bounce rounded-full bg-white/70" />
+               <span>{displayedTyping}</span>
+             </div>
+           </div>
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-background-secondary/70 px-2 py-1">
-        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.2)] focus-within:border-button/60">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleAttachment}
-            aria-hidden="true"
+      <form onSubmit={handleSubmit} className="bg-background-secondary/70 px-2 py-2 border-t border-white/5">
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.2)] focus-within:border-button/60 transition-colors">
+          <input 
+            ref={fileInputRef} 
+            type="file" 
+            className="hidden" 
+            onChange={handleAttachment} 
+            aria-hidden="true" 
           />
           <button
             type="button"
@@ -367,18 +351,17 @@ useEffect(() => {
               onClick={removeAttachment}
               className="ml-4 flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 text-white/70 transition hover:border-white/30 hover:text-white"
             >
-              <FiX className="h-3 w-3" />
+              <FiX className="h-3 w-3" /> 
               Remove
             </button>
           </div>
         )}
       </form>
-      <Lightbox
-        isOpen={selectedImage !== null}
-        onClose={() => setSelectedImage(null)}
-        imageUrl={selectedImage || ''}
-      >
-      </Lightbox>
+      <Lightbox 
+        isOpen={selectedImage !== null} 
+        onClose={() => setSelectedImage(null)} 
+        imageUrl={selectedImage || ''} 
+      />
     </div>
   )
 }

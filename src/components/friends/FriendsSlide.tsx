@@ -21,8 +21,9 @@ type FriendsSlideProps = {
 
 const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFriendId }) => {
   const { user } = useAuth()
+  const {joinLobby} = useLobby();
   const { openChat} = useChatDock()
-  const {friends } = useFriends()
+  const {friendsById } = useFriends()
   const { currentLobby } = useLobby();
   const { showPopup } = usePopup();
   const navigate = useNavigate()
@@ -61,7 +62,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
 
   const handleFriendSelect = (friendId: string | number) => {
     const normalizedId = String(friendId)
-    const friend = friends.find((val) => String(val.friend_user_id) === normalizedId)
+    const friend = friendsById[normalizedId]
     if (!friend) {
       onClose()
       return
@@ -73,11 +74,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
     if (isSmallScreen) {
       navigate('/friends', { state: { friendId: normalizedId } })
     } else {
-      openChat({
-        id: normalizedId,
-        nickname: friend.friend_nickname,
-        avatarUrl: friend.friend_pfp_path,
-      })
+      openChat(normalizedId)
     }
     onClose()
   }
@@ -152,6 +149,7 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"
+            onLobbyJoin={joinLobby}
           />
         </div>
       </aside>

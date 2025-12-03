@@ -1,8 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { User, LoginPayload, RegisterPayload } from '../services/auth'
 import * as auth from '../services/auth'
 import { onUnauthorized } from '../lib/http'
 import { usePopup } from '../components/PopupContext'
+import { useGlobalError } from '../components/GlobalErrorContext' // Importujemy nasz kontekst błędów
+import { deleteMe, getMe, patchMe } from '@/services/users'
 type AuthStatus = 'checking' | 'authenticated' | 'unauthenticated'
 
 type AuthContextValue = {
@@ -23,11 +25,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [status, setStatus] = useState<AuthStatus>('checking')
   const [googleWindow, setGoogleWindow] = useState<Window | null>(null)
-  const {showPopup} = usePopup()
+  
+  const { showPopup } = usePopup()
+  const { triggerError } = useGlobalError() // Używamy Global Error Context
 
   const refreshUser = async () => {
     try {
-      const me = await auth.getMe()
+      const me = await getMe()
+      me.id = `user:${me.id}`;
       setUser(me)
       setStatus('authenticated')
     } catch {
@@ -36,10 +41,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+
   // Flip to unauthenticated immediately on global 401
   useEffect(() => {
     onUnauthorized(() => {
-      setUser(null)
       setStatus('unauthenticated')
     })
     return () => {
@@ -48,12 +53,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (user && googleWindow && !googleWindow.closed) {
+    if (status === 'authenticated' && googleWindow && !googleWindow.closed) {
       googleWindow.close()
       setGoogleWindow(null)
-      window.location.reload(); //REFRESH SOCKETS AFTER GOOGLE AUTH
+      window.location.reload();
     } 
-  }, [user, googleWindow])
+  }, [user, googleWindow, status])
 
   useEffect(() => {
     if (!googleWindow)return
@@ -77,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     },1000)
     return () => clearInterval(iv)
-  },[googleWindow, showPopup,refreshUser])
+  }, [googleWindow, showPopup])
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
@@ -99,50 +104,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
     (async () => {
       try {
-        const me = await auth.getMe()
-        if (!cancelled) {
-          setUser(me)
-          setStatus('authenticated')
+        const storedGuest = localStorage.getItem('guestUser');
+        if (storedGuest) {
+          const guest = JSON.parse(storedGuest);
+          const now = Math.floor(Date.now() / 1000);
+          
+          // Check if guest session has expired
+          if (guest.expiration_timestamp && now >= guest.expiration_timestamp) {
+            console.log("Guest session expired, creating new one");
+            localStorage.removeItem('guestUser');
+            const newGuest = await auth.createGuestSession();
+            localStorage.setItem('guestUser', JSON.stringify(newGuest));
+            newGuest.id = `guest:${newGuest.id}`;
+            if (!cancelled) {
+              setUser(newGuest);
+              setStatus('unauthenticated');
+            }
+            window.location.reload();
+          } else {
+            guest.id = `guest:${guest.id}`;
+            if (!cancelled) {
+              setUser(guest);
+            }
+          }
+        } else {
+          const guest = await auth.createGuestSession();
+  
+          localStorage.setItem('guestUser', JSON.stringify(guest));
+          guest.id = `guest:${guest.id}`;
+  
+          if (!cancelled) {
+            setUser(guest);
+            setStatus('unauthenticated');
+          }
+          window.location.reload(); 
         }
-      } 
-      catch {
+  
+        try {
+          const me = await getMe();
+          if (!cancelled && me) {
+            me.id = `user:${me.id}`;
+            setUser(me); 
+            setStatus('authenticated');
+          }
+        } catch (error) {
+          console.log("No logged-in user detected, keeping guest session.");
+          if (!cancelled) {
+             setStatus('unauthenticated'); 
+          }
+        }
+      } catch (error: any) {
+        console.error("Error during session initialization:", error);
         if (!cancelled) {
-          setUser(null)
-          setStatus('unauthenticated')
+           triggerError(
+             "Session Initialization Failed", 
+             "We couldn't connect to the server to start your session. Please check your internet connection.",
+             503
+           );
+           setUser(null);
+           setStatus('unauthenticated');
         }
       }
-    })()
+    })();
     return () => {
-      cancelled = true
-    }
-  }, [])
-
-  // Revalidate session on tab focus/visibility change (throttled)
-  const lastCheckRef = useRef(0)
-  useEffect(() => {
-    const revalidate = async () => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
-      const now = Date.now()
-      if (now - lastCheckRef.current < 5 * 60_000 && status !== 'checking') return
-      lastCheckRef.current = now
-      await refreshUser()
-    }
-    const onFocus = () => void revalidate()
-    const onVisibility = () => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') void revalidate()
-    }
-    if (typeof window !== 'undefined') window.addEventListener('focus', onFocus)
-    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      if (typeof window !== 'undefined') window.removeEventListener('focus', onFocus)
-      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [status,refreshUser])
+      cancelled = true;
+    };
+  }, [triggerError]);
 
   const login = async (payload: LoginPayload) => {
-    const me = await auth.login(payload)
-    setUser(me)
-    setStatus('authenticated')
+    try {
+        const me = await auth.login(payload)
+        setUser(me)
+        setStatus('authenticated')
+    } catch (err: any) {
+        throw err;
+    }
   }
 
   const register = async (payload: RegisterPayload) => {
@@ -150,13 +186,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const updateProfile = async (updates: Partial<User>) => {
-    const updated = await auth.patchMe(updates)
+    const updated = await patchMe(updates)
     setUser(updated)
     return updated
   }
 
   const deleteAccount = async () => {
-    await auth.deleteMe()
+    await deleteMe()
     setUser(null)
     setStatus('unauthenticated')
   }
@@ -170,7 +206,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       user,
-      isAuthenticated: user !== null,
+      isAuthenticated: status === 'authenticated',
       status,
       login,
       register,
@@ -179,7 +215,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       deleteAccount,
       handleGoogleSignIn
     }),
-    [user, status],
+    [user, status, handleGoogleSignIn],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
