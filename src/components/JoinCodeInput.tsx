@@ -71,10 +71,19 @@ const JoinCodeInput: React.FC<JoinCodeInputProps> = ({
     }
     else if (e.key === "Backspace") {
       e.preventDefault();
-      onPartChange(index, "");
       const target = e.currentTarget;
-      target.textContent = "";
-      focusCell(index - 1);
+      const currentValue = joinCodeParts[index];
+      
+      if (currentValue) {
+        // If cell has value, clear it and stay in the same cell
+        onPartChange(index, "");
+        target.textContent = "";
+      } else {
+        // If cell is empty, move focus to previous cell
+        if (index > 0) {
+          focusCell(index - 1);
+        }
+      }
     }
     else if (e.key === "ArrowLeft") {
       e.preventDefault();
