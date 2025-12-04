@@ -1,10 +1,15 @@
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import GameTile from '../components/GameTile';
-import { ticTacToeImage, clobberImage, noGameImage } from '@assets/images';
-import { useLobby } from '../components/lobby/LobbyContext';
-import { getImage } from '../utils/imageMap';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import React, { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import GameTile from "../components/GameTile";
+import {
+  ticTacToeImage,
+  clobberImage,
+  ludoImage,
+  noGameImage,
+} from "@assets/images";
+import { useLobby } from "../components/lobby/LobbyContext";
+import { getImage } from "../utils/imageMap";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const FindGamesScreen: React.FC = () => {
   const { searchPhrase } = useParams<{ searchPhrase?: string }>();
@@ -26,9 +31,9 @@ const FindGamesScreen: React.FC = () => {
       <h1 className="text-2xl font-bold text-headline mb-4">
         {searchPhrase
           ? `Searching for games matching the phrase '${searchPhrase}'`
-          : 'Displaying all available games'}
+          : "Displaying all available games"}
       </h1>
-      
+
       {isLoading ? (
         <LoadingSpinner size="h-12 w-12" />
       ) : filteredGames.length > 0 ? (
@@ -37,7 +42,7 @@ const FindGamesScreen: React.FC = () => {
             <GameTile
               key={index}
               gameName={game.display_name}
-              imageSrc={getImage('games', game.game_name) || noGameImage}
+              imageSrc={getImage("games", game.game_name) || noGameImage}
               description={game.description}
               onClick={() => handleTileClick(game.game_name)}
             />
@@ -47,7 +52,7 @@ const FindGamesScreen: React.FC = () => {
         <div className="text-center text-headline py-8">
           {searchPhrase
             ? `No games found matching '${searchPhrase}'`
-            : 'No games available'}
+            : "No games available"}
         </div>
       )}
     </div>

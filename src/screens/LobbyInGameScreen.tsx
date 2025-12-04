@@ -1,22 +1,23 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import GameShell from '../components/games/GameShell';
-import TicTacToeModule from '../components/games/ticTacToe/module';
-import { useAuth } from '../components/AuthContext';
-import { useLobby } from '../components/lobby/LobbyContext';
-import LobbyChat from '../components/LobbyChat';
-import InGameUserTile from '../components/InGameUserTile';
-import GameResultModal from '../components/GameResultModal';
-import KickPlayerModal from '../components/KickPlayerModal';
-import LeaveModal from '../components/LeaveModal';
-import PassHostModal from '../components/PassHostModal';
-import { usePopup } from '../components/PopupContext';
-import { emitMakeMove } from '../services/game';
-import { onKickedFromLobby, offKickedFromLobby } from '../services/lobby';
-import { FaSignOutAlt } from 'react-icons/fa';
-import { getImage } from '../utils/imageMap';
-import { pfpImage } from '@/assets/images';
-import ClobberModule from '@/components/games/clobber/module';
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import GameShell from "../components/games/GameShell";
+import TicTacToeModule from "../components/games/ticTacToe/module";
+import { useAuth } from "../components/AuthContext";
+import { useLobby } from "../components/lobby/LobbyContext";
+import LobbyChat from "../components/LobbyChat";
+import InGameUserTile from "../components/InGameUserTile";
+import GameResultModal from "../components/GameResultModal";
+import KickPlayerModal from "../components/KickPlayerModal";
+import LeaveModal from "../components/LeaveModal";
+import PassHostModal from "@/components/PassHostModal";
+import { usePopup } from "../components/PopupContext";
+import { emitMakeMove } from "../services/game";
+import { onKickedFromLobby, offKickedFromLobby } from "../services/lobby";
+import { FaSignOutAlt } from "react-icons/fa";
+import { getImage } from "../utils/imageMap";
+import { pfpImage } from "@/assets/images";
+import ClobberModule from "@/components/games/clobber/module";
+import LudoModule from "@/components/games/ludo/module";
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -32,7 +33,9 @@ const LobbyInGameScreen = () => {
     }
   }, [currentLobby, navigate]);
 
-  const [lastMove, setLastMove] = useState<{ index: number } | undefined>(undefined);
+  const [lastMove, setLastMove] = useState<{ index: number } | undefined>(
+    undefined
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [winnerName, setWinnerName] = useState<string | null>(null);
   const [result, setResult] = useState<"win" | "draw">("draw");
@@ -42,20 +45,29 @@ const LobbyInGameScreen = () => {
   const [isPassHostModalOpen, setIsPassHostModalOpen] = useState(false);
   const [passHostUsername, setPassHostUsername] = useState('');
 
-    // Map game names to their respective modules
-    const gameModules: Record<string, any> = {
-      tictactoe: TicTacToeModule,
-      clobber: ClobberModule,
-    };
+  // Map game names to their respective modules
+  const gameModules: Record<string, any> = {
+    tictactoe: TicTacToeModule,
+    clobber: ClobberModule,
+    ludo: LudoModule,
+  };
 
 
   useEffect(() => {
     if (gameState) {
       const lm = gameState?.last_move;
-      if (lm && typeof lm.row === 'number' && typeof lm.col === 'number' && Array.isArray(gameState?.board)) {
+      if (
+        lm &&
+        typeof lm.row === "number" &&
+        typeof lm.col === "number" &&
+        Array.isArray(gameState?.board)
+      ) {
         const dim = Array.isArray(gameState.board[0])
           ? gameState.board.length
-          : Math.max(1, Math.floor(Math.sqrt((gameState.board as any[]).length)));
+          : Math.max(
+              1,
+              Math.floor(Math.sqrt((gameState.board as any[]).length))
+            );
         setLastMove({ index: lm.row * dim + lm.col });
       } else {
         setLastMove(undefined);
@@ -78,7 +90,8 @@ const LobbyInGameScreen = () => {
 
   const players = useMemo(() => {
     if (!members || members.length === 0) return [];
-    const playerSymbols: Record<string, string> | undefined = gameState?.player_symbols;
+    const playerSymbols: Record<string, string> | undefined =
+      gameState?.player_symbols;
     if (playerSymbols) {
       const withSymbols = members
         .filter(m => String(m.identifier) in playerSymbols)
@@ -88,8 +101,14 @@ const LobbyInGameScreen = () => {
           symbol: playerSymbols[String(m.identifier)],
           timeRemaining: gameState?.timing?.player_time_remaining?.[String(m.identifier)] ?? null,
         }));
-      withSymbols.sort((a, b) => (a.symbol === 'X' ? -1 : 1) - (b.symbol === 'X' ? -1 : 1));
-      return withSymbols.map(({ userId, nickname, timeRemaining }) => ({ userId, nickname, timeRemaining }));
+      withSymbols.sort(
+        (a, b) => (a.symbol === "X" ? -1 : 1) - (b.symbol === "X" ? -1 : 1)
+      );
+      return withSymbols.map(({ userId, nickname, timeRemaining }) => ({
+        userId,
+        nickname,
+        timeRemaining,
+      }));
     }
     return members.map(m => ({
       userId: String(m.identifier),
@@ -137,7 +156,7 @@ const LobbyInGameScreen = () => {
   };
 
   const confirmKickOut = () => {
-    const targetMember = members.find(m => m.nickname === kickTarget);
+    const targetMember = members.find((m) => m.nickname === kickTarget);
     if (targetMember) {
       kickMember(targetMember.identifier);
     }
@@ -149,7 +168,7 @@ const LobbyInGameScreen = () => {
     leaveLobby();
   };
 
-    // Dynamically select the module based on the selected game
+  // Dynamically select the module based on the selected game
   const module = useMemo(() => {
     if (!currentLobby?.selected_game) {
       return null; // Fallback if no game is selected
@@ -180,20 +199,25 @@ const LobbyInGameScreen = () => {
             module={module}
             state={gameState} // Use the updated gameState directly
             players={players}
-            localPlayerId={String(user?.id ?? '')}
+            localPlayerId={String(user?.id ?? "")}
             lastMove={lastMove}
             isMyTurn={isMyTurn}
             onProposeMove={handleProposeMove}
           />
         </div>
         <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 px-10 sm:p-4 my-10">
-          <h3 className="text-base sm:text-lg font-bold text-white mb-2">Players</h3>
+          <h3 className="text-base sm:text-lg font-bold text-white mb-2">
+            Players
+          </h3>
           <div className="flex flex-col gap-2">
             {members.map((member, index) => (
               <InGameUserTile
                 key={member.identifier}
                 avatar={
-                  getImage('avatars', 'avatar' + member.pfp_path?.split('/').pop()?.split('.')[0]) || pfpImage
+                  getImage(
+                    "avatars",
+                    "avatar" + member.pfp_path?.split("/").pop()?.split(".")[0]
+                  ) || pfpImage
                 }
                 username={member.nickname}
                 place={index + 1}
@@ -208,9 +232,14 @@ const LobbyInGameScreen = () => {
               />
             ))}
           </div>
-          <h3 className="text-base sm:text-lg font-bold text-white mt-4 mb-2">Chat</h3>
-          <LobbyChat 
-            messages={messages.map(m => ({ username: m.nickname, text: m.content }))}
+          <h3 className="text-base sm:text-lg font-bold text-white mt-4 mb-2">
+            Chat
+          </h3>
+          <LobbyChat
+            messages={messages.map((m) => ({
+              username: m.nickname,
+              text: m.content,
+            }))}
             onSendMessage={handleSendMessage}
             typingUsers={[]} // Typing indicator can be added if needed
           />
@@ -230,7 +259,7 @@ const LobbyInGameScreen = () => {
       />
       <KickPlayerModal
         isOpen={isKickModalOpen}
-        username={kickTarget || ''}
+        username={kickTarget || ""}
         onConfirm={confirmKickOut}
         onCancel={() => setIsKickModalOpen(false)}
       />
