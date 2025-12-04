@@ -9,6 +9,8 @@ import InGameUserTile from "../components/InGameUserTile";
 import GameResultModal from "../components/GameResultModal";
 import KickPlayerModal from "../components/KickPlayerModal";
 import LeaveModal from "../components/LeaveModal";
+import PassHostModal from "@/components/PassHostModal";
+import { usePopup } from "../components/PopupContext";
 import { emitMakeMove } from "../services/game";
 import { onKickedFromLobby, offKickedFromLobby } from "../services/lobby";
 import { FaSignOutAlt } from "react-icons/fa";
