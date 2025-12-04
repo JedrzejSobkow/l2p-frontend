@@ -56,6 +56,7 @@ let gameSocket: Socket | null = null
 let gameListenersRegistered = false
 
 export const connectGameSocket = (): Socket => {
+  disconnectGameSocket()
   gameSocket = getNamespaceSocket(GAME_NAMESPACE)
 
   if (!gameListenersRegistered) {

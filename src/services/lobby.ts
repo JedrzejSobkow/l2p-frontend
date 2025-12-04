@@ -43,6 +43,7 @@ let lobbySocket: Socket | null = null
 let lobbyListenersRegistered = false
 
 export const connectLobbySocket = (): Socket => {
+  disconnectLobbySocket
   lobbySocket = getNamespaceSocket(LOBBY_NAMESPACE)
   if (!lobbyListenersRegistered) {
     lobbySocket.on('connect', () => {
