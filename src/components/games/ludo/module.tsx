@@ -694,6 +694,7 @@ const LudoView: GameClientModule["GameView"] = ({
   // Dice rolling animation effect based on moves history
   useEffect(() => {
     const history = gameState?.moves_history || [];
+    let animationInterval: NodeJS.Timeout | null = null;
 
     // Initialize ref on first render
     if (prevHistoryLength.current === 0 && history.length > 0) {
@@ -705,6 +706,8 @@ const LudoView: GameClientModule["GameView"] = ({
         typeof lastMove.dice_value === "number"
       ) {
         setDisplayDiceValue(lastMove.dice_value);
+        // Clear the rolling state (set by handleRollDice)
+        setIsRolling(false);
       }
       return;
     }
@@ -723,11 +726,11 @@ const LudoView: GameClientModule["GameView"] = ({
 
         let steps = 0;
         const maxSteps = 10; // Number of animation frames
-        const interval = setInterval(() => {
+        animationInterval = setInterval(() => {
           setDisplayDiceValue(Math.floor(Math.random() * 6) + 1);
           steps++;
           if (steps >= maxSteps) {
-            clearInterval(interval);
+            if (animationInterval) clearInterval(animationInterval);
             setDisplayDiceValue(targetValue);
             setIsRolling(false);
           }
@@ -736,6 +739,13 @@ const LudoView: GameClientModule["GameView"] = ({
 
       prevHistoryLength.current = history.length;
     }
+
+    // Cleanup function to clear interval on unmount or re-run
+    return () => {
+      if (animationInterval) {
+        clearInterval(animationInterval);
+      }
+    };
   }, [gameState?.moves_history]);
 
   const status = useMemo(() => {
@@ -1104,10 +1114,11 @@ const LudoView: GameClientModule["GameView"] = ({
           )}
         </div>
 
-        {isMyTurn && !gameState?.dice_rolled && !isRolling && (
+        {isMyTurn && !gameState?.dice_rolled && (
           <button
             onClick={handleRollDice}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95"
+            disabled={isRolling}
+            className={`bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition hover:scale-105 active:scale-95 ${isRolling ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Roll Dice 🎲
           </button>
