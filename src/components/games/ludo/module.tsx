@@ -586,20 +586,23 @@ const LudoView: GameClientModule["GameView"] = ({
   const [boardSize, setBoardSize] = useState(() => {
     const screenWidth = window.innerWidth;
     // Account for padding/margins on different screen sizes
+    // Subtract padding: 2rem (32px) on each side = 64px total
+    const availableWidth = screenWidth - 64;
+    
     if (screenWidth < 480) {
-      // Very small mobile screens - use 80% of width, max 330px
-      return Math.floor(Math.min(screenWidth * 0.8, 300));
+      // Very small mobile screens - use 80% of available width, max 280px
+      return Math.floor(Math.min(availableWidth * 0.8, 280));
     }
     if (screenWidth < 768) {
-      // Small to medium screens (phones/small tablets) - use 85% of width, max 550px
-      return Math.floor(Math.min(screenWidth * 0.85, 550));
+      // Small to medium screens (phones/small tablets) - use 85% of available width, max 500px
+      return Math.floor(Math.min(availableWidth * 0.85, 500));
     }
     if (screenWidth < 1024) {
-      // Medium screens - fixed 600px
-      return 600;
+      // Medium screens - fixed 550px
+      return 550;
     }
-    // Large screens - fixed 700px
-    return 700;
+    // Large screens - fixed 650px
+    return 650;
   });
 
   // Track current breakpoint to only resize when crossing breakpoints
@@ -631,14 +634,16 @@ const LudoView: GameClientModule["GameView"] = ({
           setIsResizing(true);
           prevBreakpoint.current = newBreakpoint;
           
+          const availableWidth = screenWidth - 64; // Subtract padding
+          
           if (screenWidth < 480) {
-            setBoardSize(Math.floor(Math.min(screenWidth * 0.8, 300)));
+            setBoardSize(Math.floor(Math.min(availableWidth * 0.8, 280)));
           } else if (screenWidth < 768) {
-            setBoardSize(Math.floor(Math.min(screenWidth * 0.85, 550)));
+            setBoardSize(Math.floor(Math.min(availableWidth * 0.85, 500)));
           } else if (screenWidth < 1024) {
-            setBoardSize(600);
+            setBoardSize(550);
           } else {
-            setBoardSize(700);
+            setBoardSize(650);
           }
           
           // Reset resizing state after a brief moment
@@ -1055,7 +1060,7 @@ const LudoView: GameClientModule["GameView"] = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-6 p-4 md:p-6">
       <div className="text-center text-lg font-semibold text-white">
         {status}
         <br />
@@ -1133,7 +1138,7 @@ const LudoView: GameClientModule["GameView"] = ({
 
       {/* Board */}
       <div 
-        className="relative transition-all duration-300" 
+        className="relative transition-all duration-300 p-2 sm:p-4" 
         style={{ 
           width: boardSize, 
           height: boardSize,
