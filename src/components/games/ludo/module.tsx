@@ -577,14 +577,81 @@ const LudoView: GameClientModule["GameView"] = ({
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
   const [isRolling, setIsRolling] = useState(false);
   const [displayDiceValue, setDisplayDiceValue] = useState(1);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
   const prevHistoryLength = useRef(0);
+  const [isResizing, setIsResizing] = useState(false);
 
-  // Dynamically calculate board size based on screen width
-  const boardSize = useMemo(() => {
+  // Dynamically calculate board size based on screen width with responsive updates
+  const [boardSize, setBoardSize] = useState(() => {
     const screenWidth = window.innerWidth;
-    if (screenWidth < 640) return 400; // Small screens
-    if (screenWidth < 1024) return 500; // Medium screens
-    return 600; // Large screens
+    // Account for padding/margins on different screen sizes
+    if (screenWidth < 480) {
+      // Very small mobile screens - use 80% of width, max 330px
+      return Math.floor(Math.min(screenWidth * 0.8, 300));
+    }
+    if (screenWidth < 768) {
+      // Small to medium screens (phones/small tablets) - use 85% of width, max 550px
+      return Math.floor(Math.min(screenWidth * 0.85, 550));
+    }
+    if (screenWidth < 1024) {
+      // Medium screens - fixed 600px
+      return 600;
+    }
+    // Large screens - fixed 700px
+    return 700;
+  });
+
+  // Track current breakpoint to only resize when crossing breakpoints
+  const prevBreakpoint = useRef<string>('');
+  
+  const getBreakpoint = (width: number): string => {
+    if (width < 480) return 'xs';
+    if (width < 768) return 'sm';
+    if (width < 1024) return 'md';
+    return 'lg';
+  };
+
+  // Update board size on window resize (only when breakpoint changes)
+  useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+    
+    // Initialize breakpoint
+    prevBreakpoint.current = getBreakpoint(window.innerWidth);
+    
+    const handleResize = () => {
+      clearTimeout(resizeTimeout);
+      
+      resizeTimeout = setTimeout(() => {
+        const screenWidth = window.innerWidth;
+        const newBreakpoint = getBreakpoint(screenWidth);
+        
+        // Only update if breakpoint actually changed
+        if (newBreakpoint !== prevBreakpoint.current) {
+          setIsResizing(true);
+          prevBreakpoint.current = newBreakpoint;
+          
+          if (screenWidth < 480) {
+            setBoardSize(Math.floor(Math.min(screenWidth * 0.8, 300)));
+          } else if (screenWidth < 768) {
+            setBoardSize(Math.floor(Math.min(screenWidth * 0.85, 550)));
+          } else if (screenWidth < 1024) {
+            setBoardSize(600);
+          } else {
+            setBoardSize(700);
+          }
+          
+          // Reset resizing state after a brief moment
+          setTimeout(() => setIsResizing(false), 50);
+        }
+      }, 150);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      clearTimeout(resizeTimeout);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const gameState = rawState as GameState;
@@ -687,6 +754,12 @@ const LudoView: GameClientModule["GameView"] = ({
       (player) => String(player.userId) === currentPlayerId
     );
     const currentPlayerIdx = playerIndexMap[currentPlayerId];
+    
+    // Guard against undefined playerIdx
+    if (currentPlayerIdx === undefined) {
+      return isMyTurn ? "Your turn" : `${currentPlayer?.nickname ?? "Waiting..."}'s turn`;
+    }
+    
     const playerColor =
       PLAYER_COLOR_NAMES[currentPlayerIdx as keyof typeof PLAYER_COLOR_NAMES];
 
@@ -712,9 +785,9 @@ const LudoView: GameClientModule["GameView"] = ({
         {currentPlayer?.nickname ?? "Waiting..."}'s turn{" "}
         <span
           style={{
-            color: `#${String(
-              PLAYER_COLORS[currentPlayerIdx as keyof typeof PLAYER_COLORS]
-            )}`,
+            color: `#${PLAYER_COLORS[
+              currentPlayerIdx as keyof typeof PLAYER_COLORS
+            ].toString(16)}`,
           }}
         >
           ({playerColor})
@@ -1048,12 +1121,25 @@ const LudoView: GameClientModule["GameView"] = ({
       </div>
 
       {/* Board */}
-      <div className="relative">
-        <Application width={boardSize} height={boardSize} backgroundAlpha={0}>
-          <pixiContainer>
-            <pixiGraphics draw={drawBoard} />
-          </pixiContainer>
-        </Application>
+      <div 
+        className="relative transition-all duration-300" 
+        style={{ 
+          width: boardSize, 
+          height: boardSize,
+          minWidth: boardSize,
+          minHeight: boardSize
+        }}
+      >
+        <div 
+          className="absolute inset-0 transition-opacity duration-200"
+          style={{ opacity: isResizing ? 0.3 : 1 }}
+        >
+          <Application key={boardSize} width={boardSize} height={boardSize} backgroundAlpha={0}>
+            <pixiContainer>
+              <pixiGraphics draw={drawBoard} />
+            </pixiContainer>
+          </Application>
+        </div>
 
         {/* SVG overlay for pieces (easier to handle clicks) */}
         <svg
@@ -1103,7 +1189,7 @@ const LudoView: GameClientModule["GameView"] = ({
               </radialGradient>
             ))}
           </defs>
-          {renderPieces()}
+          {!isResizing && renderPieces()}
         </svg>
       </div>
 
