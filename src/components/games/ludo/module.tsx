@@ -60,7 +60,7 @@ interface GameState {
   dice_rolled: boolean;
   move_made: boolean;
   extra_turn_pending: boolean;
-  current_turn_player_id?: string;
+  current_turn_identifier?: string;
   winner_id?: string;
   timing?: {
     timeout_type?: string;
@@ -759,7 +759,7 @@ const LudoView: GameClientModule["GameView"] = ({
       return `${winner?.nickname ?? "Unknown player"} (${winnerColor}) wins!`;
     }
 
-    const currentPlayerId = String(gameState?.current_turn_player_id);
+    const currentPlayerId = String(gameState?.current_turn_identifier);
     const currentPlayer = players.find(
       (player) => String(player.userId) === currentPlayerId
     );
