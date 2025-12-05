@@ -75,7 +75,7 @@ const Footer: React.FC = () => {
                                 className="w-full h-auto"
                             />
                         </div>
-                        <div className="footer-email w-80 h-8 flex items-center justify-center border border-dashed border-paragraph rounded-lg text-sm leading-8 text-center">
+                        <div className="footer-email w-80 h-8 flex items-center justify-center border border-dashed border-paragraph rounded-lg text-sm leading-8 text-center md:mt-7">
                             l2p.online@gmail.com
                         </div>
                     </div>
