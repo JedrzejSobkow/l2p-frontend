@@ -5,6 +5,7 @@ const imageMap: Record<string, Record<string, string>> = {
     tictactoe: images.ticTacToeImage,
     clobber: images.clobberImage,
     ludo: images.ludoImage,
+    soccer: images.soccerImage,
     noGame: images.noGameImage,
     moreGames: images.moreGamesImage,
   },

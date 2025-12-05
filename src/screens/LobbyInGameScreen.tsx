@@ -18,6 +18,7 @@ import { getImage } from "../utils/imageMap";
 import { pfpImage } from "@/assets/images";
 import ClobberModule from "@/components/games/clobber/module";
 import LudoModule from "@/components/games/ludo/module";
+import SoccerModule from "@/components/games/soccer/module";
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -50,6 +51,7 @@ const LobbyInGameScreen = () => {
     tictactoe: TicTacToeModule,
     clobber: ClobberModule,
     ludo: LudoModule,
+    soccer: SoccerModule,
   };
 
 
