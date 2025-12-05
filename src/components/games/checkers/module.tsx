@@ -27,6 +27,12 @@ interface CheckersGameState {
   current_turn_identifier?: string;
   winner_identifier?: string;
   result?: string;
+  legal_moves?: Array<{
+    from_row: number;
+    from_col: number;
+    to_row: number;
+    to_col: number;
+  }>;
   timing?: {
     timeout_type?: string;
     timeout_seconds?: number;
@@ -139,157 +145,11 @@ const CheckersView: GameClientModule["GameView"] = ({
     return row >= 0 && row < rows && col >= 0 && col < cols;
   };
 
-  const isCaptureMove = (fromRow: number, fromCol: number, toRow: number, toCol: number): boolean => {
-    const distance = Math.abs(toRow - fromRow);
-    if (distance < 2) return false;
-
-    const piece = board[fromRow][fromCol];
-    if (!piece) return false;
-
-    const isKing = piece === piece.toUpperCase();
-    const rowDiff = toRow - fromRow;
-    const colDiff = toCol - fromCol;
-
-    if (distance === 2) {
-      // Standard capture
-      const midRow = (fromRow + toRow) / 2;
-      const midCol = (fromCol + toCol) / 2;
-      const midPiece = board[midRow][midCol];
-      return midPiece !== null && isOpponentPiece(midPiece);
-    }
-
-    // For kings with flying enabled, check path
-    if (isKing) {
-      const rowDir = rowDiff > 0 ? 1 : -1;
-      const colDir = colDiff > 0 ? 1 : -1;
-      let currentRow = fromRow + rowDir;
-      let currentCol = fromCol + colDir;
-      let foundOpponent = false;
-
-      while (currentRow !== toRow) {
-        const cellPiece = board[currentRow][currentCol];
-        if (cellPiece !== null) {
-          if (isOpponentPiece(cellPiece) && !foundOpponent) {
-            foundOpponent = true;
-          } else {
-            return false;
-          }
-        }
-        currentRow += rowDir;
-        currentCol += colDir;
-      }
-      return foundOpponent;
-    }
-
-    return false;
-  };
-
-  const getCaptureMoves = (fromRow: number, fromCol: number): Array<{ row: number; col: number }> => {
-    const piece = board[fromRow][fromCol];
-    if (!piece || !isMyPiece(piece)) return [];
-
-    const isKing = piece === piece.toUpperCase();
-    const moves: Array<{ row: number; col: number }> = [];
-    const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-
-    for (const [dr, dc] of directions) {
-      // Standard capture (distance 2)
-      const captureRow = fromRow + dr * 2;
-      const captureCol = fromCol + dc * 2;
-
-      if (isValidPosition(captureRow, captureCol) && 
-          board[captureRow][captureCol] === null &&
-          isCaptureMove(fromRow, fromCol, captureRow, captureCol)) {
-        
-        // Check if backward capture is allowed for non-kings
-        if (!isKing) {
-          const forwardDir = myColor === "white" ? -1 : 1;
-          if (dr !== forwardDir) {
-            // This is a backward move, skip unless backward_capture is true
-            // For simplicity, we'll allow it (backend will validate)
-          }
-        }
-        
-        moves.push({ row: captureRow, col: captureCol });
-      }
-
-      // For kings, check multiple distances (flying kings)
-      if (isKing) {
-        let distance = 3;
-        while (distance < rows) {
-          const longRow = fromRow + dr * distance;
-          const longCol = fromCol + dc * distance;
-
-          if (!isValidPosition(longRow, longCol)) break;
-          if (board[longRow][longCol] !== null) break;
-
-          if (isCaptureMove(fromRow, fromCol, longRow, longCol)) {
-            moves.push({ row: longRow, col: longCol });
-          }
-
-          distance++;
-        }
-      }
-    }
-
-    return moves;
-  };
-
-  const getRegularMoves = (fromRow: number, fromCol: number): Array<{ row: number; col: number }> => {
-    const piece = board[fromRow][fromCol];
-    if (!piece || !isMyPiece(piece)) return [];
-
-    const isKing = piece === piece.toUpperCase();
-    const moves: Array<{ row: number; col: number }> = [];
-
-    let directions: number[][];
-    if (isKing) {
-      directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-    } else {
-      // Regular pieces move forward only
-      const forwardDir = myColor === "white" ? -1 : 1;
-      directions = [[forwardDir, -1], [forwardDir, 1]];
-    }
-
-    for (const [dr, dc] of directions) {
-      // Regular move (distance 1)
-      const newRow = fromRow + dr;
-      const newCol = fromCol + dc;
-
-      if (isValidPosition(newRow, newCol) && board[newRow][newCol] === null) {
-        moves.push({ row: newRow, col: newCol });
-      }
-
-      // For flying kings, check multiple distances
-      if (isKing) {
-        let distance = 2;
-        while (distance < rows) {
-          const longRow = fromRow + dr * distance;
-          const longCol = fromCol + dc * distance;
-
-          if (!isValidPosition(longRow, longCol)) break;
-          if (board[longRow][longCol] !== null) break;
-
-          moves.push({ row: longRow, col: longCol });
-          distance++;
-        }
-      }
-    }
-
-    return moves;
-  };
-
-  const hasAnyCaptureMove = (): boolean => {
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const piece = board[row][col];
-        if (piece && isMyPiece(piece)) {
-          const captures = getCaptureMoves(row, col);
-          if (captures.length > 0) return true;
-        }
-      }
-    }
-    return false;
+  const getValidMovesForPiece = (fromRow: number, fromCol: number): Array<{ row: number; col: number }> => {
+    const legalMoves = gameState?.legal_moves ?? [];
+    return legalMoves
+      .filter(move => move.from_row === fromRow && move.from_col === fromCol)
+      .map(move => ({ row: move.to_row, col: move.to_col }));
   };
 
   const handleCellClick = (row: number, col: number) => {
@@ -303,18 +163,8 @@ const CheckersView: GameClientModule["GameView"] = ({
 
       setSelectedCell({ row, col });
 
-      // Calculate valid moves for this piece
-      const forcedCapture = hasAnyCaptureMove();
-      let moves: Array<{ row: number; col: number }>;
-
-      if (forcedCapture) {
-        // Must capture
-        moves = getCaptureMoves(row, col);
-      } else {
-        // Regular moves
-        moves = getRegularMoves(row, col);
-      }
-
+      // Get valid moves for this piece from legal_moves
+      const moves = getValidMovesForPiece(row, col);
       setValidMoves(moves);
     } else {
       // Making a move
@@ -331,15 +181,7 @@ const CheckersView: GameClientModule["GameView"] = ({
       if (cell && isMyPiece(cell)) {
         setSelectedCell({ row, col });
 
-        const forcedCapture = hasAnyCaptureMove();
-        let moves: Array<{ row: number; col: number }>;
-
-        if (forcedCapture) {
-          moves = getCaptureMoves(row, col);
-        } else {
-          moves = getRegularMoves(row, col);
-        }
-
+        const moves = getValidMovesForPiece(row, col);
         setValidMoves(moves);
         return;
       }
