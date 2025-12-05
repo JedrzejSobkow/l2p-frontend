@@ -195,7 +195,7 @@ const LobbyInGameScreen = () => {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-5 min-h-[84vh] px-2 pb-5">
         <div className="flex-1">
           <GameShell
             module={module}
@@ -207,7 +207,7 @@ const LobbyInGameScreen = () => {
             onProposeMove={handleProposeMove}
           />
         </div>
-        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 px-10 sm:p-4 my-10">
+        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 px-10 sm:p-4">
           <h3 className="text-base sm:text-lg font-bold text-white mb-2">
             Players
           </h3>

@@ -1,10 +1,9 @@
-import { useRef, useEffect, useState, type ReactNode } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import * as PIXI from 'pixi.js';
 
 interface GameBoardProps {
   rows: number;
   cols: number;
-  containerWidth?: number;
   borderRadius?: number;
   lineWidth?: number;
   gridLineColor?: number;
@@ -26,7 +25,6 @@ interface GameBoardProps {
 export const GameBoard: React.FC<GameBoardProps> = ({
   rows,
   cols,
-  containerWidth = 0,
   borderRadius = 24,
   lineWidth = 2,
   gridLineColor = 0xffffff,
@@ -42,167 +40,181 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const canvasRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const boardContainerRef = useRef<PIXI.Container | null>(null);
+  
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0, cellSize: 0 });
   const [isPixiReady, setIsPixiReady] = useState(false);
 
-  const { boardWidth, boardHeight, cellSize } = (() => {
-    // Calculate based on 85% of viewport height
-    const maxHeight = window.innerHeight * 0.80;
-    const availableWidth = containerWidth * 0.80;
-    
-    // Calculate cell size based on both constraints
-    const cellSizeByHeight = (maxHeight - (rows + 1) * lineWidth) / rows;
-    const cellSizeByWidth = (availableWidth - (cols + 1) * lineWidth) / cols;
-    
-    // Use the smaller one to ensure board fits in both dimensions
-    const calculatedCellSize = Math.min(cellSizeByHeight, cellSizeByWidth);
-    
-    const calculatedBoardWidth = cols * calculatedCellSize + (lineWidth * (cols + 1));
-    const calculatedBoardHeight = rows * calculatedCellSize + (lineWidth * (rows + 1));
-
-    return {
-      boardWidth: calculatedBoardWidth,
-      boardHeight: calculatedBoardHeight,
-      cellSize: calculatedCellSize,
-    };
-  })();
-
-  // Initialize Pixi Application
+  // 1. Obliczanie wymiarów (z FIXEM na height: 0)
   useEffect(() => {
-    if (!canvasRef.current || boardWidth === 0 || boardHeight === 0) return;
+    if (!containerRef.current) return;
+
+    const updateDimensions = () => {
+      if (!containerRef.current) return;
+      
+      let { clientWidth, clientHeight } = containerRef.current;
+      
+      // --- FIX START: Obsługa zerowej wysokości ---
+      // Jeśli kontener ma wysokość 0 (np. na mobile w scrollu),
+      // symulujemy wysokość na podstawie szerokości, zakładając kwadratowe pola.
+      if (clientHeight === 0 && clientWidth > 0) {
+         // Obliczamy ile wysokości potrzebujemy, żeby zachować proporcje
+         // (zakładając że cellSize będzie wynikać z szerokości)
+         const ratio = rows / cols;
+         clientHeight = clientWidth * ratio;
+      }
+      // --- FIX END ---
+
+      if (clientWidth === 0 || clientHeight === 0) return;
+
+      const totalLineWidthX = (cols + 1) * lineWidth;
+      const totalLineWidthY = (rows + 1) * lineWidth;
+
+      const maxCellWidth = (clientWidth - totalLineWidthX) / cols;
+      const maxCellHeight = (clientHeight - totalLineWidthY) / rows;
+
+      const cellSize = Math.floor(Math.min(maxCellWidth, maxCellHeight));
+
+      const boardWidth = cols * cellSize + totalLineWidthX;
+      const boardHeight = rows * cellSize + totalLineWidthY;
+
+      setDimensions({ width: boardWidth, height: boardHeight, cellSize });
+    };
+
+    updateDimensions();
+
+    const observer = new ResizeObserver(updateDimensions);
+    observer.observe(containerRef.current);
+
+    return () => observer.disconnect();
+  }, [rows, cols, lineWidth]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
 
     let mounted = true;
-    let app: PIXI.Application | null = null;
-    setIsPixiReady(false);
+    const app = new PIXI.Application();
 
-    (async () => {
+    const initPixi = async () => {
       try {
-        app = new PIXI.Application();
         await app.init({
-          width: boardWidth,
-          height: boardHeight,
+          width: 1, 
+          height: 1,
           backgroundAlpha: 0,
           antialias: true,
+          resolution: window.devicePixelRatio || 1,
+          autoDensity: true,
         });
 
-        if (!mounted || !canvasRef.current) {
-          if (app) {
-            await app.destroy(true, { children: true, texture: true });
-          }
+        if (!mounted) {
+          app.destroy(true, { children: true, texture: true });
           return;
         }
 
-        canvasRef.current.innerHTML = '';
-        canvasRef.current.appendChild(app.canvas);
-
+        if (canvasRef.current) canvasRef.current.appendChild(app.canvas);
+        
+        const container = new PIXI.Container();
+        boardContainerRef.current = container;
+        app.stage.addChild(container);
         appRef.current = app;
-        boardContainerRef.current = new PIXI.Container();
-        app.stage.addChild(boardContainerRef.current);
+        
         setIsPixiReady(true);
-      } catch (error) {
-        console.error('Failed to initialize PIXI application:', error);
-        if (app) {
-          try {
-            await app.destroy(true, { children: true, texture: true });
-          } catch (e) {
-            console.error('Error destroying PIXI app:', e);
-          }
-        }
+      } catch (err) {
+        console.error("PIXI Init Error:", err);
       }
-    })();
+    };
+
+    initPixi();
 
     return () => {
       mounted = false;
       setIsPixiReady(false);
-      
       if (appRef.current) {
-        const currentApp = appRef.current;
+        appRef.current.destroy(true, { children: true, texture: true });
         appRef.current = null;
         boardContainerRef.current = null;
-        
-        // Destroy asynchronously to avoid issues
-        setTimeout(() => {
-          try {
-            currentApp.destroy(true, { children: true, texture: true });
-          } catch (e) {
-            console.error('Error destroying PIXI app on cleanup:', e);
-          }
-        }, 0);
       }
     };
-  }, [boardWidth, boardHeight]);
+  }, []);
 
-  // Draw board grid
+  // 3. Rysowanie (bez zmian)
   useEffect(() => {
-    if (!isPixiReady || !boardContainerRef.current || boardWidth === 0) return;
-
+    const app = appRef.current;
     const container = boardContainerRef.current;
+    
+    if (!app || !container || !isPixiReady || dimensions.width === 0) return;
+
+    app.renderer.resize(dimensions.width, dimensions.height);
     container.removeChildren();
-
-    // Draw board background and grid
-    const boardGraphics = new PIXI.Graphics();
     
-    // Offset by half line width to ensure equal border thickness
+    const { width: boardWidth, height: boardHeight, cellSize } = dimensions;
+    const graphics = new PIXI.Graphics();
     const offset = lineWidth / 2;
-    
-    // Background
-    boardGraphics.roundRect(offset, offset, boardWidth - lineWidth, boardHeight - lineWidth, borderRadius);
-    boardGraphics.fill({ color: backgroundColor, alpha: backgroundAlpha });
 
-    // Grid lines
-    boardGraphics.setStrokeStyle({ width: lineWidth, color: gridLineColor, alpha: gridLineAlpha });
+    graphics.roundRect(offset, offset, boardWidth - lineWidth, boardHeight - lineWidth, borderRadius);
+    graphics.fill({ color: backgroundColor, alpha: backgroundAlpha });
+
+    graphics.setStrokeStyle({ width: lineWidth, color: gridLineColor, alpha: gridLineAlpha });
+
     for (let r = 0; r <= rows; r++) {
       const y = r * (cellSize + lineWidth) + offset;
-      boardGraphics.moveTo(offset, y);
-      boardGraphics.lineTo(cols * (cellSize + lineWidth) + offset, y);
+      graphics.moveTo(offset, y);
+      graphics.lineTo(boardWidth - offset, y);
     }
     for (let c = 0; c <= cols; c++) {
       const x = c * (cellSize + lineWidth) + offset;
-      boardGraphics.moveTo(x, offset);
-      boardGraphics.lineTo(x, rows * (cellSize + lineWidth) + offset);
+      graphics.moveTo(x, offset);
+      graphics.lineTo(x, boardHeight - offset);
     }
-    boardGraphics.stroke();
-    container.addChild(boardGraphics);
+    
+    graphics.stroke();
+    container.addChild(graphics);
 
-    // Call children render function if provided
     if (children) {
       children({ cellSize, boardWidth, boardHeight, container, lineWidth });
     }
-  }, [isPixiReady, boardWidth, boardHeight, cellSize, rows, cols, children, lineWidth, borderRadius, gridLineColor, gridLineAlpha, backgroundColor, backgroundAlpha]);
+
+  }, [isPixiReady, dimensions, rows, cols, children, lineWidth, borderRadius, gridLineColor, gridLineAlpha, backgroundColor, backgroundAlpha]);
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center w-full">
-      {containerWidth > 0 && boardWidth > 0 && (
-        <div className="relative" style={{ width: boardWidth, height: boardHeight }}>
-          <div ref={canvasRef} />
-          {/* Interactive overlay for clicks */}
-          {(onCellClick || onCellHover || onCellLeave) && (
-            <div
-              className="absolute top-0 left-0 grid"
-              style={{
-                gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                gridTemplateRows: `repeat(${rows}, 1fr)`,
-                width: `${boardWidth}px`,
-                height: `${boardHeight}px`,
-              }}
-            >
-              {Array.from({ length: rows * cols }).map((_, index) => {
-                const row = Math.floor(index / cols);
-                const col = index % cols;
-                return (
-                  <button
-                    key={`${row}-${col}`}
-                    type="button"
-                    onClick={() => onCellClick?.(row, col)}
-                    onMouseEnter={() => onCellHover?.(row, col)}
-                    onMouseLeave={() => onCellLeave?.()}
-                    className="w-full h-full bg-transparent"
-                  />
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+    <div ref={containerRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+      <div 
+        className="relative shadow-2xl rounded-3xl"
+        style={{ 
+          width: dimensions.width, 
+          height: dimensions.height,
+          opacity: dimensions.width > 0 ? 1 : 0,
+          transition: 'opacity 0.2s ease-in'
+        }}
+      >
+        <div ref={canvasRef} className="block" />
+        
+        {(onCellClick || onCellHover || onCellLeave) && (
+          <div
+            className="absolute top-0 left-0 w-full h-full grid"
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateRows: `repeat(${rows}, 1fr)`,
+              gap: `${lineWidth}px`,
+              padding: `${lineWidth}px`,
+              boxSizing: 'border-box'
+            }}
+            onMouseLeave={onCellLeave}
+          >
+            {Array.from({ length: rows * cols }).map((_, index) => {
+              const row = Math.floor(index / cols);
+              const col = index % cols;
+              return (
+                <div
+                  key={`${row}-${col}`}
+                  className="cursor-pointer hover:bg-white/5 transition-colors duration-150 rounded-md"
+                  onClick={() => onCellClick?.(row, col)}
+                  onMouseEnter={() => onCellHover?.(row, col)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
