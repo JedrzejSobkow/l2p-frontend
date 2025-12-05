@@ -51,8 +51,21 @@ const SoccerView: GameClientModule["GameView"] = ({
   const goalXEnd = Number(field.goal_x_end ?? goalXStart + goalW - 1);
 
   // --- LOGIKA OBRACANIA (Flip) ---
-  const isPlayer2 = players[1]?.userId === localPlayerId;
-  const shouldFlip = isPlayer2;
+  const logicalBottomPlayer = players.find(p => p.userId === gameState.field.bottom_goal_defender);
+  const logicalTopPlayer = players.find(p => p.userId === gameState.field.top_goal_defender);
+
+  // Wizualni gracze (kto jest gdzie na ekranie po obrocie)
+  let visualBottomPlayer = logicalBottomPlayer;
+  let visualTopPlayer = logicalTopPlayer;
+
+  const shouldFlip = logicalBottomPlayer?.userId !== localPlayerId;
+  if (shouldFlip) {
+    visualBottomPlayer = logicalTopPlayer;
+    visualTopPlayer = logicalBottomPlayer;
+  }
+
+  const isVisualBottomLocal = visualBottomPlayer?.userId === localPlayerId;
+  const isVisualTopLocal = visualTopPlayer?.userId === localPlayerId;
 
   const viewPoint = (p: Point): Point => {
     if (!shouldFlip) return p;
@@ -126,20 +139,7 @@ const SoccerView: GameClientModule["GameView"] = ({
   };
 
   // Logiczni gracze (kto jest kim w danych)
-  const logicalBottomPlayer = players[0]; // Host
-  const logicalTopPlayer = players[1];    // Guest
 
-  // Wizualni gracze (kto jest gdzie na ekranie po obrocie)
-  let visualBottomPlayer = logicalBottomPlayer;
-  let visualTopPlayer = logicalTopPlayer;
-
-  if (shouldFlip) {
-    visualBottomPlayer = logicalTopPlayer;
-    visualTopPlayer = logicalBottomPlayer;
-  }
-
-  const isVisualBottomLocal = visualBottomPlayer?.userId === localPlayerId;
-  const isVisualTopLocal = visualTopPlayer?.userId === localPlayerId;
 
   const bottomTime = useRemainingTime(gameState, visualBottomPlayer?.userId || '');
   const topTime = useRemainingTime(gameState, visualTopPlayer?.userId || '');
