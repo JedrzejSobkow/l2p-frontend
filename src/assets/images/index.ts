@@ -2,6 +2,7 @@ export { default as logoImage } from "./logo.png";
 export { default as noGameImage } from "./games/default.png";
 export { default as ticTacToeImage } from "./games/tictactoe.png";
 export { default as clobberImage } from "./games/clobber.png";
+export { default as checkersImage } from "./games/checkers.png";
 export { default as ludoImage } from "./games/ludo.png";
 export { default as moreGamesImage } from "./more-games.png";
 export { default as pfpImage } from "./pfp.png";
