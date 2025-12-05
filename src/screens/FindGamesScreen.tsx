@@ -2,9 +2,6 @@ import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GameTile from "../components/GameTile";
 import {
-  ticTacToeImage,
-  clobberImage,
-  ludoImage,
   noGameImage,
 } from "@assets/images";
 import { useLobby } from "../components/lobby/LobbyContext";
