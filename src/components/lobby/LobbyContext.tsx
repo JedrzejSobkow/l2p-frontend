@@ -73,6 +73,8 @@ import {
   emitInviteFriend,
   offLobbyInviteSent,
   onLobbyInviteSent,
+  onLobbyGameEnded,
+  offLobbyGameEnded,
 } from '../../services/lobby'
 
 import {
@@ -356,6 +358,10 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setGameState(data.game_state)
     }
 
+    const handleLobbyGameEnded = (data: { lobby_code: string; result: string; winner_identifier: number | null; game_state: any }) => {
+      setGameState(data.game_state)
+    }
+
     const handleInviteSent = () => {
       showPopup({ type: 'confirmation', message: `Invitation succesfully sent.` })
     }
@@ -384,6 +390,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
     onGameStarted(handleGameStarted)
     onMoveMade(handleMoveMade)
     onGameEnded(handleGameEnded)
+    onLobbyGameEnded(handleLobbyGameEnded)
     onLobbyInviteSent(handleInviteSent)
 
     return () => {
@@ -411,6 +418,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       offGameStarted(handleGameStarted)
       offMoveMade(handleMoveMade)
       offGameEnded(handleGameEnded)
+      offLobbyGameEnded(handleLobbyGameEnded)
       offLobbyInviteSent(handleInviteSent)
     }
   }, [currentLobby?.lobby_code,showPopup,setIsLoading,navigate])
