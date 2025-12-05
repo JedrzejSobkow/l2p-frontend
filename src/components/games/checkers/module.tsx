@@ -369,6 +369,7 @@ const CheckersView: GameClientModule["GameView"] = ({
   const renderTokens = ({ cellSize, container, lineWidth }: { cellSize: number; container: PIXI.Container; lineWidth: number }) => {
     const tokenRadius = cellSize * 0.35;
     const fontSize = Math.max(12, cellSize * 0.25);
+    const crownSize = tokenRadius * 1.4; // Scale crown based on token size
 
     board.forEach((row, rowIndex) => {
       row.forEach((cell, colIndex) => {
@@ -424,7 +425,7 @@ const CheckersView: GameClientModule["GameView"] = ({
           fill: isKing ? 0xFFD700 : (isWhite ? 0xaaaaaa : 0x8b5010), // Gold for crown
           fontFamily: "Poppins, Inter, sans-serif",
           fontWeight: "900", // Extra bold
-          fontSize: isKing ? fontSize * 2.2 : fontSize, // Even larger crown
+          fontSize: isKing ? crownSize : fontSize,
           align: 'center',
         });
 
@@ -433,9 +434,9 @@ const CheckersView: GameClientModule["GameView"] = ({
         }
 
         const label = new PIXI.Text(isKing ? "♔" : "○", textStyle);
-        label.anchor.set(0.5, 0.5); // Center both horizontally and vertically
-        label.x = 0; // Explicitly center at container origin
-        label.y = 0;
+        label.anchor.set(0.5, 0.5);
+        label.x = isKing ? crownSize * 0.03 : 0; // Slight right adjustment for crown
+        label.y = isKing ? -crownSize * 0.1 : 0; // Slight upward adjustment for crown
         tokenContainer.addChild(label);
 
         tokenContainer.eventMode = 'static';
