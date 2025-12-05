@@ -206,7 +206,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               return (
                 <div
                   key={`${row}-${col}`}
-                  className="cursor-pointer hover:bg-white/5 transition-colors duration-150 rounded-md"
+                  className="cursor-pointer transition-colors duration-150 rounded-md"
                   onClick={() => onCellClick?.(row, col)}
                   onMouseEnter={() => onCellHover?.(row, col)}
                 />

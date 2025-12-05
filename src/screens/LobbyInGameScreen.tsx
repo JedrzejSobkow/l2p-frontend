@@ -185,7 +185,7 @@ const LobbyInGameScreen = () => {
   return (
     <div className="w-full">
       {/* Top Bar with Leave Button */}
-      <div className="flex justify-start px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+      <div className="flex justify-start px-2 sm:px-6 lg:px-8 pt-4 pb-4">
         <button
           onClick={() => setIsLeaveModalOpen(true)}
           className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-red-700 hover:scale-105 transition-transform focus:outline-none"
@@ -195,7 +195,7 @@ const LobbyInGameScreen = () => {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-5 min-h-[84vh] px-2 pb-5">
+      <div className="flex flex-col lg:flex-row gap-6 min-h-[84vh] sm:px-6 lg:px-8 px-2 pb-5">
         <div className="flex-1">
           <GameShell
             module={module}
