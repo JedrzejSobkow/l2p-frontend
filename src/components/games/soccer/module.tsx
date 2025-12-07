@@ -50,11 +50,9 @@ const SoccerView: GameClientModule["GameView"] = ({
   const goalXStart = Number(field.goal_x_start ?? Math.floor((w - goalW) / 2));
   const goalXEnd = Number(field.goal_x_end ?? goalXStart + goalW - 1);
 
-  // --- LOGIKA OBRACANIA (Flip) ---
   const logicalBottomPlayer = players.find(p => p.userId === gameState.field.bottom_goal_defender);
   const logicalTopPlayer = players.find(p => p.userId === gameState.field.top_goal_defender);
 
-  // Wizualni gracze (kto jest gdzie na ekranie po obrocie)
   let visualBottomPlayer = logicalBottomPlayer;
   let visualTopPlayer = logicalTopPlayer;
 
@@ -138,7 +136,6 @@ const SoccerView: GameClientModule["GameView"] = ({
     onProposeMove({ to_x: logicTarget.x, to_y: logicTarget.y });
   };
 
-  // Logiczni gracze (kto jest kim w danych)
 
 
   const bottomTime = useRemainingTime(gameState, visualBottomPlayer?.userId || '');
@@ -148,8 +145,7 @@ const SoccerView: GameClientModule["GameView"] = ({
       if (!player) return null;
       const isTurn = timeLeft !== null;
       const isCriticalTime = isTurn && timeLeft < 10;
-      
-      // Prosty badge, bez pozycjonowania absolute
+
       return (
         <div className={`flex items-center gap-3 px-4 py-2 rounded-full shadow-lg border backdrop-blur-md transition-all duration-300 z-10 ${isTurn ? 'bg-background/90 border-orange-500/50 scale-105 shadow-orange-500/20' : 'bg-background/60 border-white/10 opacity-80'}`}>
            <div className="flex items-center gap-2">
@@ -171,13 +167,14 @@ const SoccerView: GameClientModule["GameView"] = ({
   return (
     <div className="relative h-full w-full bg-green-800 flex flex-col items-center justify-center p-2 gap-1">
       
+      {/* 1. TOP PLAYER BADGE */}
       <PlayerBadge 
         player={visualTopPlayer} 
         isLocal={isVisualTopLocal} 
         timeLeft={topTime} 
       />
 
-      {/* 2. BOISKO (SVG) */}
+      {/* 2. PITCH (SVG) */}
       <div className="relative w-full max-h-[70vh] aspect-[9/13] shrink-0"> 
         <svg viewBox={`${minX} ${minY} ${widthView} ${heightView}`} preserveAspectRatio="xMidYMid meet" className="w-full h-full drop-shadow-2xl">
           <defs>

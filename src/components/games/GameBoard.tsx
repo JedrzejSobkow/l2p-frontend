@@ -44,7 +44,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0, cellSize: 0 });
   const [isPixiReady, setIsPixiReady] = useState(false);
 
-  // 1. Obliczanie wymiarów (z FIXEM na height: 0)
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -53,16 +52,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       
       let { clientWidth, clientHeight } = containerRef.current;
       
-      // --- FIX START: Obsługa zerowej wysokości ---
-      // Jeśli kontener ma wysokość 0 (np. na mobile w scrollu),
-      // symulujemy wysokość na podstawie szerokości, zakładając kwadratowe pola.
       if (clientHeight === 0 && clientWidth > 0) {
-         // Obliczamy ile wysokości potrzebujemy, żeby zachować proporcje
-         // (zakładając że cellSize będzie wynikać z szerokości)
          const ratio = rows / cols;
          clientHeight = clientWidth * ratio;
       }
-      // --- FIX END ---
 
       if (clientWidth === 0 || clientHeight === 0) return;
 
@@ -136,7 +129,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     };
   }, []);
 
-  // 3. Rysowanie (bez zmian)
   useEffect(() => {
     const app = appRef.current;
     const container = boardContainerRef.current;
