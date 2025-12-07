@@ -5,6 +5,7 @@ import { useChatDock } from './ChatDockContext';
 import ChatWindow from './ChatWindow';
 import { FiMinus, FiX, FiLoader } from 'react-icons/fi';
 import { pfpImage } from '@assets/images';
+import { useLobby } from '../lobby/LobbyContext';
 
 type DockItemProps = {
   userId: string;
@@ -15,6 +16,7 @@ export const DockItem = ({ userId, minimized }: DockItemProps) => {
   const { friendsById, isLoading: friendsLoading } = useFriends();
   const { getMessages, getHasMore, getTyping, sendMessage, sendTyping, loadMoreMessages, getUnread } = useChat();
   const { minimizeChat, closeChat } = useChatDock();
+  const {joinLobby} = useLobby()
 
   const userData = useMemo(() => {
     if (friendsById[userId]) {
@@ -23,7 +25,7 @@ export const DockItem = ({ userId, minimized }: DockItemProps) => {
         nickname: friendsById[userId].nickname,
         avatarUrl: friendsById[userId].avatarUrl,
         status: friendsById[userId].userStatus,
-        isOnline: friendsById[userId].userStatus === 'online'
+        isOnline: friendsById[userId].userStatus,
       };
     }
     return null;
@@ -80,7 +82,7 @@ export const DockItem = ({ userId, minimized }: DockItemProps) => {
         </button>
     );
   }
-
+  const color = userData.status === 'online' ? 'green-500' : userData.status === 'offline' ? 'white/30' : 'button'
   return (
     <div className="pointer-events-auto flex w-[340px] flex-col overflow-hidden rounded-t-xl border border-white/10 bg-background-secondary shadow-2xl">
       <div 
@@ -88,8 +90,9 @@ export const DockItem = ({ userId, minimized }: DockItemProps) => {
         onClick={() => minimizeChat(userId, true)}
       >
         <div className="flex items-center gap-2 overflow-hidden">
-          <div className={`h-2 w-2 rounded-full ${userData.isOnline ? 'bg-green-500' : 'bg-white/30'}`} />
+          <div className={`h-2 w-2 rounded-full bg-${color}`} />
           <span className="truncate text-sm font-bold text-white/90">{userData.nickname}</span>
+          <span className={`truncate text-sm font-medium text-${color}`}>{userData.status === 'online' ? 'Online' : userData.status === 'in_game' ? 'In Game' : userData.status === 'in_lobby' ? 'In Lobby' : 'Offline'}</span>
         </div>
         <div className="flex items-center gap-1">
           <button 
@@ -119,6 +122,7 @@ export const DockItem = ({ userId, minimized }: DockItemProps) => {
           onSend={async (payload) => sendMessage(userId, payload)}
           onTyping={() => sendTyping(userId)}
           onLoadMore={() => loadMoreMessages(userId)}
+          onJoinLobby={(lobbyCode: string) => joinLobby(lobbyCode!)}
           className="h-full rounded-none border-0"
         />
       </div>

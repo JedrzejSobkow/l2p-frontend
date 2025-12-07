@@ -23,7 +23,6 @@ const ChatDock = () => {
   const { isAuthenticated } = useAuth()
   const chat = useChat()
   const {friendsById} = useFriends()
-  const {joinLobby} = useLobby()
   const location = useLocation()
   
   const [maxVisible, setMaxVisible] = useState<number>(() => getMaxVisibleWindows())
