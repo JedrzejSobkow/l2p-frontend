@@ -112,11 +112,11 @@ const SoccerView: GameClientModule["GameView"] = ({
     return set;
   }, [availableMoves]);
 
-  const padding = 0;
+  const padding = 0.5;
   const minX = -padding;
   const maxX = w - 1 + padding;
-  const minY = -1 - padding / 2;
-  const maxY = h + padding / 2;
+  const minY = -1 - padding;
+  const maxY = h + padding;
   const widthView = maxX - minX;
   const heightView = maxY - minY;
 
@@ -165,7 +165,7 @@ const SoccerView: GameClientModule["GameView"] = ({
   };
 
   return (
-    <div className="relative h-full w-full bg-green-800 flex flex-col items-center justify-center p-2 gap-1">
+    <div className="relative h-full w-full flex flex-col items-center justify-center p-2 gap-1">
       
       {/* 1. TOP PLAYER BADGE */}
       <PlayerBadge 
@@ -180,6 +180,13 @@ const SoccerView: GameClientModule["GameView"] = ({
           <defs>
              <filter id="glow"><feGaussianBlur stdDeviation="0.1" result="coloredBlur" /><feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
+
+          {/* PITCH BACKGROUND */}
+          <rect x={0} y={0} width={w - 1} height={h - 1} fill="#0f5a2e" />
+
+          {/* GOAL AREAS */}
+          <rect x={goalXStart} y={-1} width={goalXEnd - goalXStart} height={1} fill="#0a3d1f" />
+          <rect x={goalXStart} y={h - 1} width={goalXEnd - goalXStart} height={1} fill="#0a3d1f" />
 
           {/* GRID */}
           <g stroke="rgba(255,255,255,0.06)" strokeWidth={LINE_WIDTH / 2}>
