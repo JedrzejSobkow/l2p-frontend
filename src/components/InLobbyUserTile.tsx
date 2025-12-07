@@ -44,9 +44,9 @@ const InLobbyUserTile: React.FC<InLobbyUserTileProps> = ({ avatar, username, pla
       {/* Left Side: Place and Avatar */}
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-sm font-bold text-gray-500 flex-shrink-0">{place}.</span>
-        <div className="relative w-12 h-12 flex-shrink-0">
+        <div className="relative w-8 h-8 sm:w-12 sm:h-12 flex-shrink-0">
           {isHost && (
-            <FaCrown className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-yellow-500" size={24} />
+            <FaCrown className="absolute -top-3 sm:-top-3 left-1/2 transform -translate-x-1/2 text-yellow-500" size={24} />
           )}
           <img
             src={avatar}

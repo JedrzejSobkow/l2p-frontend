@@ -311,3 +311,10 @@ export const offGameRulesUpdated = (cb?: (data: { rules: Record<string, any> }) 
   if (!lobbySocket) return
   cb ? lobbySocket.off('game_rules_updated', cb) : lobbySocket.off('game_rules_updated')
 }
+
+export const onLobbyGameEnded = (cb: (data: { lobby_code: string; result: string; winner_identifier: number | null; game_state: any }) => void) => 
+  lobbySocket?.on('game_ended', cb)
+export const offLobbyGameEnded = (cb?: (data: { lobby_code: string; result: string; winner_identifier: number | null; game_state: any }) => void) => {
+  if (!lobbySocket) return
+  cb ? lobbySocket.off('game_ended', cb) : lobbySocket.off('game_ended')
+}

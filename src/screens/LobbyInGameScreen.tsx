@@ -17,6 +17,7 @@ import { FaSignOutAlt } from "react-icons/fa";
 import { getImage } from "../utils/imageMap";
 import { pfpImage } from "@/assets/images";
 import ClobberModule from "@/components/games/clobber/module";
+import CheckersModule from "@/components/games/checkers/module";
 import LudoModule from "@/components/games/ludo/module";
 import SoccerModule from "@/components/games/soccer/module";
 
@@ -50,6 +51,7 @@ const LobbyInGameScreen = () => {
   const gameModules: Record<string, any> = {
     tictactoe: TicTacToeModule,
     clobber: ClobberModule,
+    checkers: CheckersModule,
     ludo: LudoModule,
     soccer: SoccerModule,
   };
