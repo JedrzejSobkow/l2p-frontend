@@ -1060,7 +1060,7 @@ const LudoView: GameClientModule["GameView"] = ({
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 p-4 md:p-6">
+    <div className="flex flex-col items-center gap-3  h-full">
       <div className="text-center text-lg font-semibold text-white">
         {status}
         <br />
