@@ -211,7 +211,7 @@ const ProfileScreen: React.FC = () => {
             if (statusCode === 422) {
                 showPopup({ type: 'error', message: 'Invalid username. Please use only letters, numbers, and underscores.' });
             } else if (statusCode === 400) {
-                showPopup({ type: 'error', message: 'Username cannot be empty and must be less than 20 characters.' });
+                showPopup({ type: 'error', message: e?.detail?.message || 'Username cannot be empty and must be less than 20 characters.' });
             } else {
                 showPopup({ type: 'error', message: e?.message || 'Failed to update username. Please try again.' });
             }
