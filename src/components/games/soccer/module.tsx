@@ -141,27 +141,48 @@ const SoccerView: GameClientModule["GameView"] = ({
   const bottomTime = useRemainingTime(gameState, visualBottomPlayer?.userId || '');
   const topTime = useRemainingTime(gameState, visualTopPlayer?.userId || '');
 
-  const PlayerBadge = ({ player, isLocal, timeLeft }: any) => {
-      if (!player) return null;
-      const isTurn = timeLeft !== null;
-      const isCriticalTime = isTurn && timeLeft < 10;
+  const PlayerBadge = ({ player, isLocal, timeLeft, isTurn }: any) => {
+    if (!player) return null;
+    
+    // Sprawdzamy, czy w ogóle mamy limit czasowy (czy timeLeft jest liczbą)
+    const hasTimer = typeof timeLeft === 'number';
+    const isCriticalTime = isTurn && hasTimer && timeLeft < 10;
 
-      return (
-        <div className={`flex items-center gap-3 px-4 py-2 rounded-full shadow-lg border backdrop-blur-md transition-all duration-300 z-10 ${isTurn ? 'bg-background/90 border-orange-500/50 scale-105 shadow-orange-500/20' : 'bg-background/60 border-white/10 opacity-80'}`}>
-           <div className="flex items-center gap-2">
-              <FaUser className={isLocal ? "text-orange-400" : "text-white/40"} size={14} />
-              <span className={`text-sm font-bold ${isLocal ? 'text-white' : 'text-white/70'}`}>
-                {isLocal ? 'You' : player.nickname}
-              </span>
-           </div>
-           {isTurn && (
-             <div className="flex items-center gap-1.5 pl-2 border-l border-white/10">
-                <FaClock className={isCriticalTime ? "text-red-500 animate-pulse" : "text-white/60"} size={12} />
-                <span className={`font-mono text-sm font-bold ${isCriticalTime ? "text-red-400" : "text-white"}`}>{Math.floor(timeLeft)}s</span>
-             </div>
-           )}
+    return (
+      <div className={`
+        relative flex items-center gap-3 px-5 py-2 rounded-full border backdrop-blur-md transition-all duration-300 z-10
+        ${isTurn 
+          ? 'bg-background/95 border-orange-500 scale-110' 
+          : 'bg-background/60 border-white/10 opacity-70 grayscale-[0.5]'
+        }
+      `}>
+        <div className="flex items-center gap-3">
+            <FaUser className={isLocal ? "text-orange-400" : "text-white/40"} size={16} />
+            
+            <div className="flex flex-col justify-center">
+                <span className={`text-sm font-bold leading-tight ${isLocal ? 'text-white' : 'text-white/80'}`}>
+                  {isLocal ? 'You' : player.nickname}
+                </span>
+                
+                {isTurn && (
+                  <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider leading-none animate-pulse">
+                    {isLocal ? 'Your Turn' : 'Playing...'}
+                  </span>
+                )}
+            </div>
         </div>
-      );
+
+        {/* Timer - Wyświetlamy TYLKO gdy jest tura I mamy zdefiniowany czas */}
+        {isTurn && hasTimer && (
+          <div className="flex items-center gap-1.5 pl-3 border-l border-white/20 ml-1">
+              <FaClock className={isCriticalTime ? "text-red-500 animate-pulse" : "text-orange-400"} size={14} />
+              <span className={`font-mono text-base font-bold ${isCriticalTime ? "text-red-400" : "text-white"}`}>
+                {Math.floor(timeLeft)}s
+              </span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -172,10 +193,11 @@ const SoccerView: GameClientModule["GameView"] = ({
         player={visualTopPlayer} 
         isLocal={isVisualTopLocal} 
         timeLeft={topTime} 
+        isTurn={!isMyTurn}
       />
 
       {/* 2. PITCH (SVG) */}
-      <div className="relative w-full max-h-[70vh] aspect-[9/13] shrink-0"> 
+      <div className="relative w-full max-h-[68vh] aspect-[9/13] shrink-0"> 
         <svg viewBox={`${minX} ${minY} ${widthView} ${heightView}`} preserveAspectRatio="xMidYMid meet" className="w-full h-full drop-shadow-2xl">
           <defs>
              <filter id="glow"><feGaussianBlur stdDeviation="0.1" result="coloredBlur" /><feMerge><feMergeNode in="coloredBlur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
@@ -252,6 +274,7 @@ const SoccerView: GameClientModule["GameView"] = ({
         player={visualBottomPlayer} 
         isLocal={isVisualBottomLocal} 
         timeLeft={bottomTime} 
+        isTurn={isMyTurn}
       />
     </div>
   );
