@@ -50,7 +50,6 @@ const CheckersView: GameClientModule["GameView"] = ({
   const [remainingTime, setRemainingTime] = useState<number | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
   const [validMoves, setValidMoves] = useState<Array<{ row: number; col: number }>>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -69,23 +68,6 @@ const CheckersView: GameClientModule["GameView"] = ({
     setValidMoves([]);
   }, [board]);
 
-  useEffect(() => {
-    const updateContainerWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
-
-    updateContainerWidth();
-    const resizeObserver = new ResizeObserver(updateContainerWidth);
-    if (containerRef.current) {
-      resizeObserver.observe(containerRef.current);
-    }
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   useEffect(() => {
     if (timing?.timeout_type === "per_turn" && timeoutSeconds && turnStartTime) {
@@ -304,7 +286,7 @@ const CheckersView: GameClientModule["GameView"] = ({
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
+    <div ref={containerRef} className="flex flex-col items-center gap-6 w-full h-full">
       <div className="text-center text-lg font-semibold text-white flex items-center justify-center gap-3">
         <div 
           className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
@@ -330,7 +312,6 @@ const CheckersView: GameClientModule["GameView"] = ({
       <GameBoard
         rows={rows}
         cols={cols}
-        containerWidth={containerWidth}
         onCellClick={handleCellClick}
         onCellHover={(row, col) => setHoveredCell({ row, col })}
         onCellLeave={() => setHoveredCell(null)}

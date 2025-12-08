@@ -19,6 +19,7 @@ import { pfpImage } from "@/assets/images";
 import ClobberModule from "@/components/games/clobber/module";
 import CheckersModule from "@/components/games/checkers/module";
 import LudoModule from "@/components/games/ludo/module";
+import SoccerModule from "@/components/games/soccer/module";
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ const LobbyInGameScreen = () => {
     clobber: ClobberModule,
     checkers: CheckersModule,
     ludo: LudoModule,
+    soccer: SoccerModule,
   };
 
 
@@ -185,7 +187,7 @@ const LobbyInGameScreen = () => {
   return (
     <div className="w-full">
       {/* Top Bar with Leave Button */}
-      <div className="flex justify-start px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+      <div className="flex justify-start px-2 sm:px-6 lg:px-8 pt-4 pb-4">
         <button
           onClick={() => setIsLeaveModalOpen(true)}
           className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white font-bold text-sm sm:text-base rounded-lg hover:bg-red-700 hover:scale-105 transition-transform focus:outline-none"
@@ -195,7 +197,7 @@ const LobbyInGameScreen = () => {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-6 min-h-[84vh] sm:px-6 lg:px-8 px-2 pb-5">
         <div className="flex-1">
           <GameShell
             module={module}
@@ -207,7 +209,7 @@ const LobbyInGameScreen = () => {
             onProposeMove={handleProposeMove}
           />
         </div>
-        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 px-10 sm:p-4 my-10">
+        <div className="w-full lg:w-1/3 bg-background-secondary rounded-lg shadow-md p-3 px-10 sm:p-4">
           <h3 className="text-base sm:text-lg font-bold text-white mb-2">
             Players
           </h3>

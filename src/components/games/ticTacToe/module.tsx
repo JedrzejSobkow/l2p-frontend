@@ -126,7 +126,7 @@ const TicTacToeView: GameClientModule["GameView"] = ({
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-6 w-full">
+    <div ref={containerRef} className="flex flex-col items-center gap-6 w-full h-full">
       <div className="text-center text-lg font-semibold text-white">
         {status}
         <br />
@@ -139,7 +139,6 @@ const TicTacToeView: GameClientModule["GameView"] = ({
       <GameBoard
         rows={dim}
         cols={dim}
-        containerWidth={containerWidth}
         onCellClick={handleCellClick}
       >
         {renderTokens}

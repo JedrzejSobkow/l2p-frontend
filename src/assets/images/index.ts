@@ -4,6 +4,7 @@ export { default as ticTacToeImage } from "./games/tictactoe.png";
 export { default as clobberImage } from "./games/clobber.png";
 export { default as checkersImage } from "./games/checkers.png";
 export { default as ludoImage } from "./games/ludo.png";
+export { default as soccerImage } from "./games/soccer.png";
 export { default as moreGamesImage } from "./more-games.png";
 export { default as pfpImage } from "./pfp.png";
 export { default as profilePictureImage } from "./profile-picture.png";
