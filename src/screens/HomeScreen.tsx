@@ -46,7 +46,7 @@ const HomeScreen: React.FC = () => {
   }, [location, showPopup]);
 
   const topPicksImages = availableGames.length > 0
-    ? availableGames.slice(0, 2).map((game: any) => ({
+    ? availableGames.slice(0, 3).map((game: any) => ({
         src: getImage('games', game.game_name) || noGameImage,
         alt: game.display_name,
         gameName: game.game_name,
@@ -54,7 +54,7 @@ const HomeScreen: React.FC = () => {
     : [];
 
   const featuredGamesImages = availableGames.length > 0
-    ? [availableGames[2] || availableGames[0]].map((game: any) => ({
+    ? availableGames.slice(availableGames.length-2, availableGames.length).map((game: any) => ({
         src: getImage('games', game.game_name) || noGameImage,
         alt: game.display_name,
         gameName: game.game_name,
