@@ -168,7 +168,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   }, [isPixiReady, dimensions, rows, cols, children, lineWidth, borderRadius, gridLineColor, gridLineAlpha, backgroundColor, backgroundAlpha]);
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center overflow-hidden">
+    <div ref={containerRef} className="w-full max-h-[70vh] flex items-center justify-center overflow-hidden">
       <div 
         className="relative shadow-2xl rounded-3xl"
         style={{ 
