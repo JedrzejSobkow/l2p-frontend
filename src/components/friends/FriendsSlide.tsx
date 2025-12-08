@@ -149,7 +149,11 @@ const FriendsSlide: FC<FriendsSlideProps> = ({ open, onClose, title, selectedFri
             title={title || 'Friends'}
             selectedFriendId={selectedFriendId}
             className="h-full rounded-none border-0"
-            onLobbyJoin={joinLobby}
+            onLobbyJoin={(lobbyCode: string) => {
+              joinLobby(lobbyCode)
+              navigate('/lobby')
+              onClose();
+            }}
           />
         </div>
       </aside>

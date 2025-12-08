@@ -19,11 +19,8 @@ const getMaxVisibleWindows = () => {
 }
 
 const ChatDock = () => {
-  const { sessions, minimizeChat, closeChat } = useChatDock()
+  const { sessions } = useChatDock()
   const { isAuthenticated } = useAuth()
-  const chat = useChat()
-  const {friendsById} = useFriends()
-  const {joinLobby} = useLobby()
   const location = useLocation()
   
   const [maxVisible, setMaxVisible] = useState<number>(() => getMaxVisibleWindows())
@@ -64,7 +61,7 @@ const ChatDock = () => {
             <DockItem
               key={s.id}
               userId={s.id}
-              minimized={s.minimized}
+              minimized={true}
             />
           )}
         </div>
