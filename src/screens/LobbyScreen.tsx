@@ -51,7 +51,8 @@ export const LobbyScreen = () => {
     selectGame,
     clearGameSelection,
     sendInvite,
-    isLoading
+    isLoading,
+    isLobbySocketConnected,
   } = useLobby()
 
   // Redirect user to home if they are not in a lobby
@@ -69,7 +70,7 @@ export const LobbyScreen = () => {
     }, 100);
 
     return () => clearTimeout(delayCheck); // Cleanup timeout on unmount or dependency change
-  }, [currentLobby, navigate])
+  }, [currentLobby, navigate, getLobbySocket])
 
   useEffect(() => {
     if (!lobbyCode) return
@@ -340,7 +341,7 @@ export const LobbyScreen = () => {
     },
   ]
 
-  if (!currentLobby) {
+  if (!currentLobby || !isLobbySocketConnected) {
     return (
       <main className="flex h-screen items-center justify-center bg-background-primary">
          <LoadingSpinner size="h-16 w-16" />

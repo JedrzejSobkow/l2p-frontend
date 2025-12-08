@@ -171,6 +171,9 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
       setMembers([])
       setMessages([])
       setTypingUsers([])
+      navigate('/')
+      setGameState(null)
+      setIsLoading(false)
     }
 
     const handleLobbyState = (data: LobbyState) => {
@@ -438,9 +441,7 @@ export const LobbyProvider = ({ children }: { children: ReactNode }) => {
   const leaveLobbyHandler = useCallback(() => {
     if (!currentLobby) return
     setIsLoading(true)
-    // navigate('/')
     emitLeaveLobby(currentLobby.lobby_code)
-    setGameState(null)
   }, [currentLobby])
 
   const updateSettingsHandler = useCallback((maxPlayers: number, isPublic: boolean, lobbyName?: string) => {

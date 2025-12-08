@@ -19,20 +19,21 @@ import { pfpImage } from "@/assets/images";
 import ClobberModule from "@/components/games/clobber/module";
 import CheckersModule from "@/components/games/checkers/module";
 import LudoModule from "@/components/games/ludo/module";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const LobbyInGameScreen = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { showPopup } = usePopup()
-  const { gameState, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby,} = useLobby();
+  const { gameState,isGameSocketConnected, members, currentLobby, messages, sendMessage, transferHost, kickMember, leaveLobby,} = useLobby();
 
   // Redirect user to home if they are not in a lobby
   useEffect(() => {
-    if (!currentLobby) {
+    if (!currentLobby && isGameSocketConnected) {
       navigate('/');
       showPopup({ message: 'You are not in a lobby.', type: 'error' });
     }
-  }, [currentLobby, navigate]);
+  }, [currentLobby, navigate,isGameSocketConnected]);
 
   const [lastMove, setLastMove] = useState<{ index: number } | undefined>(
     undefined
@@ -178,8 +179,8 @@ const LobbyInGameScreen = () => {
     return gameModules[currentLobby.selected_game] || null; // Use the mapped module or fallback
   }, [currentLobby?.selected_game]);
 
-  if (!gameState) {
-    return <div>Loading game state...</div>; // Show a loading state until gameState is available
+  if (!gameState && !isGameSocketConnected) {
+    return <LoadingSpinner className="min-h-[90vh]"/>
   }
 
   return (
