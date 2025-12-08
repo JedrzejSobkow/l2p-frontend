@@ -13,6 +13,8 @@ interface SettingProps {
 const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, defaultValue, disabled = false, disabledValues = [], onChange }) => {
   const [selectedValue, setSelectedValue] = useState(defaultValue);
 
+  const formatDisplayValue = (value: string) => value.replace(/_/g, ' ');
+
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newValue = e.target.value;
     if (!disabledValues.includes(newValue)) {
@@ -28,7 +30,7 @@ const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, def
           <div className="text-highlight">{icon}</div>
           <span className="text-sm font-medium text-gray-300">{label}</span>
         </div>
-        <span className="text-gray-400 h-8">{selectedValue}</span>
+        <span className="text-gray-400 h-8">{formatDisplayValue(selectedValue)}</span>
       </div>
     );
   }
@@ -63,7 +65,7 @@ const GameSetting: React.FC<SettingProps> = ({ label, icon, availableValues, def
       >
         {availableValues.map((value, index) => (
           <option key={index} value={value} disabled={disabledValues.includes(value)}>
-            {value}
+            {formatDisplayValue(value)}
           </option>
         ))}
       </select>
