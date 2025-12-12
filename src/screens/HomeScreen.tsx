@@ -22,18 +22,28 @@ import LoadingSpinner from '@/components/LoadingSpinner';
 import RefreshButton from '@/components/RefreshButton';
 
 const HomeScreen: React.FC = () => {
-  const { availableGames, isLobbySocketConnected, publicLobbies, getPublicLobbies,isLoading } = useLobby();
+  const { availableGames, isLobbySocketConnected, publicLobbies, getPublicLobbies, isLoading } = useLobby();
   const location = useLocation();
   const { showPopup } = usePopup();
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 400);
 
   useEffect(() => {
-    if (isLobbySocketConnected ) {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 400);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (isLobbySocketConnected) {
       getPublicLobbies();
     }
-  }, [getPublicLobbies,isLobbySocketConnected]);
+  }, [getPublicLobbies, isLobbySocketConnected]);
 
   useEffect(() => {
     if (location.state?.message) {
@@ -54,7 +64,7 @@ const HomeScreen: React.FC = () => {
     : [];
 
   const featuredGamesImages = availableGames.length > 0
-    ? availableGames.slice(availableGames.length-2, availableGames.length).map((game: any) => ({
+    ? availableGames.slice(availableGames.length - 2, availableGames.length).map((game: any) => ({
         src: getImage('games', game.game_name) || noGameImage,
         alt: game.display_name,
         gameName: game.game_name,
@@ -115,18 +125,26 @@ const HomeScreen: React.FC = () => {
           onSuggestionClickRoute="/game"
         />
       </div>
-      <JoinOrCreateGame />
+
+      <div>
+        <JoinOrCreateGame />
+      </div>
 
       <div className="flex flex-col md:flex-row justify-between gap-8">
         {/* Left Column: Top Picks and Featured Games */}
         <div className="w-full md:w-[70%] flex flex-col gap-8">
           <GameRecommendationWithImages title="Top picks for you" images={topPicksImages} />
           <GameRecommendationWithImages title="Featured games" images={featuredGamesImages} />
-
         </div>
 
         {/* Right Column: Leaderboard */}
-        <Leaderboard/>
+        {isSmallScreen ? (
+          <div className="flex justify-center w-full">
+            <Leaderboard />
+          </div>
+        ) : (
+          <Leaderboard />
+        )}
       </div>
 
       {/* Game Lobbies Section */}
@@ -139,7 +157,7 @@ const HomeScreen: React.FC = () => {
             title="Refresh lobbies"
           />
         </div>
-        
+
         {isLoading ? (
           <LoadingSpinner size="h-12 w-12" />
         ) : currentLobbies.length > 0 ? (
