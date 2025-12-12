@@ -80,7 +80,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({ title, minPlayers, maxPlayers, 
             <div className="game-header-icon w-full sm:w-auto flex justify-center sm:mr-4">
                 <img src={path} alt={`${title} icon`} style={{ maxWidth: '150px', maxHeight: '150px' }} />
             </div>
-            <div className="bg-background-secondary w-full h-auto p-6 rounded-lg flex flex-wrap items-center justify-center gap-4 sm:justify-between text-center mx-auto flex-col sm:flex-row min-w-[290px]">
+            <div className="bg-background-secondary w-full h-auto p-6 rounded-lg flex flex-wrap items-center justify-center gap-4 sm:justify-between text-center mx-auto flex-col sm:flex-row">
                 <div className="game-header-details max-w-[250px] mx-auto">
                     <h1 className="game-header-title text-3xl font-bold text-headline">{title}</h1>
                     <p className="game-header-info text-paragraph">

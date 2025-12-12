@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaUserPlus } from 'react-icons/fa';
 
 interface InviteToLobbyUserTileProps {
   onInviteClick?: () => void;
@@ -29,7 +30,8 @@ const InviteToLobbyUserTile: React.FC<InviteToLobbyUserTileProps> = ({ onInviteC
             : 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
         }`}
       >
-        Invite
+        <span className="hidden min-[400px]:inline">Invite</span>
+        <FaUserPlus className="inline min-[400px]:hidden" size={20} />
       </button>
     </div>
   );
